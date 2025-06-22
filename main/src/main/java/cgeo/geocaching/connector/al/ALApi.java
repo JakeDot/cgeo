@@ -166,14 +166,15 @@ final class ALApi {
         try {
             final Response response = apiRequest(geocode.substring(2), null, headers).blockingGet();
             final Geocache gc = importCacheFromJSON(response);
-            if (!Settings.isALCfoundStateManual()) {
-                final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
-                for (Geocache matchedLabCache : matchedLabCaches) {
-                    if (matchedLabCache.getGeocode().equals(geocode)) {
-                        gc.setFound(matchedLabCache.isFound());
-                    }
+
+            // TODO: FUCK THIS
+            final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
+            for (Geocache matchedLabCache : matchedLabCaches) {
+                if (matchedLabCache.getGeocode().equals(geocode)) {
+                    gc.setFound(matchedLabCache.isFound());
                 }
             }
+
             return gc;
         } catch (final Exception ex) {
             Log.w("APApi: Exception while getting " + geocode, ex);
@@ -342,9 +343,8 @@ final class ALApi {
             cache.setRating(response.get("RatingsAverage").floatValue());
             cache.setArchived(response.get("IsArchived").asBoolean());
             cache.setHidden(parseDate(response.get("PublishedUtc").asText()));
-            if (!Settings.isALCfoundStateManual()) {
-                cache.setFound(response.get("IsComplete").asBoolean());
-            }
+            cache.setFound(response.get("IsComplete").asBoolean());
+
             final Geocache oldCache = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
             final String personalNote = (oldCache != null && oldCache.getPersonalNote() != null) ? oldCache.getPersonalNote() : "";
             cache.setPersonalNote(personalNote, false);

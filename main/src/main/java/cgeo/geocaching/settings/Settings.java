@@ -725,14 +725,6 @@ public class Settings {
         return getGCMemberStatus().isPremium();
     }
 
-    public static boolean isALCAdvanced() {
-        return getBoolean(R.string.pref_alc_advanced, false);
-    }
-
-    public static boolean isALCfoundStateManual() {
-        return getBoolean(R.string.pref_foundstate_al, false);
-    }
-
     public static boolean enableVtmSingleMarkerSymbol() {
         return getBoolean(R.string.pref_vtm_single_marker_symbol, false);
     }

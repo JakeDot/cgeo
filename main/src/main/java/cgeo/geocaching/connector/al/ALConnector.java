@@ -110,11 +110,6 @@ public class ALConnector extends AbstractConnector implements ISearchByGeocode, 
     }
 
     @Override
-    public boolean supportsSettingFoundState() {
-        return Settings.isALCfoundStateManual();
-    }
-
-    @Override
     public boolean supportsDifficultyTerrain() {
         return false;
     }
