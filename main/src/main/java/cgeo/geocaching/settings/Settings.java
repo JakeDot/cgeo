@@ -725,6 +725,11 @@ public class Settings {
         return getGCMemberStatus().isPremium();
     }
 
+    // "Advanced" AL support - read questions and answer images
+    public static boolean isALCAdvanced() {
+        return getBoolean(R.string.pref_alc_advanced, false);
+    }
+
     public static boolean enableVtmSingleMarkerSymbol() {
         return getBoolean(R.string.pref_vtm_single_marker_symbol, false);
     }
@@ -1045,10 +1050,6 @@ public class Settings {
 
     public static boolean isLiveList() {
         return getBoolean(R.string.pref_livelist, true);
-    }
-
-    public static boolean useLiveCompassInNavigationAction() {
-        return getBoolean(R.string.pref_live_compass_in_navigation_action, false);
     }
 
     public static boolean isTrackableAutoVisit() {

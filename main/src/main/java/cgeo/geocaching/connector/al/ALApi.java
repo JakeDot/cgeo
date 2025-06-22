@@ -420,10 +420,12 @@ final class ALApi {
                 wpt.setPrefix(String.valueOf(stageCounter));
                 wpt.setGeofence((float) wptResponse.get("GeofencingRadius").asDouble());
 
+                // TODO: download images linked to instead of pasting the link into an <img>
+
                 final StringBuilder note = new StringBuilder("<img src=\"" + ilink + "\"></img><p><p>" + desc);
-                if (Settings.isALCAdvanced()) {
+                //if (Settings.isALCAdvanced()) {
                     note.append("<p><p>").append(wptResponse.get("Question").asText());
-                }
+                //}
 
                 try {
                     final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
