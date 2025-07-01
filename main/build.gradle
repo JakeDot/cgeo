@@ -357,7 +357,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
 
     // Jsoup HTML parsing
-    implementation 'org.jsoup:jsoup:1.20.1'
+    implementation 'org.jsoup:jsoup:1.21.1'
 
      // GeoJson parsing: https://github.com/cocoahero/android-geojson
     implementation 'com.cocoahero.android:geojson:1.0.1@jar'
@@ -477,7 +477,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-reactivestreams:$lifecycleVersion"
 
     // workmanager (to replace foreground services for downloader)
-    implementation "androidx.work:work-runtime:2.8.1"
+    implementation "androidx.work:work-runtime:2.10.2"
 
     // Support Library AppCompat
     implementation 'androidx.appcompat:appcompat:1.7.1'
@@ -532,7 +532,6 @@ dependencies {
 
     // charting, based on com.github.PhilJay:MPAndroidChart
     // for detailed docs for the base library see https://weeklycoding.com/mpandroidchart/
-    // stay with 3.1.0.16 for now to avoid problems with CI
     implementation 'com.github.AppDevNext:AndroidChart:3.1.0.27'
 
     // For Wherigos: GIF support
