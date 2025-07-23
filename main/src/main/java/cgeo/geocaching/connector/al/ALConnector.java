@@ -27,7 +27,6 @@ import java.util.EnumSet;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 
 public class ALConnector extends AbstractConnector implements ISearchByGeocode, ISearchByFilter, ISearchByViewPort {
 
@@ -68,7 +67,7 @@ public class ALConnector extends AbstractConnector implements ISearchByGeocode, 
         return PATTERN_AL_CODE.matcher(geocode).matches();
     }
 
-    @NotNull
+    @NonNull
     @Override
     public String[] getGeocodeSqlLikeExpressions() {
         return new String[]{"AL%"};
