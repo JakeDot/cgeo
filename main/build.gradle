@@ -27,8 +27,8 @@ android {
         // enable Java 8 APIs like Streams on older Android versions
         coreLibraryDesugaringEnabled true
         // use the diamond operator, lambdas and some other Java 8 language features in Android
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility 17
+        targetCompatibility 17
     }
 
     defaultConfig {
@@ -440,16 +440,10 @@ dependencies {
     // used by mapsforge
     implementation 'com.caverock:androidsvg:1.4'
 
-    // Maps.ME integration
-    implementation project(":mapswithme-api")
-
-    // Organic Maps integration
-    implementation project(":organicmaps-api")
-
     // Metadata Extractor, EXIF location extraction from images
     implementation 'com.drewnoakes:metadata-extractor:2.19.0'
 
-    String okhttpVersion = '4.12.0'
+    String okhttpVersion = '5.1.0'
     implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
     // For local unit tests
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
@@ -478,7 +472,7 @@ dependencies {
     }
 
     // Support Library Lifecycle Helpers
-    String lifecycleVersion = '2.6.2'
+    String lifecycleVersion = '2.9.2'
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycleVersion"
@@ -507,7 +501,7 @@ dependencies {
     implementation 'androidx.exifinterface:exifinterface:1.4.1'
 
     // Support Library RecyclerView
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
 
     // Settings Library
     implementation 'androidx.preference:preference:1.2.1'
@@ -537,7 +531,7 @@ dependencies {
 
     //TooLargeTool is used for logging transaction sizes and thus helping find transactionTooLargeExceptions
     //See https://github.com/guardian/toolargetool
-    implementation 'com.gu.android:toolargetool:0.3.0'
+    implementation 'com.gu.android:toolargetool:0.3.2'
 
     // charting, based on com.github.PhilJay:MPAndroidChart
     // for detailed docs for the base library see https://weeklycoding.com/mpandroidchart/
