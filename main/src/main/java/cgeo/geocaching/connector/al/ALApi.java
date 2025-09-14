@@ -50,7 +50,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import okhttp3.Response;
@@ -75,27 +74,42 @@ final class ALApi {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class ALSearchV4Query {
+    static class ALSearchV4Query {
         @JsonProperty("Origin")
-        private Origin origin;
+        Origin origin;
         @JsonProperty("RadiusInMeters")
-        private Integer radiusInMeters;
+        Integer radiusInMeters;
         @JsonProperty("RecentlyPublishedDays")
-        private Integer recentlyPublishedDays = null;
+        Integer recentlyPublishedDays = null;
         @JsonProperty("Skip")
-        private Integer skip = 0;
+        Integer skip = 0;
         @JsonProperty("Take")
-        private Integer take;
+        Integer take;
         @JsonProperty("CompletionStatuses")
-        private List<Integer> completionStatuses = null;
+        List<Integer> completionStatuses = null;
         @JsonProperty("AdventureTypes")
-        private List<Integer> adventureTypes = null;
+        List<Integer> adventureTypes = null;
         @JsonProperty("MedianCompletionTimes")
-        private List<String> medianCompletionTimes = null;
+        List<String> medianCompletionTimes = null;
         @JsonProperty("CallingUserPublicGuid")
-        private String callingUserPublicGuid;
+        String callingUserPublicGuid;
         @JsonProperty("Themes")
-        private List<Integer> themes = null;
+        List<Integer> themes = null;
+
+        static class Origin {
+            @JsonProperty("Latitude")
+            Double latitude;
+            @JsonProperty("Longitude")
+            Double longitude;
+            @JsonProperty("Altitude")
+            Double altitude;
+
+            Origin(final Double latitude, final Double longitude, final Double altitude) {
+                this.latitude = latitude;
+                this.longitude = longitude;
+                this.altitude = altitude;
+            }
+        }
 
         public void setRadiusInMeters(final Integer radiusInMeters) {
             this.radiusInMeters = radiusInMeters;
@@ -137,20 +151,6 @@ final class ALApi {
             this.themes = themes;
         }
 
-        static class Origin {
-            @JsonProperty("Latitude")
-            private Double latitude;
-            @JsonProperty("Longitude")
-            private Double longitude;
-            @JsonProperty("Altitude")
-            private Double altitude;
-
-            Origin(final Double latitude, final Double longitude, final Double altitude) {
-                this.latitude = latitude;
-                this.longitude = longitude;
-                this.altitude = altitude;
-            }
-        }
     }
 
     // To understand the logic of this function some details about the API is in order.
@@ -404,7 +404,7 @@ final class ALApi {
     }
 
     @NonNull
-    private static List<Waypoint> parseWaypoints(final Geocache cache, final ArrayNode wptsJson) {
+    private static void parseWaypoints(final Geocache cache, final ArrayNode wptsJson) {
         final List<Waypoint> result = new ArrayList<>(5);
         final List<Image> wptImages = new ArrayList<>(5);
         final Geopoint pointZero = new Geopoint(0, 0);
@@ -463,12 +463,11 @@ final class ALApi {
                 result.add(wpt);
             } catch (final NullPointerException e) {
                 Log.e("_AL ALApi.parseWaypoints", e);
+                return;
             }
         }
 
         cache.setSpoilers(wptImages);
-
-        return result;
     }
 
     @Nullable
