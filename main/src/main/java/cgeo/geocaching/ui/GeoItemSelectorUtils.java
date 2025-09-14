@@ -14,14 +14,18 @@ import cgeo.geocaching.models.MapSelectableItem;
 import cgeo.geocaching.models.Route;
 import cgeo.geocaching.models.RouteItem;
 import cgeo.geocaching.models.Waypoint;
+import cgeo.geocaching.network.HtmlImage;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.DataStore;
 import cgeo.geocaching.utils.Formatter;
 import cgeo.geocaching.utils.MapMarkerUtils;
 import cgeo.geocaching.utils.TextUtils;
 
+import io.reactivex.rxjava3.core.Observable;
+
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.BitmapDrawable;
 import android.text.Html;
 import android.text.SpannableString;
 import android.view.LayoutInflater;
@@ -80,6 +84,8 @@ public class GeoItemSelectorUtils {
             text.append(Formatter.SEPARATOR).append(Html.fromHtml(waypoint.getNote()));
         }
         setViewValues(view, waypointName, TextParam.text(text), waypointIcon);
+
+        waypoint.fetchImage(view);
 
         return view;
     }

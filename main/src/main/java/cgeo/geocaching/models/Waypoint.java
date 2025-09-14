@@ -1,5 +1,6 @@
 package cgeo.geocaching.models;
 
+import cgeo.geocaching.R;
 import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.al.ALConnector;
 import cgeo.geocaching.connector.internal.InternalConnector;
@@ -10,15 +11,23 @@ import cgeo.geocaching.enumerations.WaypointType;
 import cgeo.geocaching.location.DistanceUnit;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.maps.mapsforge.v6.caches.GeoitemRef;
+import cgeo.geocaching.network.HtmlImage;
 import cgeo.geocaching.storage.DataStore;
+import cgeo.geocaching.ui.ImageParam;
 import cgeo.geocaching.utils.ClipboardUtils;
 import cgeo.geocaching.utils.MatcherWrapper;
 import cgeo.geocaching.utils.TextParser;
 import cgeo.geocaching.utils.formulas.Formula;
 import cgeo.geocaching.utils.formulas.Value;
 import cgeo.geocaching.utils.formulas.VariableList;
+
+import io.reactivex.rxjava3.core.Observable;
+
 import static cgeo.geocaching.models.Image.ImageCategory.WAYPOINT;
 import static cgeo.geocaching.utils.Formatter.generateShortGeocode;
+
+import android.graphics.drawable.BitmapDrawable;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -353,6 +362,18 @@ public class Waypoint implements INamedGeoCoordinate {
                 .build();
         }
         return modelImage;
+    }
+
+    public void fetchImage(View view) {
+        parentCache = this.getParentGeocache();
+        final String geocode = parentCache == null ? "" : parentCache.getGeocode();
+
+        final HtmlImage htmlImage = new HtmlImage(geocode, true, false, false);
+        final Observable<BitmapDrawable> observable = htmlImage.fetchDrawable(getImage());
+        final BitmapDrawable drawable = observable.blockingFirst();
+
+        final ImageParam image = ImageParam.drawable(drawable);
+        image.applyTo(view.findViewById(R.id.waypoint_item_image));
     }
 
     public void setCoords(final Geopoint coords) {
