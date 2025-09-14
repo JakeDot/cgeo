@@ -36,7 +36,7 @@ import java.util.Objects;
 import cgeo.geocaching.wherigo.kahlua.stdlib.BaseLib;
 
 
-public final class LuaTableImpl implements LuaTable {
+public class LuaTableImpl implements LuaTable {
     private boolean weakKeys, weakValues;
 
     // Hash part
@@ -308,7 +308,7 @@ public final class LuaTableImpl implements LuaTable {
 
     private LuaTable metatable;
 
-    public final void rawset(Object key, Object value) {
+    public void rawset(Object key, Object value) {
         checkKey(key);
         rawsetHash(key, value);
     }
@@ -334,12 +334,12 @@ public final class LuaTableImpl implements LuaTable {
         rawsetHash(LuaState.toDouble(index), value);
     }
 
-    public final Object rawget(Object key) {
+    public final <T> T rawget(Object key) {
         checkKey(key);
         if (key instanceof Double) {
             BaseLib.luaAssert(!((Double) key).isNaN(), "table index is NaN");
         }
-        return rawgetHash(key);
+        return (T) rawgetHash(key);
     }
 
     private Object rawgetHash(Object key) {
