@@ -17,7 +17,6 @@ import cgeo.geocaching.connector.IConnector;
 import cgeo.geocaching.connector.al.ALConnector;
 import cgeo.geocaching.connector.capability.IFavoriteCapability;
 import cgeo.geocaching.connector.capability.IIgnoreCapability;
-import cgeo.geocaching.connector.capability.IVotingCapability;
 import cgeo.geocaching.connector.capability.PersonalNoteCapability;
 import cgeo.geocaching.connector.capability.PgcChallengeCheckerCapability;
 import cgeo.geocaching.connector.capability.WatchListCapability;
@@ -42,7 +41,6 @@ import cgeo.geocaching.enumerations.WaypointType;
 import cgeo.geocaching.export.FieldNoteExport;
 import cgeo.geocaching.export.GpxExport;
 import cgeo.geocaching.export.PersonalNoteExport;
-import cgeo.geocaching.gcvote.VoteDialog;
 import cgeo.geocaching.list.StoredList;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.location.GeopointFormatter;
@@ -726,6 +724,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         CacheMenuHandler.onPrepareOptionsMenu(menu, cache, false);
         LoggingUI.onPrepareOptionsMenu(menu, cache);
         MenuUtils.setVisible(menu.findItem(R.id.menu_set_coordinates), isUDC);
+        MenuUtils.setVisible(menu.findItem(R.id.menu_translate), cache != null && TranslationUtils.isEnabled());
+        menu.findItem(R.id.menu_translate).setTitle(TranslationUtils.getTranslationLabel());
 
         if (cache != null) {
             // top level menu items
@@ -757,11 +757,6 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             menu.findItem(R.id.menu_export).setVisible(true);
 
             // submenu advanced
-            if (connector instanceof IVotingCapability) {
-                final MenuItem menuItemGCVote = menu.findItem(R.id.menu_gcvote);
-                menuItemGCVote.setVisible(((IVotingCapability) connector).supportsVoting(cache));
-                menuItemGCVote.setEnabled(Settings.isRatingWanted() && Settings.isGCVoteLoginValid());
-            }
             if (connector instanceof IIgnoreCapability) {
                 menu.findItem(R.id.menu_ignore).setVisible(((IIgnoreCapability) connector).canIgnoreCache(cache));
             }
@@ -788,14 +783,14 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             dropGeneratedWaypoints();
         } else if (menuItem == R.id.menu_refresh) {
             refreshCache();
-        } else if (menuItem == R.id.menu_gcvote) {
-            showVoteDialog();
         } else if (menuItem == R.id.menu_challenge_checker) {
             ShareUtils.openUrl(this, "https://project-gc.com/Challenges/" + cache.getGeocode());
         } else if (menuItem == R.id.menu_ignore) {
             ignoreCache();
         } else if (menuItem == R.id.menu_set_coordinates) {
             setCoordinates(this);
+        } else if (menuItem == R.id.menu_translate) {
+            TranslationUtils.translate(this, getListingForTranslate(cache));
         } else if (menuItem == R.id.menu_extract_waypoints) {
             final String searchText = cache.getShortDescription() + ' ' + cache.getDescription();
             extractWaypoints(searchText, cache);
@@ -884,10 +879,6 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         } else {
             storeCache(false);
         }
-    }
-
-    private void showVoteDialog() {
-        VoteDialog.show(this, cache, this::notifyDataSetChanged);
     }
 
     private static final class CacheDetailsGeoDirHandler extends GeoDirHandler {
@@ -1922,7 +1913,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                     binding.descriptionTranslateExternalButton,
                     binding.descriptionTranslateExternal,
                     binding.descriptionTranslateExternalNote,
-                    () -> TranslationUtils.prepareForTranslation(getDescriptionText(cache), cache.getHint()));
+                    () -> getListingForTranslate(cache));
 
             //register for changes of variableslist -> state of variable sync may change
             cache.getVariables().addChangeListener(this, s -> activity.adjustPersonalNoteVarsOutOfSyncButton(binding.personalnoteVarsOutOfSync));
@@ -2019,6 +2010,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                         if (translator != null) {
                             binding.descriptionTranslateNote.setText(LocalizationUtils.getString(R.string.translator_translation_success, status.getSourceLanguage()));
                         }
+                        binding.descriptionTranslatedByGoogle.setVisibility(translator != null ? View.VISIBLE : View.GONE);
 
                         if (status == null || StringUtils.equals(status.getSourceLanguage().getCode(), OfflineTranslateUtils.LANGUAGE_INVALID)) {
                             OfflineTranslateUtils.initializeListingTranslatorInTabbedViewPagerActivity((CacheDetailActivity) getActivity(), binding.descriptionTranslate, binding.description.getText().toString() + " " + binding.hint.getText().toString(), this::translateListing);
@@ -2086,22 +2078,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                     successConsumer.accept(createDescriptionContentHelper(activity, descriptionTextFinal, textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle))
                 );
             } else {
-                OfflineTranslateUtils.translateParagraph(translator, status, descriptionTextFinal, translatedText -> successConsumer.accept(createDescriptionContentHelper(activity, translatedText, textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle)), errorConsumer);
+                OfflineTranslateUtils.translateParagraph(translator, status, descriptionTextFinal, translatedText -> successConsumer.accept(createDescriptionContentHelper(activity, translatedText.toString(), textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle)), errorConsumer);
             }
-        }
-
-        private static String getDescriptionText(final Geocache cache) {
-            //combine short and long description to the final description to render
-            String descriptionText = cache.getDescription();
-            final String shortDescriptionText = cache.getShortDescription();
-            if (StringUtils.isNotBlank(shortDescriptionText)) {
-                final int index = StringUtils.indexOf(descriptionText, shortDescriptionText);
-                // allow up to 200 characters of HTML formatting
-                if (index < 0 || index > 200) {
-                    descriptionText = shortDescriptionText + "\n" + descriptionText;
-                }
-            }
-            return descriptionText;
         }
 
         @WorkerThread
@@ -2673,6 +2651,32 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             return this.getString(Page.LOGSFRIENDS.titleStringId) + " (" + logCount + ")";
         }
         return this.getString(Page.find(pageId).titleStringId);
+    }
+
+    @NonNull
+    public static String getListingForTranslate(final Geocache cache) {
+        if (cache == null) {
+            return "";
+        }
+        return TranslationUtils.prepareForTranslation(getDescriptionText(cache), cache.getHint());
+    }
+
+    @NonNull
+    public static String getDescriptionText(final Geocache cache) {
+        if (cache == null) {
+            return "";
+        }
+        //combine short and long description to the final description to render
+        String descriptionText = cache.getDescription();
+        final String shortDescriptionText = cache.getShortDescription();
+        if (StringUtils.isNotBlank(shortDescriptionText)) {
+            final int index = StringUtils.indexOf(descriptionText, shortDescriptionText);
+            // allow up to 200 characters of HTML formatting
+            if (index < 0 || index > 200) {
+                descriptionText = shortDescriptionText + "\n" + descriptionText;
+            }
+        }
+        return descriptionText;
     }
 
     protected long[] getOrderedPages() {
