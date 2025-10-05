@@ -64,7 +64,8 @@ public class Waypoint implements INamedGeoCoordinate {
     private Geopoint preprojectedCoords = null;
     @Nullable
     private Float geofence; // radius in meters
-    @Nullable Image image;
+    @Nullable
+    Image image;
     @NonNull
     private String note = "";
     private String userNote = "";
@@ -329,7 +330,7 @@ public class Waypoint implements INamedGeoCoordinate {
         return image;
     }
 
-    public void setImage(@NonNull final Image image) {
+    public void setImage(@Nullable final Image image) {
         this.image = image;
     }
 
