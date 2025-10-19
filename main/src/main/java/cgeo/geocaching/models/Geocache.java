@@ -1052,7 +1052,7 @@ public class Geocache implements INamedGeoCoordinate {
     }
 
     @NonNull
-    private List<Image> getWaypointImages() {
+    public List<Image> getWaypointImages() {
         return waypoints.stream().map(Waypoint::getImage).toList();
     }
 

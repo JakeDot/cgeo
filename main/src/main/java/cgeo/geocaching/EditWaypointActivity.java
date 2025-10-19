@@ -14,6 +14,7 @@ import cgeo.geocaching.location.GeopointFormatter;
 import cgeo.geocaching.models.CalculatedCoordinate;
 import cgeo.geocaching.models.CoordinateInputData;
 import cgeo.geocaching.models.Geocache;
+import cgeo.geocaching.models.Image;
 import cgeo.geocaching.models.LegacyCalculatedCoordinateMigrator;
 import cgeo.geocaching.models.Waypoint;
 import cgeo.geocaching.network.HtmlImage;
@@ -179,7 +180,16 @@ public class EditWaypointActivity extends AbstractActionBarActivity implements C
                         final AutoCompleteTextView waypointName = activity.binding.name;
                         waypointName.setText(TextUtils.stripHtml(StringUtils.trimToEmpty(waypoint.getName())));
                         Dialogs.moveCursorToEnd(waypointName);
-                        activity.binding.note.setText(HtmlCompat.fromHtml(StringUtils.trimToEmpty(waypoint.getNote()), HtmlCompat.FROM_HTML_MODE_LEGACY, new HtmlImage(activity.geocode, true, false, activity.binding.note, false), new UnknownTagsHandler()), TextView.BufferType.SPANNABLE);
+
+                        final HtmlImage htmlImage = new HtmlImage(activity.geocode, true, false, activity.binding.note, false);
+                        activity.binding.note.setText(HtmlCompat.fromHtml(StringUtils.trimToEmpty(waypoint.getNote()), HtmlCompat.FROM_HTML_MODE_LEGACY, htmlImage, new UnknownTagsHandler()), TextView.BufferType.SPANNABLE);
+                        if (waypoint.getImage() instanceof Image i) {
+                            activity.binding.image.setImageDrawable(htmlImage.getDrawable(i.getUrl()));
+                        }
+                        if (waypoint.getSpoilerImage() instanceof Image i) {
+                            activity.binding.spoilerImage.setImageDrawable(htmlImage.getDrawable(i.getUrl()));
+                        }
+
                         final EditText userNote = activity.binding.userNote;
                         userNote.setText(StringUtils.trimToEmpty(waypoint.getUserNote()));
                         Dialogs.moveCursorToEnd(userNote);

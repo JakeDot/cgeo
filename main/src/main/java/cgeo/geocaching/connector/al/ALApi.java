@@ -18,20 +18,16 @@ import cgeo.geocaching.location.Viewport;
 import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.models.Image;
 import cgeo.geocaching.models.Waypoint;
-import cgeo.geocaching.network.HtmlImage;
 import cgeo.geocaching.network.Network;
 import cgeo.geocaching.network.Parameters;
 import cgeo.geocaching.sensors.LocationDataProvider;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.DataStore;
-import cgeo.geocaching.utils.DisposableHandler;
 import cgeo.geocaching.utils.JsonUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
 import cgeo.geocaching.utils.SynchronizedDateFormat;
 import static cgeo.geocaching.enumerations.CacheType.ADVLAB;
-
-import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -83,35 +79,6 @@ final class ALApi {
                 .setDescription(desc)
                 .setCategory(Image.ImageCategory.WAYPOINT)
                 .build();
-    }
-
-    static class ImageHandler extends DisposableHandler {
-        final Geocache cache;
-        final Waypoint waypoint;
-        final String ilink;
-        final Image image;
-        ImageHandler(final Geocache cache, final Waypoint waypoint, final String ilink, final Image image) {
-            this.cache = cache;
-            this.waypoint = waypoint;
-            this.ilink = ilink;
-            this.image = image;
-        }
-
-        @Override
-        protected void handleRegularMessage(final Message message) {
-            final String localUri = message.obj.toString();
-            final Image cachedImage = getImage(localUri, waypoint.getName(), waypoint.getNote());
-
-            waypoint.setNote(imageString(localUri) + waypoint.getNote());
-
-            cache.getSpoilers().remove(image);
-            cache.getSpoilers().add(cachedImage);
-        }
-
-        @NonNull
-        private static String imageString(final String localUri) {
-            return "<img src=\"" + localUri + "\"></img><p><p>";
-        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -209,7 +176,7 @@ final class ALApi {
         }
         final Parameters headers = new Parameters(CONSUMER_HEADER, CONSUMER_KEY);
         try {
-            final Response response = apiRequest(geocode.substring(2), null, headers).blockingGet();
+            final Response response = apiRequest(geocode.substring(2), headers).blockingGet();
             final Geocache gc = importCacheFromJSON(response);
             if (gc != null && !Settings.isALCfoundStateManual()) {
                 final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
@@ -292,8 +259,8 @@ final class ALApi {
     }
 
     @NonNull
-    private static Single<Response> apiRequest(final String uri, @Nullable final Parameters params, final Parameters headers) {
-        return apiRequest(uri, params, headers, false);
+    private static Single<Response> apiRequest(final String uri, final Parameters headers) {
+        return apiRequest(uri, null, headers, false);
     }
 
     @NonNull
@@ -357,10 +324,7 @@ final class ALApi {
             }
             final List<Geocache> caches = new ArrayList<>(items.size());
             for (final JsonNode node : items) {
-                final Geocache cache = parseCache(node);
-                if (cache != null) {
-                    caches.add(cache);
-                }
+                    caches.add(parseCache(node));
             }
             return caches;
         } catch (final Exception e) {
@@ -369,7 +333,7 @@ final class ALApi {
         }
     }
 
-    @Nullable
+    @NonNull
     private static Geocache parseCache(final JsonNode response) {
         try {
             final Geocache cache = new Geocache();
@@ -397,14 +361,14 @@ final class ALApi {
             return cache;
         } catch (final NullPointerException e) {
             Log.e("_AL ALApi.parseCache", e);
-            return null;
+            throw e;
         }
     }
 
     // Having a separate parser for details is required because the API provider
     // decided to use different upper/lower case wordings for the same entities
 
-    @Nullable
+    @NonNull
     private static Geocache parseCacheDetail(final JsonNode response) {
         try {
             final Geocache cache = new Geocache();
@@ -440,16 +404,13 @@ final class ALApi {
             return cache;
         } catch (final NullPointerException e) {
             Log.e("_AL ALApi.parseCache", e);
-            return null;
+            throw e;
         }
     }
 
     private static void parseWaypoints(final Geocache cache, final ArrayNode wptsJson) {
-        final List<Image> wptImages = new ArrayList<>(5);
-        ImageHandler handler;
-        final Geopoint pointZero = new Geopoint(0, 0);
 
-        final HtmlImage downloader = new HtmlImage(cache.getGeocode(), true, true, false);
+        final Geopoint pointZero = new Geopoint(0, 0);
 
         int stageCounter = 0;
         for (final JsonNode wptResponse : wptsJson) {
@@ -468,14 +429,7 @@ final class ALApi {
                 wpt.setGeofence((float) wptResponse.get("GeofencingRadius").asDouble());
 
                 final Image spoilerImage = getImage(ilink, wptName, desc);
-
-                wptImages.add(spoilerImage);
-
-                handler = new ImageHandler(cache, wpt, ilink, spoilerImage);
-
-                downloader.waitForEndCompletable(handler);
-
-                downloader.fetchDrawable(ilink);
+                wpt.setImage(spoilerImage);
 
                 final StringBuilder note = new StringBuilder(desc);
 
@@ -483,17 +437,17 @@ final class ALApi {
                     note.append("<p><p>").append(wptResponse.get("Question").asText());
                 }
 
-            final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
-            if (jn instanceof ArrayNode) { // implicitly covers null case as well
-                final ArrayNode multiChoiceOptions = (ArrayNode) jn;
-                if (!multiChoiceOptions.isEmpty()) {
+                if (wptResponse.path(MULTICHOICEOPTIONS) instanceof ArrayNode multiChoiceOptions && !multiChoiceOptions.isEmpty()) { // implicitly covers null case as well
                     note.append("<ul>");
                     for (final JsonNode mc : multiChoiceOptions) {
                         note.append("<li>").append(mc.get("Text").asText()).append("</li>");
                     }
                     note.append("</ul>");
                 }
-            }
+
+                if (Settings.isALCAdvanced()) {
+                    wpt.setSpoilerImage(getImage(wptResponse.path("").asText(), "Spoiler", "Spoiler"));
+                }
 
                 final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
                 if (!pt.equals(pointZero)) {
@@ -501,13 +455,15 @@ final class ALApi {
                 } else {
                     wpt.setOriginalCoordsEmpty(true);
                 }
+
+                cache.addOrChangeWaypoint(wpt, false);
             } catch (final Exception e) {
                 Log.e("_AL ALApi.parseWaypoints", e);
                 throw e;
             }
         }
 
-        cache.setSpoilers(wptImages);
+        cache.setSpoilers(cache.getWaypointImages());
     }
 
     @Nullable

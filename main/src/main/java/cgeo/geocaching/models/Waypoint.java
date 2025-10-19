@@ -10,6 +10,7 @@ import cgeo.geocaching.enumerations.WaypointType;
 import cgeo.geocaching.location.DistanceUnit;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.maps.mapsforge.v6.caches.GeoitemRef;
+import cgeo.geocaching.network.HtmlImage;
 import cgeo.geocaching.storage.DataStore;
 import cgeo.geocaching.utils.ClipboardUtils;
 import cgeo.geocaching.utils.MatcherWrapper;
@@ -67,6 +68,8 @@ public class Waypoint implements INamedGeoCoordinate {
     private Float geofence; // radius in meters
     @Nullable
     private Image image;
+    @Nullable
+    private Image spoilerImage;
     @NonNull
     private String note = "";
     private String userNote = "";
@@ -317,6 +320,7 @@ public class Waypoint implements INamedGeoCoordinate {
     public Float getGeofence() {
         return geofence;
     }
+
     public boolean canChangeGeofence() {
         // currently geofence value is used by AL connector only, so you may set it manually for every other connector
         return !ALConnector.getInstance().canHandle(geocode);
@@ -334,6 +338,18 @@ public class Waypoint implements INamedGeoCoordinate {
     public void setImage(@Nullable final Image image) {
         this.image = image;
     }
+
+    @Nullable
+    public Image getSpoilerImage() {
+        return spoilerImage;
+    }
+
+    public void setSpoilerImage(@Nullable final Image image) {
+        this.spoilerImage = image;
+    }
+
+
+
 
     public void setCoords(final Geopoint coords) {
         setCoordsPure(coords);
