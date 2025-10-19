@@ -317,6 +317,7 @@ public class Waypoint implements INamedGeoCoordinate {
     public Float getGeofence() {
         return geofence;
     }
+
     public boolean canChangeGeofence() {
         // currently geofence value is used by AL connector only, so you may set it manually for every other connector
         return !ALConnector.getInstance().canHandle(geocode);
