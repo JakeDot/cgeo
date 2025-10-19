@@ -2,10 +2,14 @@ package cgeo.geocaching.utils;
 
 import cgeo.geocaching.CgeoApplication;
 
+import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Color;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.ColorRes;
+import androidx.appcompat.app.AppCompatDelegate;
 
 public class ColorUtils {
     private ColorUtils() {
@@ -50,10 +54,25 @@ public class ColorUtils {
 
     @ColorInt
     public static int colorFromResource(@ColorRes final int colorRes) {
-        return CgeoApplication.getInstance().getResources().getColor(colorRes);
+        return getThemedContext().getResources().getColor(colorRes);
     }
 
-    private static float[] getHslValues(@ColorInt final int colorInt) {
+    public static Context getThemedContext() {
+        final Context ctx = CgeoApplication.getInstance();
+        final Resources res = ctx.getResources();
+        final Configuration configuration = new Configuration(ctx.getResources().getConfiguration());
+        final int nightNode = AppCompatDelegate.getDefaultNightMode();
+        if (nightNode == AppCompatDelegate.MODE_NIGHT_NO) {
+            configuration.uiMode = Configuration.UI_MODE_NIGHT_NO | (res.getConfiguration().uiMode & ~Configuration.UI_MODE_NIGHT_MASK);
+        } else if (nightNode == AppCompatDelegate.MODE_NIGHT_YES) {
+            configuration.uiMode = Configuration.UI_MODE_NIGHT_YES | (res.getConfiguration().uiMode & ~Configuration.UI_MODE_NIGHT_MASK);
+        } else {
+            configuration.uiMode = res.getConfiguration().uiMode;
+        }
+        return ctx.createConfigurationContext(configuration);
+    }
+
+    public static float[] getHslValues(@ColorInt final int colorInt) {
         final int red = Color.red(colorInt);
         final int green = Color.green(colorInt);
         final int blue = Color.blue(colorInt);
@@ -61,6 +80,11 @@ public class ColorUtils {
         final float[] hsl = new float[3];
         androidx.core.graphics.ColorUtils.RGBToHSL(red, green, blue, hsl);
         return hsl;
+    }
+
+    public static int getColorFromHslValues(final float[] hslValues) {
+        return androidx.core.graphics.ColorUtils.HSLToColor(hslValues);
+
     }
 
     public static boolean isBrightnessDark(@ColorInt final int colorInt) {

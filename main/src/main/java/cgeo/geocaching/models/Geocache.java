@@ -783,6 +783,10 @@ public class Geocache implements INamedGeoCoordinate {
         return !isArchived() && BooleanUtils.isTrue(disabled);
     }
 
+    public boolean isEnabled() {
+        return !isDisabled() && !isArchived();
+    }
+
     public boolean isPremiumMembersOnly() {
         return BooleanUtils.isTrue(premiumMembersOnly);
     }
@@ -1383,6 +1387,15 @@ public class Geocache implements INamedGeoCoordinate {
     @NonNull
     public List<Waypoint> getWaypoints() {
         return waypoints.getUnderlyingList();
+    }
+
+    public List<Waypoint> getSortedWaypointList() {
+        if (hasWaypoints()) {
+            final List<Waypoint> waypoints = getWaypoints();
+            Collections.sort(waypoints, getWaypointComparator());
+            return waypoints;
+        }
+        return Collections.emptyList();
     }
 
     /**

@@ -17,6 +17,7 @@ import cgeo.geocaching.filters.gui.GeocacheFilterActivity;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.search.GeocacheAutoCompleteAdapter;
 import cgeo.geocaching.search.SearchAutoCompleteAdapter;
+import cgeo.geocaching.search.SearchUtils;
 import cgeo.geocaching.sensors.LocationDataProvider;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.DataStore;
@@ -497,7 +498,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
     }
 
     private void onClickCoordinates() {
-        CoordinateInputDialog.show(this, this::onUpdateCoordinates, LocationDataProvider.getInstance().currentGeo().getCoords());
+        CoordinateInputDialog.showLocation(this, this::onUpdateCoordinates, LocationDataProvider.getInstance().currentGeo().getCoords());
     }
 
     public void onUpdateCoordinates(final Geopoint input) {
@@ -613,11 +614,15 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         });
         searchButtonItem = menu.findItem(R.id.menu_gosearch_icon);
         searchView = (AutoCompleteTextView) searchViewItem.getActionView();
-        searchView.setBackground(AppCompatResources.getDrawable(this, R.drawable.mark_transparent));
-        // configure keyboard
-        searchView.setInputType(InputType.TYPE_CLASS_TEXT);
-        searchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-        searchView.addTextChangedListener(ViewUtils.createSimpleWatcher((s) -> updateSuggestions()));
+        if (null != searchView) {
+            searchView.setBackground(AppCompatResources.getDrawable(this, R.drawable.mark_transparent));
+            SearchUtils.setSearchViewColor(searchView);
+
+            // configure keyboard
+            searchView.setInputType(InputType.TYPE_CLASS_TEXT);
+            searchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+            searchView.addTextChangedListener(ViewUtils.createSimpleWatcher((s) -> updateSuggestions()));
+        }
         return true;
     }
 }
