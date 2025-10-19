@@ -20,7 +20,6 @@ String commitIdShort = gitCommitIdProvider.get()
 
 android {
     namespace 'cgeo.geocaching'
-    compileSdk 36
 
     compileOptions {
         // https://developer.android.com/studio/write/java8-support
@@ -33,7 +32,7 @@ android {
 
     defaultConfig {
         minSdk 21
-        targetSdk 35
+        targetSdk 36
 
         versionName versionNameFromDate()
         versionCode versionCodeFromDate(0)
@@ -374,6 +373,7 @@ dependencies {
     // Junit only needed for local unit tests
     testImplementation 'junit:junit:4.13.2'
 
+<<<<<<< Updated upstream
     // Leak Canary, memory leak detection
     String leakCanaryVersion = '2.14'
     debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
@@ -382,6 +382,8 @@ dependencies {
     // Locus Maps integration
     implementation "com.asamm:locus-api-android:0.9.55"
 
+=======
+>>>>>>> Stashed changes
     // -- Mapsforge / Mapsforge --
 
     // Mapsforge official version
@@ -463,19 +465,9 @@ dependencies {
     // Support Library Design
     implementation 'com.google.android.material:material:1.12.0'
 
-    // ProcessPhoenix, reliable process restart
-    // implementation 'com.jakewharton:process-phoenix:2.0.0'
-
     // RxJava
     implementation 'io.reactivex.rxjava3:rxjava:3.1.11'
     implementation "io.reactivex.rxjava3:rxandroid:3.0.2"
-
-    // avoid duplicate class, see e.g. https://stackoverflow.com/questions/75712899/duplicate-class-kotlin-random-jdk8-found-in-modules-jetified-kotlin-stdlib-1-8-1
-    constraints {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") {
-            because 'align all versions of kotlin transitive dependencies'
-        }
-    }
 
     // Support Library Lifecycle Helpers
     String lifecycleVersion = '2.6.2'
