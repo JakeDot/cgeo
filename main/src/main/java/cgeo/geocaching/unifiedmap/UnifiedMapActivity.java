@@ -63,12 +63,12 @@ import cgeo.geocaching.unifiedmap.layers.TracksLayer;
 import cgeo.geocaching.unifiedmap.layers.WherigoLayer;
 import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.unifiedmap.tileproviders.TileProviderFactory;
+import cgeo.geocaching.utils.ActionBarUtils;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.CommonUtils;
 import cgeo.geocaching.utils.CompactIconModeUtils;
 import cgeo.geocaching.utils.FilterUtils;
 import cgeo.geocaching.utils.Formatter;
-import cgeo.geocaching.utils.HideActionBarUtils;
 import cgeo.geocaching.utils.HistoryTrackUtils;
 import cgeo.geocaching.utils.LifecycleAwareBroadcastReceiver;
 import cgeo.geocaching.utils.LocalizationUtils;
@@ -134,6 +134,7 @@ import static java.lang.Boolean.TRUE;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class UnifiedMapActivity extends AbstractNavigationBarMapActivity implements FilteredActivity, AbstractDialogFragment.TargetUpdateReceiver {
@@ -185,7 +186,7 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
         super.onCreate(savedInstanceState);
         acquireUnifiedMap(this);
 
-        HideActionBarUtils.setContentView(this, R.layout.unifiedmap_activity, true);
+        ActionBarUtils.setContentView(this, R.layout.unifiedmap_activity, true);
         if (null != findViewById(R.id.live_map_status)) {
             findViewById(R.id.live_map_status).getBackground().mutate();
         }
@@ -1156,7 +1157,12 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
             if (key.startsWith(UnifiedMapViewModel.CACHE_KEY_PREFIX)) {
                 final String geocode = key.substring(UnifiedMapViewModel.CACHE_KEY_PREFIX.length());
 
-                final Geocache temp = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
+                Geocache temp = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
+                //if not in CacheCache, try viewmodel cache. See #17492
+                if (temp == null) {
+                    temp = viewModel.caches.readWithResult(caches ->
+                        IterableUtils.find(caches, cache -> geocode.equals(cache.getGeocode())));
+                }
                 if (temp != null) {
                     result.add(new MapSelectableItem(new RouteItem(temp)));
                 } else {
@@ -1220,7 +1226,7 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
                 if (sheetRemoveFragment()) {
                     return;
                 }
-                HideActionBarUtils.toggleActionBar(this);
+                ActionBarUtils.toggleActionBar(this);
                 GeoItemTestLayer.handleTapTest(clickableItemsLayer, this, touchedPoint, "", isLongTap);
             }
         } else if (result.size() == 1) {
