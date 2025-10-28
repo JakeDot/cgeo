@@ -1422,7 +1422,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             binding.removeFromWatchlist.setOnClickListener(new RemoveFromWatchlistClickListener());
             updateWatchlistBox(activity);
 
-            // internal WIG player, WhereYouGo, ChirpWolf, Adventure Lab
+            // internal WIG player,ChirpWolf, Adventure Lab
             updateWherigoBox(activity);
             updateChirpWolfBox(activity);
             updateALCBox(activity);
