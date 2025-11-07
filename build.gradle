@@ -67,7 +67,7 @@ tasks.register('cgeoHelp') {
         println '    gradlew dependencies main:dependencies'
         println ''
         println 'check gradle dependencies for updates:'
-        println '    gradlew dependencyUpdates'
+        println '    gradlew dependencyUpdates --no-parallel'
         println ''
         println 'Use "gradlew tasks" for more available tasks.'
         println ''
