@@ -24,6 +24,7 @@ Due to Play Store policies we have updated the Android API level this version of
 - New: Variables view can be filtered
 - New: Visualize calculated coordinates overflow in waypoint list
 - New: Menu entry in waypoint list to mark certain waypoint types as visited
+- New placeholders for trackable logging (geocache name, geocache code, user)
 
 ### Wherigo player
 - New: Offline translation for Wherigos
@@ -42,3 +43,5 @@ Due to Play Store policies we have updated the Android API level this version of
 - Change: Remove GCVote (service discontinued)
 - New: Colored toolbar on cache details pages
 - New: Select multiple bookmark lists / pocket queries to download
+- New: Preview bookmark lists
+- Change: Increase minimum required Android version to Android 8

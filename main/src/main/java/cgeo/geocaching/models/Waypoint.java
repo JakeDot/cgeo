@@ -20,9 +20,6 @@ import cgeo.geocaching.utils.TextParser;
 import cgeo.geocaching.utils.formulas.Formula;
 import cgeo.geocaching.utils.formulas.Value;
 import cgeo.geocaching.utils.formulas.VariableList;
-
-import io.reactivex.rxjava3.core.Observable;
-
 import static cgeo.geocaching.models.Image.ImageCategory.WAYPOINT;
 import static cgeo.geocaching.utils.Formatter.generateShortGeocode;
 
@@ -41,10 +38,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import io.reactivex.rxjava3.core.Observable;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -128,6 +127,7 @@ public class Waypoint implements INamedGeoCoordinate {
 
     /**
      * copy constructor
+     * @noinspection CopyConstructorMissesField
      */
     public Waypoint(final Waypoint other) {
         merge(other);
@@ -199,16 +199,20 @@ public class Waypoint implements INamedGeoCoordinate {
         // Copy user modified details of the old waypoints over the new ones
         for (final Waypoint oldWaypoint : oldPoints) {
             final String prefix = oldWaypoint.getPrefix();
-            if (newPrefixes.containsKey(prefix)) {
-                final Waypoint newWaypoint = newPrefixes.get(prefix);
-                if (oldWaypoint.isUserDefined() && !newWaypoint.isUserDefined()) {
-                    assignUniquePrefix(oldWaypoint, newPoints);
+            try {
+                if (newPrefixes.containsKey(prefix)) {
+                    final Waypoint newWaypoint = Objects.requireNonNull(newPrefixes.get(prefix));
+                    if (oldWaypoint.isUserDefined() && !newWaypoint.isUserDefined()) {
+                        assignUniquePrefix(oldWaypoint, newPoints);
+                        newPoints.add(oldWaypoint);
+                    } else {
+                        newWaypoint.merge(oldWaypoint);
+                    }
+                } else if (oldWaypoint.isUserDefined() || forceMerge) {
                     newPoints.add(oldWaypoint);
-                } else {
-                    newWaypoint.merge(oldWaypoint);
                 }
-            } else if (oldWaypoint.isUserDefined() || forceMerge) {
-                newPoints.add(oldWaypoint);
+            } catch (NullPointerException e) {
+                // ?
             }
         }
     }
@@ -323,13 +327,13 @@ public class Waypoint implements INamedGeoCoordinate {
         return coords;
     }
 
+    @Nullable
     public Geopoint getPreprojectedCoords() {
         return preprojectedCoords;
     }
 
-    @Nullable
-    public Float getGeofence() {
-        return geofence;
+    public int getGeofence() {
+        return geofence == null ? 0 : Math.round(geofence);
     }
 
     public boolean canChangeGeofence() {
@@ -364,7 +368,11 @@ public class Waypoint implements INamedGeoCoordinate {
         return modelImage;
     }
 
-    public void fetchImage(View view) {
+    public void fetchImage(final View view) {
+        if (view == null) {
+            return;
+        }
+
         parentCache = this.getParentGeocache();
         final String geocode = parentCache == null ? "" : parentCache.getGeocode();
 
@@ -386,7 +394,7 @@ public class Waypoint implements INamedGeoCoordinate {
         this.coords = coords;
     }
 
-    public void setPreprojectedCoords(final Geopoint coords) {
+    public void setPreprojectedCoords(@Nullable final Geopoint coords) {
         this.preprojectedCoords = coords;
     }
 
@@ -395,7 +403,7 @@ public class Waypoint implements INamedGeoCoordinate {
         return note;
     }
 
-    public void setNote(final String note) {
+    public void setNote(@NonNull final String note) {
         this.note = note;
     }
 
