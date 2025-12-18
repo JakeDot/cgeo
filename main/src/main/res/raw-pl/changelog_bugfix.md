@@ -1,9 +1,29 @@
 ##
-- Fix: Encrypting/decrypting a hint needs an extra tap initially
-- Fix: Wherigo crash on reading old saved games
-- Fix: Logging from within c:geo not remembered sometimes
-- Fix: Missing live data update for found & archived caches
-- Fix: Waypoints in offline map are not shown sometimes
+- Zmiana: UnifiedMap ustawiona jako domyślna mapa dla każdego (jako część naszego harmonogramu dla UnifiedMap). Tymczasowo możesz to zmienić przez „Ustawienia” – „Źródła mapy”. W naszych regularnych wydaniach planowane jest usunięcie dotychczasowych map na wiosnę 2026 r.
+- Naprawiono: Pole wyboru Ulubione było resetowane przy ponowym wejściu na ekran logowania offline
+- Naprawiono: Pole do wpisywania promienia geofence pokazuje liczbę dziesiętną
+- Naprawiono: Synchronizacja notatek osobistych nie działała
+- Change: New icon for GPX track/route import in map track/route quick settings
+
+##
+- Naprawiono: Wartości ujemne na wykresie wysokości nie są skalowane
+- Naprawiono: Współrzędne bliskie 0 uszkadzane przy eksporcie GPX
+- Naprawiono: Kilka awarii
+- Próba naprawienia: Aplikacja nie odpowiada podczas uruchamiania
+- Próba naprawienia: Brak danych skrytek na mapie na żywo
+
+##
+- Naprawiono: Awaria podczas wyszukiwania słów kluczowych
+- Naprawiono: Awaria na mapie
+- Naprawiono: Tekst wskazówki nie jest już możliwy do zaznaczenia
+- Naprawiono: Kilka problemów z Wherigo
+
+##
+- Naprawiono: Szyfrowanie/odszyfrowywanie podpowiedzi wymaga dodatkowego dotknięcia
+- Naprawiono: Błąd Wherigo podczas czytania starych zapisanych gier
+- Naprawiono: Logowanie wywołane w c:geo czasami nie było zapamiętane
+- Naprawiono: Brak aktualizacji danych na żywo dla znalezionych i zarchiwizowanych skrytek
+- Naprawiono: Punkty nawigacji na mapie offline nie są czasami wyświetlane
 
 ##
 - Naprawiono: Niezaszyfrowane wskazówki skrytki (zmiana strony internetowej)
@@ -23,6 +43,15 @@
 ##
 - Naprawiono: Migracja skrzynek zdefiniowanych przez użytkownika podczas uruchamiania c:geo nie powiodła się => tymczasowo usunięto
 - Naprawiono: Zakończone zadania Wherigo nie zostały oznaczone jako zakończone lub nieudane
+
+
+
+
+
+
+
+
+
 
 
 

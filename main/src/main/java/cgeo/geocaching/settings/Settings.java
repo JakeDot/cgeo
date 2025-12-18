@@ -14,6 +14,7 @@ import cgeo.geocaching.connector.gc.GCConstants;
 import cgeo.geocaching.connector.gc.GCMemberState;
 import cgeo.geocaching.enumerations.CacheListInfoItem;
 import cgeo.geocaching.enumerations.QuickLaunchItem;
+import cgeo.geocaching.enumerations.WaypointType;
 import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
 import cgeo.geocaching.list.StoredList;
@@ -276,7 +277,7 @@ public class Settings {
     }
 
     public static int getExpectedVersion() {
-        return 10;
+        return 11;
     }
 
     private static void migrateSettings() {
@@ -320,7 +321,6 @@ public class Settings {
             e.putBoolean(getKey(R.string.old_pref_skin), prefsV0.getInt(getKey(R.string.old_pref_skin), 0) != 0);
             e.putInt(getKey(R.string.pref_lastusedlist), prefsV0.getInt(getKey(R.string.pref_lastusedlist), StoredList.STANDARD_LIST_ID));
             e.putInt(getKey(R.string.pref_version), prefsV0.getInt(getKey(R.string.pref_version), 0));
-            e.putBoolean(getKey(R.string.pref_ratingwanted), prefsV0.getBoolean(getKey(R.string.pref_ratingwanted), true));
             e.putBoolean(getKey(R.string.pref_friendlogswanted), prefsV0.getBoolean(getKey(R.string.pref_friendlogswanted), true));
             e.putBoolean(getKey(R.string.old_pref_useenglish), prefsV0.getBoolean(getKey(R.string.old_pref_useenglish), false));
             e.putBoolean(getKey(R.string.pref_usecompass), prefsV0.getInt(getKey(R.string.pref_usecompass), 1) != 0);
@@ -329,7 +329,6 @@ public class Settings {
             e.putBoolean(getKey(R.string.pref_logimages), prefsV0.getBoolean(getKey(R.string.pref_logimages), false));
             e.putString(getKey(R.string.pref_mapfile), prefsV0.getString(getKey(R.string.pref_mapfile), null));
             e.putString(getKey(R.string.pref_signature), prefsV0.getString(getKey(R.string.pref_signature), null));
-            e.putString(getKey(R.string.pref_pass_vote), prefsV0.getString(getKey(R.string.pref_pass_vote), null));
             e.putString(getKey(R.string.pref_password), prefsV0.getString(getKey(R.string.pref_password), null));
             e.putString(getKey(R.string.pref_username), prefsV0.getString(getKey(R.string.pref_username), null));
             e.putString(getKey(R.string.pref_memberstatus), prefsV0.getString(getKey(R.string.pref_memberstatus), ""));
@@ -494,6 +493,45 @@ public class Settings {
             e.apply();
             setActualVersion(10);
         }
+
+        if (currentVersion < 11) {
+            final String tileprovider = sharedPrefs.getString(getKey(R.string.pref_mapsource), "")
+                // Google Maps map sources
+                .replace("cgeo.geocaching.maps.google.v2.GoogleMapProvider$", "cgeo.geocaching.unifiedmap.tileproviders.")
+                // cgeo.geocaching.maps.google.v2.GoogleMapProvider$GoogleMapSource         => cgeo.geocaching.unifiedmap.tileproviders.GoogleMapSource
+                // cgeo.geocaching.maps.google.v2.GoogleMapProvider$GoogleSatelliteSource   => cgeo.geocaching.unifiedmap.tileproviders.GoogleSatelliteSource
+                // cgeo.geocaching.maps.google.v2.GoogleMapProvider$GoogleTerrainSource     => cgeo.geocaching.unifiedmap.tileproviders.GoogleTerrainSource
+
+                // OSM online map sources
+                .replace("cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$", "cgeo.geocaching.unifiedmap.tileproviders.")
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$OsmMapSource         => cgeo.geocaching.unifiedmap.tileproviders.OsmOrgSource:null
+                .replace(".OsmMapSource", ".OsmOrgSource:null")
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$OsmdeMapSource       => cgeo.geocaching.unifiedmap.tileproviders.OsmDeSource:null
+                .replace(".OsmdeMapSource", ".OsmDeSource:null")
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$CyclosmMapSource     => cgeo.geocaching.unifiedmap.tileproviders.CyclosmSource:null
+                .replace(".CyclosmMapSource", ".CyclosmSource:null")
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$OpenTopoMapSource    => cgeo.geocaching.unifiedmap.tileproviders.OpenTopoMapSource:null (!!!)
+                .replace(".OpenTopoMapSource", ".OpenTopoMapSource:null")
+
+                // OSM offline map sources
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$OfflineMapSource:primary:cgeo/maps/bremen.map => cgeo.geocaching.unifiedmap.tileproviders.AbstractMapsforgeOfflineTileProvider:primary:cgeo/maps/bremen.map
+                .replace(".OfflineMapSource:", ".AbstractMapsforgeOfflineTileProvider:")
+                // cgeo.geocaching.maps.mapsforge.MapsforgeMapProvider$OfflineMultiMapSource => cgeo.geocaching.unifiedmap.tileproviders.MapsforgeMultiOfflineTileProvider:null
+                .replace(".OfflineMultiMapSource", ".MapsforgeMultiOfflineTileProvider:null")
+            ;
+
+            if (useLegacyMaps()) {
+                final Editor e = sharedPrefs.edit();
+                e.putString(getKey(R.string.pref_tileprovider), StringUtils.isBlank(tileprovider) ? "cgeo.geocaching.unifiedmap.tileproviders.GoogleMapSource" : tileprovider);
+                e.putBoolean(getKey(R.string.pref_useLegacyMap), false);
+                e.putString(getKey(R.string.pref_unifiedMapVariants), String.valueOf(UNIFIEDMAP_VARIANT_MAPSFORGE));
+                e.apply();
+                Log.e("Migrated map mode to UnifiedMap: " + tileprovider);
+            }
+
+            setActualVersion(11);
+        }
+
     }
 
     private static String getKey(final int prefKeyId) {
@@ -817,17 +855,6 @@ public class Settings {
                 && StringUtils.isNotBlank(getString(tokenSecretPrefKeyId, ""));
     }
 
-    public static boolean isGCVoteLoginValid() {
-        return getGCVoteLogin().isValid();
-    }
-
-    @NonNull
-    public static Credentials getGCVoteLogin() {
-        final String username = StringUtils.trimToNull(getString(R.string.pref_username, null));
-        final String password = getString(R.string.pref_pass_vote, null);
-        return new Credentials(username, password);
-    }
-
     @NonNull
     public static String getSignature() {
         return StringUtils.defaultString(getString(R.string.pref_signature, StringUtils.EMPTY));
@@ -875,6 +902,22 @@ public class Settings {
      */
     public static void setLastSelectedLists(final Set<Integer> lastSelectedLists) {
         putStringList(R.string.pref_last_selected_lists, lastSelectedLists);
+    }
+
+    public static Set<WaypointType> getLastSelectedVisitedWaypointTypes() {
+        final Set<WaypointType> lastSelectedVisitedWaypointTypes = new HashSet<>();
+        for (final String lastSelectedVisitedWaypointTypesString : getStringList(R.string.pref_last_selected_visited_waypointtypes, StringUtils.EMPTY)) {
+            lastSelectedVisitedWaypointTypes.add(WaypointType.findById(lastSelectedVisitedWaypointTypesString));
+        }
+        return lastSelectedVisitedWaypointTypes;
+    }
+
+    public static void setLastSelectedVisitedWaypointTypes(final Set<WaypointType> lastSelectedVisitedWaypointTypes) {
+        final Set<String> lastSelectedVisitedWaypointTypesAsString = new HashSet<>();
+        for (final WaypointType wpType : lastSelectedVisitedWaypointTypes) {
+            lastSelectedVisitedWaypointTypesAsString.add(wpType.id);
+        }
+        putStringList(R.string.pref_last_selected_visited_waypointtypes, lastSelectedVisitedWaypointTypesAsString);
     }
 
     public static void setWebNameCode(final String name, final String code) {
@@ -985,10 +1028,6 @@ public class Settings {
 
     public static boolean isStoreLogImages() {
         return getBoolean(R.string.pref_logimages, false);
-    }
-
-    public static boolean isRatingWanted() {
-        return getBoolean(R.string.pref_ratingwanted, false);
     }
 
     public static boolean isGeokretyConnectorActive() {
@@ -1435,6 +1474,10 @@ public class Settings {
 
     public static boolean isLightSkin(final @NonNull Context context) {
         return !isDarkThemeActive(context, getAppTheme(context));
+    }
+
+    public static boolean useColoredActionBar(final @NonNull Context context) {
+        return getBoolean(R.string.pref_colored_theme, true);
     }
 
     public static Intent getStartscreenIntent(final @NonNull Activity activity) {
@@ -2037,6 +2080,13 @@ public class Settings {
         putStringList(prefKey, history);
     }
 
+    public static void removeFromHistoryList(final int prefKey, final String historyValue) {
+        final List<String> history = new ArrayList<>(Arrays.asList(getHistoryList(prefKey)));
+        Log.e("remove from history " + prefKey + ": " + historyValue);
+        history.remove(historyValue);
+        putStringList(prefKey, history);
+    }
+
     public static void clearRecentlyViewedHistory() {
         putStringList(R.string.pref_caches_history, new ArrayList<>());
     }
@@ -2426,7 +2476,6 @@ public class Settings {
         final HashSet<String> sensitiveKeys = new HashSet<>();
         Collections.addAll(sensitiveKeys,
                 context.getString(R.string.pref_username), context.getString(R.string.pref_password),
-                context.getString(R.string.pref_user_vote), context.getString(R.string.pref_pass_vote),
                 context.getString(R.string.pref_ocde_tokensecret), context.getString(R.string.pref_ocde_tokenpublic), context.getString(R.string.pref_temp_ocde_token_secret), context.getString(R.string.pref_temp_ocde_token_public),
                 context.getString(R.string.pref_ocpl_tokensecret), context.getString(R.string.pref_ocpl_tokenpublic), context.getString(R.string.pref_temp_ocpl_token_secret), context.getString(R.string.pref_temp_ocpl_token_public),
                 context.getString(R.string.pref_ocnl_tokensecret), context.getString(R.string.pref_ocnl_tokenpublic), context.getString(R.string.pref_temp_ocnl_token_secret), context.getString(R.string.pref_temp_ocnl_token_public),
@@ -2599,9 +2648,12 @@ public class Settings {
         return getString(R.string.pref_short_date_format, "");
     }
 
+    @NonNull
     public static TranslationUtils.Translator getTranslatorExternal() {
-        return EnumUtils.getEnum(TranslationUtils.Translator.class, getString(R.string.pref_translator_external, null),
-                TranslationUtils.Translator.GOOGLE);
+        final TranslationUtils.Translator defaultTranslator = TranslationUtils.Translator.GOOGLE;
+        return EnumUtils.getEnum(TranslationUtils.Translator.class,
+            getString(R.string.pref_translator_external, defaultTranslator.name()),
+                defaultTranslator);
     }
 
     public static OfflineTranslateUtils.Language getTranslationTargetLanguageRaw() {
@@ -2638,8 +2690,12 @@ public class Settings {
         if (sharedPrefs == null) {
             return lngs;
         }
-        lngs.addAll(sharedPrefs.getStringSet(getKey(R.string.pref_translation_notranslate), lngs));
-        lngs.add(getTranslationTargetLanguage().getCode());
+        lngs.addAll(sharedPrefs.getStringSet(getKey(R.string.pref_translation_notranslate), Collections.emptySet()));
+        //add target language if valid
+        final OfflineTranslateUtils.Language targetLng = getTranslationTargetLanguage();
+        if (targetLng.isValid()) {
+            lngs.add(targetLng.getCode());
+        }
         return lngs;
     }
 }

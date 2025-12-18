@@ -38,6 +38,7 @@ import cgeo.geocaching.sensors.LocationDataProvider;
 import cgeo.geocaching.service.CacheDownloaderService;
 import cgeo.geocaching.service.GeocacheChangedBroadcastReceiver;
 import cgeo.geocaching.settings.Settings;
+import cgeo.geocaching.sorting.TargetDistanceComparator;
 import cgeo.geocaching.storage.DataStore;
 import cgeo.geocaching.ui.CacheListActionBarChooser;
 import cgeo.geocaching.ui.GeoItemSelectorUtils;
@@ -62,12 +63,12 @@ import cgeo.geocaching.unifiedmap.layers.TracksLayer;
 import cgeo.geocaching.unifiedmap.layers.WherigoLayer;
 import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.unifiedmap.tileproviders.TileProviderFactory;
+import cgeo.geocaching.utils.ActionBarUtils;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.CommonUtils;
 import cgeo.geocaching.utils.CompactIconModeUtils;
 import cgeo.geocaching.utils.FilterUtils;
 import cgeo.geocaching.utils.Formatter;
-import cgeo.geocaching.utils.HideActionBarUtils;
 import cgeo.geocaching.utils.HistoryTrackUtils;
 import cgeo.geocaching.utils.LifecycleAwareBroadcastReceiver;
 import cgeo.geocaching.utils.LocalizationUtils;
@@ -122,18 +123,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import static java.lang.Boolean.TRUE;
 
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class UnifiedMapActivity extends AbstractNavigationBarMapActivity implements FilteredActivity, AbstractDialogFragment.TargetUpdateReceiver {
@@ -185,7 +187,7 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
         super.onCreate(savedInstanceState);
         acquireUnifiedMap(this);
 
-        HideActionBarUtils.setContentView(this, R.layout.unifiedmap_activity, true);
+        ActionBarUtils.setContentView(this, R.layout.unifiedmap_activity, true);
         if (null != findViewById(R.id.live_map_status)) {
             findViewById(R.id.live_map_status).getBackground().mutate();
         }
@@ -994,13 +996,10 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
         } else if (id == R.id.menu_filter) {
             showFilterMenu();
         } else if (id == R.id.menu_store_caches) {
-            final Set<String> geocodes = viewModel.caches.readWithResult(caches ->
-                    mapFragment.getViewport()
-                            .filter(caches)
-                            .stream()
-                            .map(Geocache::getGeocode)
-                            .collect(Collectors.toSet()));
-            CacheDownloaderService.downloadCaches(this, geocodes, false, false, () -> viewModel.caches.notifyDataChanged(false));
+            final List<Geocache> list = viewModel.caches.readWithResult(caches ->
+                    mapFragment.getViewport().filter(caches));
+            new TargetDistanceComparator(LocationDataProvider.getInstance().currentGeo().getCoords()).sort(list);
+            CacheDownloaderService.downloadCaches(this, Geocache.getGeocodes(list, new ArrayList<>()), false, false, () -> viewModel.caches.notifyDataChanged(false));
         } else if (id == R.id.menu_theme_mode) {
             mapFragment.selectTheme(this);
         } else if (id == R.id.menu_theme_options) {
@@ -1159,7 +1158,17 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
             if (key.startsWith(UnifiedMapViewModel.CACHE_KEY_PREFIX)) {
                 final String geocode = key.substring(UnifiedMapViewModel.CACHE_KEY_PREFIX.length());
 
-                final Geocache temp = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
+                Geocache temp = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
+                //if not in CacheCache, try viewmodel cache. See #17492
+                if (temp == null) {
+                    temp = viewModel.caches.readWithResult(caches ->
+                        IterableUtils.find(caches, cache -> geocode.equals(cache.getGeocode())));
+                    //If found in viewmodel cache but not in CacheCache,
+                    //-> then put into CacheCache for usage by Cache-Popup (popup will fail otherwise)
+                    if (temp != null) {
+                        DataStore.saveCache(temp, EnumSet.of(LoadFlags.SaveFlag.CACHE));
+                    }
+                }
                 if (temp != null) {
                     result.add(new MapSelectableItem(new RouteItem(temp)));
                 } else {
@@ -1223,7 +1232,7 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
                 if (sheetRemoveFragment()) {
                     return;
                 }
-                HideActionBarUtils.toggleActionBar(this);
+                ActionBarUtils.toggleActionBar(this);
                 GeoItemTestLayer.handleTapTest(clickableItemsLayer, this, touchedPoint, "", isLongTap);
             }
         } else if (result.size() == 1) {
@@ -1450,12 +1459,14 @@ public class UnifiedMapActivity extends AbstractNavigationBarMapActivity impleme
             recreate(); // restart with a fresh MapView
         }
 
-        if (Settings.removeFromRouteOnLog()) {
-            viewModel.reloadIndividualRoute();
-        }
         super.onResume();
         reloadCachesAndWaypoints();
         MapUtils.updateFilterBar(this, viewModel.mapType.filterContext);
+        
+        if (Settings.removeFromRouteOnLog()) {
+            viewModel.reloadIndividualRoute();
+        }
+
         if (tileProvider != null) {
             tileProvider.onResume();
         }

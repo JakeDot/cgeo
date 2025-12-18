@@ -335,6 +335,7 @@
     <string name="warn_search_help_user">Enter a username from Geocaching.com.</string>
     <string name="warn_search_help_tb">Enter the code for a trackable. For example \"TB29QMZ\".</string>
     <string name="warn_log_text_fill">Please input some text for your log.</string>
+    <string name="warn_bookmarklist_select">No bookmark list selected.</string>
     <string name="warn_pocket_query_select">No Pocket query selected.</string>
     <string name="warn_no_pocket_query_found">No Pocket query found online.</string>
     <string name="warn_notloggedin_title">Offline mode</string>
@@ -393,7 +394,7 @@
     <string name="translator_model_download_success">Translation model for %s downloaded</string>
     <string name="translator_model_download_error">Failed to download translation model %1$s: %2$s</string>
     <string name="translator_model">Translation model</string>
-    <string name="translator_tooltip">Offline translate</string>
+    <string name="translator_tooltip">Offline translate with Google</string>
     <string name="translator_language_select">Select source language</string>
     <string name="translator_language_target_select">Select target language</string>
     <string name="translator_language_unsupported">Language (%s) not supported for translation. Tap to select source language.</string>
@@ -612,6 +613,7 @@
     <string name="list_dialog_rename">Rename</string>
     <string name="list_not_available">List no longer available, switching to standard list</string>
     <string name="list_parent_list">Parent list</string>
+    <string name="list_create_parent">&lt;Create new parent list&gt;</string>
     <string name="list_name">List name</string>
     <string name="list_confirm_rename">Renaming from \"%1$s\" to \"%2$s\"\n%3$s\nThis action cannot be undone!</string>
     <string name="list_confirm_no_hierarchy">\nNo \":\" found - all matching lists will be transformed to top-level lists\n</string>
@@ -966,6 +968,8 @@
     <string name="settings_hide_tileproviders_title">Hide Map Sources</string>
     <string name="settings_hide_tileproviders_summary">Exclude one or more map sources from map source selection</string>
     <string name="settings_unifiedMapVariants_title">UnifiedMap variants</string>
+    <string name="settings_vtm_background_transparent_title">Transparent background</string>
+    <string name="settings_vtm_background_transparent_summary">Show background of VTM offline maps transparent (experimental)</string>
     <string name="settings_userDefinedTileProvider">User-defined tile provider</string>
     <string name="settings_userDefinedTileProviderUri">Enter full Uri (without trailing slash) to tile provider, or enter full Uri with parameters (including {X}, {Y} and {Z}). Make sure you have checked and comply to their usage conditions.</string>
     <string name="settings_title_data_dir">Geocache data folder</string>
@@ -1021,9 +1025,7 @@
     <string name="init_summary_oc_uk">Load caches from opencache.uk</string>
     <string name="init_oc_uk_description">Authorize c:geo with opencache.uk to search for caches and access/filter your found caches.</string>
     <string name="init_summary_su">Load caches from Geocaching.su</string>
-    <string name="init_gcvote_password_description">To be able to rate a cache, you need to follow the instructions at GCVote.com and enter your GCVote password here.</string>
     <string name="err_vote_send_rating">Error while sending rating.</string>
-    <string name="vote_sent">Voting successfully sent</string>
     <string name="init_login_popup">Login</string>
     <string name="init_login_popup_working">Logging in…</string>
     <string name="init_login_popup_ok">Login OK</string>
@@ -1068,8 +1070,9 @@
     <string name="init_signature_template_type">Type</string>
     <string name="init_signature_template_location">Location</string>
     <string name="init_signature_template_geocode">Geocode</string>
-    <string name="init_ratingwanted">GCvote Rating</string>
-    <string name="init_summary_ratingwanted">Load cache rating from GCvote.com</string>
+    <string name="init_signature_template_tblocation_geocache_code">Trackable - Geocache code</string>
+    <string name="init_signature_template_tblocation_geocache_name">Trackable - Geocache name</string>
+    <string name="init_signature_template_tblocation_user">Trackable - User</string>
     <string name="init_summary_bettercacher">Load cache tier and categories from BetterCacher.org</string>
     <string name="init_friends_and_own_logs_wanted">Show Friends\'/Own</string>
     <string name="init_summary_friends_and_own_logs_wanted">Display additional logbook page for friends\' and own logs</string>
@@ -1185,6 +1188,8 @@
 
     <string name="init_wallpaper">Wallpaper</string>
     <string name="init_summary_wallpaper">Show device wallpaper as home screen background</string>
+    <string name="init_colored_theme">Colored theme</string>
+    <string name="init_summary_colored_theme">Use colored theme</string>
 
     <!-- backup / restore -->
     <string name="init_backup_title">Create Backup</string>
@@ -1577,6 +1582,17 @@
     <string name="cache_delete_generated_waypoints">Remove generated waypoints</string>
     <string name="cache_delete_generated_waypoints_confirm">Remove all generated waypoints from this cache?\n\nWaypoints will be deleted immediately, there is no undo.</string>
     <string name="cache_delete_generated_waypoints_success">Generated waypoints deleted</string>
+
+    <string name="cache_select_waypoint_types">Select waypoint types</string>
+    <plurals name="cache_waypoints_marked_as_visited_success">
+        <item quantity="zero">%d waypoints marked as visited</item>
+        <item quantity="one">%d waypoint marked as visited</item>
+        <item quantity="two">%d waypoints marked as visited</item>
+        <item quantity="few">%d waypoints marked as visited</item>
+        <item quantity="many">%d waypoints marked as visited</item>
+        <item quantity="other">%d waypoints marked as visited</item>
+    </plurals>
+
     <string name="cache_offline_store">Store</string>
     <string name="cache_offline_stored_ago">Stored %s</string>
     <string name="cache_offline_not_ready">Not available offline</string>
@@ -1678,7 +1694,6 @@
     <string name="cache_dialog_loading_details_status_spoilers">Loading spoiler images</string>
     <string name="cache_dialog_loading_details_status_logs">Loading logs</string>
     <string name="cache_dialog_loading_details_status_waypoints">Processing waypoints</string>
-    <string name="cache_dialog_loading_details_status_gcvote">Loading GCVote</string>
     <string name="cache_dialog_loading_details_status_cache">Caching Data</string>
     <string name="cache_dialog_loading_details_status_render">Render view</string>
     <string name="cache_dialog_offline_save_title">Offline</string>
@@ -1734,7 +1749,6 @@
     <string name="cache_menu_copy_list">Copy to different list</string>
     <string name="cache_menu_oruxmaps_online">OruxMaps (Online)</string>
     <string name="cache_menu_oruxmaps_offline">OruxMaps (Offline)</string>
-    <string name="cache_menu_vote">Vote</string>
     <string name="cache_menu_challenge_checker">Search challenge checker</string>
     <string name="cache_menu_log_in_browser">Log in browser</string>
     <string name="cache_menu_ignore">Ignore cache</string>
@@ -1946,6 +1960,7 @@
     <string name="waypoint_user_note">User note</string>
     <string name="waypoint_visited">Visited</string>
     <string name="waypoint_set_visited">Waypoint set to visited</string>
+    <string name="waypoint_set_visited_types">Set waypoints to visited</string>
     <string name="waypoint_unset_visited">Waypoint set to not visited</string>
     <string name="waypoint_save">Save</string>
     <string name="waypoint_loading">Loading waypoint…</string>
@@ -2849,7 +2864,6 @@
     <string name="add_setting_already_exists">A preference with this name already exists</string>
 
     <!-- HandleLocalFilesActivity -->
-    <string name="localfile_intenttitle">c:geo Local file handler</string>
     <string name="localfile_title">Open a local file</string>
     <string name="localfile_cannot_handle">Error reading file or c:geo cannot handle this file type.</string>
 
@@ -3016,7 +3030,6 @@
 
     <string name="wherigo_controls_resume_paused_dialog">Resume paused dialog</string>
     <string name="wherigo_dialog_pause_info">Resume dialog in Wherigo Player by tapping \"Resume paused dialog\"</string>
-    <string name="wherigo_no_game_running">No wherigo game is currently running</string>
     <string name="wherigo_currently_playing">Currently playing</string>
     <string name="wherigo_locate_on_center">Locate on center</string>
     <string name="wherigo_revoke_fixed_location">Revoke fixed location</string>
@@ -3058,7 +3071,6 @@
     <string name="wherigo_error_title">Wherigo Problem report</string>
     <string name="wherigo_error_game_noerror">No error reported by Wherigo Engine.</string>
     <string name="wherigo_error_game_error">Error reported by Wherigo Engine:\n\n```\n%1$s\n```\nYou may contact the author of the cartridge [here](%2$s)</string>
-    <string name="wherigo_error_email">Wherigo Problem report\n\nEngine Error: %1$s\n\nWherigo Info: %2$s</string>
     <string name="wherigo_error_toast">Wherigo Engine reported an error. Open bug dialog for details.</string>
 
     <string name="wherigo_confirm_stop_running_game_title">Stop running Wherigo Game</string>

@@ -784,6 +784,10 @@ public class Geocache implements INamedGeoCoordinate {
         return !isArchived() && BooleanUtils.isTrue(disabled);
     }
 
+    public boolean isEnabled() {
+        return !isDisabled() && !isArchived();
+    }
+
     public boolean isPremiumMembersOnly() {
         return BooleanUtils.isTrue(premiumMembersOnly);
     }
@@ -1377,6 +1381,15 @@ public class Geocache implements INamedGeoCoordinate {
     @NonNull
     public List<Waypoint> getWaypoints() {
         return waypoints.getUnderlyingList();
+    }
+
+    public List<Waypoint> getSortedWaypointList() {
+        if (hasWaypoints()) {
+            final List<Waypoint> waypoints = getWaypoints();
+            Collections.sort(waypoints, getWaypointComparator());
+            return waypoints;
+        }
+        return Collections.emptyList();
     }
 
     /**
@@ -2460,14 +2473,18 @@ public class Geocache implements INamedGeoCoordinate {
      */
     @NonNull
     public static Set<String> getGeocodes(@NonNull final Collection<Geocache> caches) {
-        final Set<String> geocodes = new HashSet<>(caches.size());
+        return getGeocodes(caches, new HashSet<>(caches.size()));
+    }
+
+    @NonNull
+    public static <T extends Collection<String>> T getGeocodes(@NonNull final Iterable<Geocache> caches, final T result) {
         for (final Geocache cache : caches) {
             final String geocode = cache.getGeocode();
             if (StringUtils.isNotBlank(geocode)) {
-                geocodes.add(geocode);
+                result.add(geocode);
             }
         }
-        return geocodes;
+        return result;
     }
 
     /**

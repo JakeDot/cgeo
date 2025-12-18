@@ -11,8 +11,6 @@ import cgeo.geocaching.enumerations.CacheType;
 import cgeo.geocaching.enumerations.LoadFlags.SaveFlag;
 import cgeo.geocaching.enumerations.StatusCode;
 import cgeo.geocaching.enumerations.WaypointType;
-import cgeo.geocaching.gcvote.GCVote;
-import cgeo.geocaching.gcvote.GCVoteRating;
 import cgeo.geocaching.location.DistanceUnit;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.log.LogEntry;
@@ -125,22 +123,24 @@ public final class GCParser {
         final JsonNode features = json.get("data").get("layer").get("features");
         for (int i = 0; i < features.size(); i++) {
             final JsonNode properties = features.get(i).get("properties");
-            final Geocache cache = new Geocache();
-            cache.setName(properties.get("name").asText());
-            cache.setGeocode(properties.get("key").asText());
-            cache.setType(CacheType.getByWaypointType(properties.get("wptid").asText()));
-            cache.setArchived(properties.get("archived").asBoolean());
-            cache.setDisabled(!properties.get("available").asBoolean());
-            cache.setCoords(new Geopoint(properties.get("lat").asDouble(), properties.get("lng").asDouble()));
-            final String icon = properties.get("icon").asText();
-            if ("MyHide".equals(icon)) {
-                cache.setOwnerUserId(Settings.getUserName());
-            } else if ("MyFind".equals(icon)) {
-                cache.setFound(true);
-            } else if (icon.startsWith("solved")) {
-                cache.setUserModifiedCoords(true);
+            if (properties != null) {
+                final Geocache cache = new Geocache();
+                cache.setName(properties.get("name").asText());
+                cache.setGeocode(properties.get("key").asText());
+                cache.setType(CacheType.getByWaypointType(properties.get("wptid").asText()));
+                cache.setArchived(properties.get("archived").asBoolean());
+                cache.setDisabled(!properties.get("available").asBoolean());
+                cache.setCoords(new Geopoint(properties.get("lat").asDouble(), properties.get("lng").asDouble()));
+                final String icon = properties.get("icon").asText();
+                if ("MyHide".equals(icon)) {
+                    cache.setOwnerUserId(Settings.getUserName());
+                } else if ("MyFind".equals(icon)) {
+                    cache.setFound(true);
+                } else if (icon.startsWith("solved")) {
+                    cache.setUserModifiedCoords(true);
+                }
+                caches.add(cache);
             }
-            caches.add(cache);
         }
 
         final SearchResult searchResult = new SearchResult();
@@ -683,7 +683,7 @@ public final class GCParser {
         return StringUtils.replaceChars(numberWithPunctuation, ".,", "");
     }
 
-    private static SearchResult searchByMap(final IConnector con, final Parameters params) {
+    private static SearchResult searchByMap(final IConnector con, final Parameters params, final String context) {
         final String page = GCLogin.getInstance().getRequestLogged(GCConstants.URL_LIVE_MAP, params);
 
         if (StringUtils.isBlank(page)) {
@@ -699,16 +699,16 @@ public final class GCParser {
 
         params.add("st", sessionToken);
 
-        final String pqJson = GCLogin.getInstance().getRequestLogged("https://tiles01.geocaching.com/map.pq", params);
+        final String pqJson = GCLogin.getInstance().getRequestLogged("https://tiles01.geocaching.com/map." + context, params);
 
         SearchResult searchResult;
         try {
-            searchResult = parseMap(con, "https://tiles01.geocaching.com/map.pq" + "?" + params, pqJson, 0);
+            searchResult = parseMap(con, "https://tiles01.geocaching.com/map." + context + "?" + params, pqJson, 0);
         } catch (JsonProcessingException e) {
             searchResult = null;
         }
         if (searchResult == null || CollectionUtils.isEmpty(searchResult.getGeocodes())) {
-            Log.w("GCParser.searchByAny: No cache parsed");
+            Log.w("GCParser.searchByMap : No cache parsed");
             return searchResult;
         }
 
@@ -726,7 +726,58 @@ public final class GCParser {
         }
 
         final Parameters params = new Parameters("pq", shortGuid, "hash", pqHash);
-        return searchByMap(con, params);
+        return searchByMap(con, params, "pq");
+    }
+
+    public static SearchResult searchByBookmarkList(final IConnector con, final String bmGuid, final int alreadyTaken) {
+        final Parameters params = new Parameters("skip", String.valueOf(alreadyTaken), "take", "1000");
+
+        final String url = "https://www.geocaching.com/api/proxy/web/v1/lists/" + bmGuid + "/geocaches";
+        final String page = GCLogin.getInstance().getRequestLogged(url, params);
+
+        if (StringUtils.isBlank(page)) {
+            Log.w("GCParser.searchByBookmarkList: No data from server");
+            return null;
+        }
+
+        final List<Geocache> caches = new ArrayList<>();
+        try {
+            final JsonNode json = JsonUtils.reader.readTree(page);
+
+            final int totalCount = json.get("total").asInt();
+            final JsonNode jsonData = json.get("data");
+            for (int i = 0; i < jsonData.size(); i++) {
+                final Geocache cache = new Geocache();
+                final JsonNode properties = jsonData.get(i);
+                final JsonNode stateProps = properties.get("state");
+                cache.setName(properties.get("name").asText());
+                cache.setGeocode(properties.get("referenceCode").asText());
+                cache.setOwnerDisplayName(properties.get("owner").asText());
+                cache.setDifficulty(properties.get("difficulty").floatValue());
+                cache.setTerrain(properties.get("terrain").floatValue());
+                cache.setSize(CacheSize.getByGcId(properties.get("containerType").asInt()));
+                cache.setType(CacheType.getByWaypointType(properties.get("geocacheType").asText()));
+
+                cache.setArchived(stateProps.get("isArchived").asBoolean());
+                cache.setDisabled(!stateProps.get("isAvailable").asBoolean());
+                cache.setPremiumMembersOnly(stateProps.get("isPremiumOnly").asBoolean());
+
+                caches.add(cache);
+            }
+
+            final int currentFetched = alreadyTaken + caches.size();
+            final SearchResult searchResult = new SearchResult(caches);
+            searchResult.setLeftToFetch(con, totalCount - currentFetched);
+            searchResult.setToContext(con, b -> {
+                b.putInt(GCConnector.SEARCH_CONTEXT_TOOK_TOTAL, currentFetched);
+                b.putString(GCConnector.SEARCH_CONTEXT_BOOKMARK, bmGuid);
+            });
+
+            return searchResult;
+        } catch (final Exception e) {
+            Log.e("GCParser.searchByBookmarkLists: error parsing html page", e);
+            return null;
+        }
     }
 
     @Nullable
@@ -1067,7 +1118,7 @@ public final class GCParser {
     static String requestHtmlPage(@Nullable final String geocode, @Nullable final String guid) {
         if (StringUtils.isNotBlank(geocode)) {
             final Parameters params = new Parameters("decrypt", "y");
-            return GCLogin.getInstance().getRequestLogged("https://www.geocaching.com/geocache/" + geocode, params);
+            return GCLogin.getInstance().getRequestLogged("https://www.geocaching.com/geocache/" + geocode, params, false);
         } else if (StringUtils.isNotBlank(guid)) {
             final Parameters params = new Parameters("decrypt", "y");
             params.put("guid", guid);
@@ -1643,16 +1694,6 @@ public final class GCParser {
 
         //add gallery images if wanted
         addImagesFromGallery(cache, handler);
-
-        if (Settings.isRatingWanted() && !DisposableHandler.isDisposed(handler)) {
-            DisposableHandler.sendLoadProgressDetail(handler, R.string.cache_dialog_loading_details_status_gcvote);
-            final GCVoteRating rating = GCVote.getRating(cache.getGuid(), cache.getGeocode());
-            if (rating != null) {
-                cache.setRating(rating.getRating());
-                cache.setVotes(rating.getVotes());
-                cache.setMyVote(rating.getMyVote());
-            }
-        }
     }
 
     private static void mergeAndStoreLogEntries(@NonNull final Geocache cache, final String page, final DisposableHandler handler) {

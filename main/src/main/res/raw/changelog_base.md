@@ -5,6 +5,10 @@ Due to Play Store policies we have updated the Android API level this version of
 - New: Enabling live mode keeps waypoints of currently set target visible
 - New: Long-tap on navigation line opens elevation chart (UnifiedMap)
 - New: Show generated waypoints on map
+- New: Download caches ordered by distance
+- Fix: Doubling of individual route items
+- New: Support for Motorider theme (VTM only)
+- New: Support for transparent background display of offline maps (VTM only)
 
 ### Cache details
 - New: Detect additional characters in formulas: –, ⋅, ×
@@ -18,6 +22,9 @@ Due to Play Store policies we have updated the Android API level this version of
 - Change: More compact layout for "adding new waypoint"
 - New: Option to load images for geocaching.com caches in "unchanged" size
 - New: Variables view can be filtered
+- New: Visualize calculated coordinates overflow in waypoint list
+- New: Menu entry in waypoint list to mark certain waypoint types as visited
+- New placeholders for trackable logging (geocache name, geocache code, user)
 
 ### Wherigo player
 - New: Offline translation for Wherigos
@@ -32,3 +39,9 @@ Due to Play Store policies we have updated the Android API level this version of
 - New: Warning on trying to add too many caches to a bookmark list
 - New: Watch/unwatch list functions
 - New: Offer offline translation with Google Translate or DeepL apps (if installed)
+- New: Delete items from search history
+- Change: Remove GCVote (service discontinued)
+- New: Colored toolbar on cache details pages
+- New: Select multiple bookmark lists / pocket queries to download
+- New: Preview bookmark lists
+- Change: Increase minimum required Android version to Android 8

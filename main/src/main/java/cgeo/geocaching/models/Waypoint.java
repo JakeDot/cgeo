@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -310,9 +311,8 @@ public class Waypoint implements INamedGeoCoordinate {
         return preprojectedCoords;
     }
 
-    @Nullable
-    public Float getGeofence() {
-        return geofence;
+    public int getGeofence() {
+        return geofence == null ? 0 : Math.round(geofence);
     }
 
     public boolean canChangeGeofence() {
@@ -649,6 +649,15 @@ public class Waypoint implements INamedGeoCoordinate {
             }
         }
         return type.getNameForNewWaypoint() + " " + (max + 1);
+    }
+
+    public static Set<WaypointType> getWaypointTypes(final Iterable<Waypoint> waypoints) {
+        final Set<WaypointType> wpTypes = new LinkedHashSet<>();
+        for (Waypoint waypoint : waypoints) {
+            final WaypointType wpType = waypoint.getWaypointType();
+            wpTypes.add(wpType);
+        }
+        return wpTypes;
     }
 
     /**

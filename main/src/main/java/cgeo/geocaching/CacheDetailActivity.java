@@ -17,7 +17,6 @@ import cgeo.geocaching.connector.IConnector;
 import cgeo.geocaching.connector.al.ALConnector;
 import cgeo.geocaching.connector.capability.IFavoriteCapability;
 import cgeo.geocaching.connector.capability.IIgnoreCapability;
-import cgeo.geocaching.connector.capability.IVotingCapability;
 import cgeo.geocaching.connector.capability.PersonalNoteCapability;
 import cgeo.geocaching.connector.capability.PgcChallengeCheckerCapability;
 import cgeo.geocaching.connector.capability.WatchListCapability;
@@ -42,7 +41,6 @@ import cgeo.geocaching.enumerations.WaypointType;
 import cgeo.geocaching.export.FieldNoteExport;
 import cgeo.geocaching.export.GpxExport;
 import cgeo.geocaching.export.PersonalNoteExport;
-import cgeo.geocaching.gcvote.VoteDialog;
 import cgeo.geocaching.list.StoredList;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.location.GeopointFormatter;
@@ -112,6 +110,7 @@ import cgeo.geocaching.utils.ShareUtils;
 import cgeo.geocaching.utils.SimpleDisposableHandler;
 import cgeo.geocaching.utils.TextUtils;
 import cgeo.geocaching.utils.TranslationUtils;
+import cgeo.geocaching.utils.formulas.VariableList;
 import cgeo.geocaching.utils.functions.Action1;
 import cgeo.geocaching.utils.html.HtmlStyle;
 import cgeo.geocaching.utils.html.HtmlUtils;
@@ -127,7 +126,9 @@ import android.app.Activity;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -337,7 +338,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         }
 
         // If we open this cache from a search, let's properly initialize the title bar, even if we don't have cache details
-        setCacheTitleBar(geocode, name, null);
+        setCacheTitleBar(geocode, name);
 
         final LoadCacheHandler loadCacheHandler = new LoadCacheHandler(this, progress);
 
@@ -498,6 +499,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             menu.findItem(R.id.menu_waypoint_reset_cache_coords).setVisible(isOriginalWaypoint);
             menu.findItem(R.id.menu_waypoint_edit).setVisible(!isOriginalWaypoint);
             menu.findItem(R.id.menu_waypoint_geofence).setVisible(selectedWaypoint.canChangeGeofence());
+            menu.findItem(R.id.menu_waypoint_visited).setVisible(!selectedWaypoint.isVisited());
             menu.findItem(R.id.menu_waypoint_duplicate).setVisible(!isOriginalWaypoint);
             menu.findItem(R.id.menu_waypoint_delete).setVisible(!isOriginalWaypoint || selectedWaypoint.belongsToUserDefinedCache());
             final boolean hasCoords = selectedWaypoint.getCoords() != null;
@@ -614,7 +616,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             }, result -> {
                 if (result) {
                     if (waypointPos > 0) {
-                        selectedWaypoint = WaypointsViewCreator.createSortedWaypointList(cache).get(waypointPos - 1); // set new list position to avoid jumping to the top
+                        // set new list position to avoid jumping to the top
+                        selectedWaypoint = WaypointsViewCreator.createWaypointList(cache, false).get(waypointPos - 1);
                     }
                     notifyDataSetChanged();
                     GeocacheChangedBroadcastReceiver.sendBroadcast(CacheDetailActivity.this, cache.getGeocode());
@@ -726,6 +729,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         CacheMenuHandler.onPrepareOptionsMenu(menu, cache, false);
         LoggingUI.onPrepareOptionsMenu(menu, cache);
         MenuUtils.setVisible(menu.findItem(R.id.menu_set_coordinates), isUDC);
+        MenuUtils.setVisible(menu.findItem(R.id.menu_translate), cache != null && TranslationUtils.isEnabled());
+        menu.findItem(R.id.menu_translate).setTitle(TranslationUtils.getTranslationLabel());
 
         if (cache != null) {
             // top level menu items
@@ -745,6 +750,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             // submenu waypoints
             menu.findItem(R.id.menu_delete_userdefined_waypoints).setVisible(cache.isOffline() && cache.hasUserdefinedWaypoints());
             menu.findItem(R.id.menu_delete_generated_waypoints).setVisible(cache.isOffline() && cache.hasGeneratedWaypoints());
+            menu.findItem(R.id.menu_set_waypoints_to_visited).setVisible(cache.isOffline() && cache.hasWaypoints());
             menu.findItem(R.id.menu_extract_waypoints).setVisible(!isUDC);
             menu.findItem(R.id.menu_scan_calculated_waypoints).setVisible(!isUDC);
             menu.findItem(R.id.menu_clear_goto_history).setVisible(cache.isGotoHistoryUDC());
@@ -757,11 +763,6 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             menu.findItem(R.id.menu_export).setVisible(true);
 
             // submenu advanced
-            if (connector instanceof IVotingCapability) {
-                final MenuItem menuItemGCVote = menu.findItem(R.id.menu_gcvote);
-                menuItemGCVote.setVisible(((IVotingCapability) connector).supportsVoting(cache));
-                menuItemGCVote.setEnabled(Settings.isRatingWanted() && Settings.isGCVoteLoginValid());
-            }
             if (connector instanceof IIgnoreCapability) {
                 menu.findItem(R.id.menu_ignore).setVisible(((IIgnoreCapability) connector).canIgnoreCache(cache));
             }
@@ -786,16 +787,18 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             dropUserdefinedWaypoints();
         } else if (menuItem == R.id.menu_delete_generated_waypoints) {
             dropGeneratedWaypoints();
+        } else if (menuItem == R.id.menu_set_waypoints_to_visited) {
+            setWaypointsOfWaypointTypesToVisited();
         } else if (menuItem == R.id.menu_refresh) {
             refreshCache();
-        } else if (menuItem == R.id.menu_gcvote) {
-            showVoteDialog();
         } else if (menuItem == R.id.menu_challenge_checker) {
             ShareUtils.openUrl(this, "https://project-gc.com/Challenges/" + cache.getGeocode());
         } else if (menuItem == R.id.menu_ignore) {
             ignoreCache();
         } else if (menuItem == R.id.menu_set_coordinates) {
             setCoordinates(this);
+        } else if (menuItem == R.id.menu_translate) {
+            TranslationUtils.translate(this, getListingForTranslate(cache));
         } else if (menuItem == R.id.menu_extract_waypoints) {
             final String searchText = cache.getShortDescription() + ' ' + cache.getDescription();
             extractWaypoints(searchText, cache);
@@ -874,7 +877,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
 
     private void setCoordinates(final Activity activity) {
         ensureSaved();
-        CoordinateInputDialog.show(activity, this::onCoordinatesUpdated, cache.getCoords());
+        CoordinateInputDialog.showLocation(activity, this::onCoordinatesUpdated, cache.getCoords());
     }
 
     public void onCoordinatesUpdated(final Geopoint input) {
@@ -884,10 +887,6 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         } else {
             storeCache(false);
         }
-    }
-
-    private void showVoteDialog() {
-        VoteDialog.show(this, cache, this::notifyDataSetChanged);
     }
 
     private static final class CacheDetailsGeoDirHandler extends GeoDirHandler {
@@ -1203,6 +1202,45 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             });
         }
     }
+
+
+    private void setWaypointsOfWaypointTypesToVisited() {
+        final List<Waypoint> waypoints = cache.getSortedWaypointList();
+        if (waypoints.isEmpty()) {
+            return;
+        }
+
+        final Set<WaypointType> lastSelectedWaypointTypes = Settings.getLastSelectedVisitedWaypointTypes();
+        final Set<WaypointType> selectableWaypointTypes = Waypoint.getWaypointTypes(waypoints);
+        final SimpleDialog.ItemSelectModel<WaypointType> model = new SimpleDialog.ItemSelectModel<>();
+        model.setItems(selectableWaypointTypes)
+                .setChoiceMode(SimpleItemListModel.ChoiceMode.MULTI_CHECKBOX)
+                .setSelectedItems(lastSelectedWaypointTypes)
+                .setDisplayMapper((wpType) -> TextParam.text(wpType.getL10n()));
+
+        SimpleDialog.of(this).setTitle(R.string.cache_select_waypoint_types)
+                .selectMultiple(model, selectedWpTypeSet -> {
+                    // still remember currently not available waypoint types
+                    lastSelectedWaypointTypes.removeAll(selectableWaypointTypes);
+                    lastSelectedWaypointTypes.addAll(selectedWpTypeSet);
+                    Settings.setLastSelectedVisitedWaypointTypes(lastSelectedWaypointTypes);
+
+                    int wpCount = 0;
+                    for (Waypoint waypoint : new LinkedList<>(cache.getWaypoints())) {
+                        final WaypointType wpType = waypoint.getWaypointType();
+                        if (selectedWpTypeSet.contains(wpType)) {
+                            waypoint.setVisited(true);
+                            wpCount++;
+                        }
+                    }
+
+                    saveAndNotify();
+                    ActivityMixin.showShortToast(this, getResources().getQuantityString(R.plurals.cache_waypoints_marked_as_visited_success, wpCount));
+                    invalidateOptionsMenu();
+                    reinitializePage(Page.WAYPOINTS.id);
+                });
+    }
+
 
     private void storeCache(final boolean fastStoreOnLastSelection) {
         if (ProgressBarDisposableHandler.isInProgress(this) || progress.isShowing()) {
@@ -1922,7 +1960,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                     binding.descriptionTranslateExternalButton,
                     binding.descriptionTranslateExternal,
                     binding.descriptionTranslateExternalNote,
-                    () -> TranslationUtils.prepareForTranslation(getDescriptionText(cache), cache.getHint()));
+                    () -> getListingForTranslate(cache));
 
             //register for changes of variableslist -> state of variable sync may change
             cache.getVariables().addChangeListener(this, s -> activity.adjustPersonalNoteVarsOutOfSyncButton(binding.personalnoteVarsOutOfSync));
@@ -2019,6 +2057,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                         if (translator != null) {
                             binding.descriptionTranslateNote.setText(LocalizationUtils.getString(R.string.translator_translation_success, status.getSourceLanguage()));
                         }
+                        binding.descriptionTranslatedByGoogle.setVisibility(translator != null ? View.VISIBLE : View.GONE);
 
                         if (status == null || StringUtils.equals(status.getSourceLanguage().getCode(), OfflineTranslateUtils.LANGUAGE_INVALID)) {
                             OfflineTranslateUtils.initializeListingTranslatorInTabbedViewPagerActivity((CacheDetailActivity) getActivity(), binding.descriptionTranslate, binding.description.getText().toString() + " " + binding.hint.getText().toString(), this::translateListing);
@@ -2086,22 +2125,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                     successConsumer.accept(createDescriptionContentHelper(activity, descriptionTextFinal, textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle))
                 );
             } else {
-                OfflineTranslateUtils.translateParagraph(translator, status, descriptionTextFinal, translatedText -> successConsumer.accept(createDescriptionContentHelper(activity, translatedText, textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle)), errorConsumer);
+                OfflineTranslateUtils.translateParagraph(translator, status, descriptionTextFinal, translatedText -> successConsumer.accept(createDescriptionContentHelper(activity, translatedText.toString(), textTooLong, descriptionFullLength, cache, restrictLength, descriptionView, descriptionStyle)), errorConsumer);
             }
-        }
-
-        private static String getDescriptionText(final Geocache cache) {
-            //combine short and long description to the final description to render
-            String descriptionText = cache.getDescription();
-            final String shortDescriptionText = cache.getShortDescription();
-            if (StringUtils.isNotBlank(shortDescriptionText)) {
-                final int index = StringUtils.indexOf(descriptionText, shortDescriptionText);
-                // allow up to 200 characters of HTML formatting
-                if (index < 0 || index > 200) {
-                    descriptionText = shortDescriptionText + "\n" + descriptionText;
-                }
-            }
-            return descriptionText;
         }
 
         @WorkerThread
@@ -2209,21 +2234,25 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             Collections.sort(sortedWaypoints, cache.getWaypointComparator());
         }
 
-        private static List<Waypoint> createSortedWaypointList(final Geocache cache) {
-            final List<Waypoint> sortedWaypoints2 = new ArrayList<>(cache.getWaypoints());
-            final Iterator<Waypoint> waypointIterator = sortedWaypoints2.iterator();
+        private static List<Waypoint> createWaypointList(final Geocache cache, final boolean sorted) {
+            final List<Waypoint> waypointList = new ArrayList<>(sorted ? cache.getSortedWaypointList() : cache.getWaypoints());
+            if (!Settings.getHideVisitedWaypoints()) {
+                return waypointList;
+            }
+
+            final List<Waypoint> filteredWaypointList = new ArrayList<>(waypointList);
+            final Iterator<Waypoint> waypointIterator = filteredWaypointList.iterator();
             while (waypointIterator.hasNext()) {
                 final Waypoint waypointInIterator = waypointIterator.next();
-                if (waypointInIterator.isVisited() && Settings.getHideVisitedWaypoints()) {
+                if (waypointInIterator.isVisited()) {
                     waypointIterator.remove();
                 }
             }
-            return sortedWaypoints2;
+            return filteredWaypointList;
         }
 
         private static int indexOfWaypoint(final Geocache cache, final Waypoint waypoint) {
-            final List<Waypoint> sortedWaypoints = createSortedWaypointList(cache);
-            Collections.sort(sortedWaypoints, cache.getWaypointComparator());
+            final List<Waypoint> sortedWaypoints = createWaypointList(cache, true);
             return IterableUtils.indexOf(sortedWaypoints, wp -> wp.getId() == waypoint.getId());
         }
 
@@ -2254,9 +2283,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             rootView.setClickable(true);
 
             // sort waypoints: PP, Sx, FI, OWN
-            final List<Waypoint> sortedWaypoints = createSortedWaypointList(cache);
-            Collections.sort(sortedWaypoints, cache.getWaypointComparator());
-
+            final List<Waypoint> sortedWaypoints = createWaypointList(cache, true);
             final ArrayAdapter<Waypoint> adapter = new ArrayAdapter<Waypoint>(activity, R.layout.waypoint_item, sortedWaypoints) {
                 @NonNull
                 @Override
@@ -2274,7 +2301,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                     }
 
                     final Waypoint waypoint = getItem(position);
-                    fillViewHolder(activity, rowView, holder, waypoint);
+                    fillViewHolder(activity, rowView, holder, waypoint, cache.getVariables());
                     return rowView;
                 }
             };
@@ -2323,10 +2350,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             binding.chipVisitedWaypoints.setVisibility(hasVisitedWaypoints ? View.VISIBLE : View.GONE);
             binding.chipVisitedWaypoints.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 Settings.setHideVisitedWaypoints(!isChecked);
-
-                    final List<Waypoint> sortedWaypoints2 = createSortedWaypointList(cache);
-                    Collections.sort(sortedWaypoints2, cache.getWaypointComparator());
-
+                final List<Waypoint> sortedWaypoints2 = createWaypointList(cache, true);
                     adapter.clear();
                     adapter.addAll(sortedWaypoints2);
                     adapter.notifyDataSetChanged();
@@ -2370,7 +2394,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         }
 
         @SuppressLint("SetTextI18n")
-        protected void fillViewHolder(final CacheDetailActivity activity, final View rowView, final WaypointViewHolder holder, final Waypoint wpt) {
+        protected void fillViewHolder(final CacheDetailActivity activity, final View rowView, final WaypointViewHolder holder, final Waypoint wpt, final VariableList varList) {
             // coordinates
             final TextView coordinatesView = holder.binding.coordinates;
             final TextView calculatedCoordinatesView = holder.binding.calculatedCoordinateInfo;
@@ -2385,6 +2409,10 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             final CalculatedCoordinate cc = CalculatedCoordinate.createFromConfig(calcStateJson);
             calculatedCoordinatesView.setText("(x):" + cc.getLatitudePattern() + " | " + cc.getLongitudePattern());
             holder.binding.calculatedCoordinatesIcon.setVisibility(wpt.isCalculated() ? View.VISIBLE : View.GONE);
+            if (cc.hasWarning(varList::getValue)) {
+                holder.binding.calculatedCoordinatesIcon.setImageTintList(ColorStateList.valueOf(Color.YELLOW));
+                holder.binding.calculatedCoordinatesIcon.setImageResource(R.drawable.warning);
+            }
 
             holder.binding.projectionIcon.setVisibility(wpt.hasProjection() ? View.VISIBLE : View.GONE);
             holder.binding.projectionIcon.setImageResource(wpt.getProjectionType().markerId);
@@ -2673,6 +2701,32 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             return this.getString(Page.LOGSFRIENDS.titleStringId) + " (" + logCount + ")";
         }
         return this.getString(Page.find(pageId).titleStringId);
+    }
+
+    @NonNull
+    public static String getListingForTranslate(final Geocache cache) {
+        if (cache == null) {
+            return "";
+        }
+        return TranslationUtils.prepareForTranslation(getDescriptionText(cache), cache.getHint());
+    }
+
+    @NonNull
+    public static String getDescriptionText(final Geocache cache) {
+        if (cache == null) {
+            return "";
+        }
+        //combine short and long description to the final description to render
+        String descriptionText = cache.getDescription();
+        final String shortDescriptionText = cache.getShortDescription();
+        if (StringUtils.isNotBlank(shortDescriptionText)) {
+            final int index = StringUtils.indexOf(descriptionText, shortDescriptionText);
+            // allow up to 200 characters of HTML formatting
+            if (index < 0 || index > 200) {
+                descriptionText = shortDescriptionText + "\n" + descriptionText;
+            }
+        }
+        return descriptionText;
     }
 
     protected long[] getOrderedPages() {

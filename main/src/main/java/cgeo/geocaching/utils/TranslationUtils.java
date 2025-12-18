@@ -6,12 +6,12 @@ import cgeo.geocaching.network.Network;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.ui.ImageParam;
 import cgeo.geocaching.utils.html.HtmlUtils;
+import cgeo.geocaching.utils.offlinetranslate.TranslateAccessor;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-/** Utilities used for (c:geo-external) translatinn */
+/** Utilities used for (c:geo-external) translation */
 public final class TranslationUtils {
 
     public enum Translator {
@@ -47,13 +47,19 @@ public final class TranslationUtils {
 
         public String toUserDisplayableString() {
             final StringBuilder sb = new StringBuilder(LocalizationUtils.getString(nameId));
-            if (!APP_PACKAGE_ANYAPP.equals(this.appPackageName)) {
+            if (this.appPackageName != null && !APP_PACKAGE_ANYAPP.equals(this.appPackageName)) {
                 sb
                     .append(" (")
                     .append(LocalizationUtils.getString(appIsAvailable(this.appPackageName) ? R.string.translate_external_variant_app : R.string.translate_external_variant_web))
                     .append(")");
             }
             return sb.toString();
+        }
+
+        @Override
+        @NonNull
+        public String toString() {
+            return name() + "/appPackage:" + appPackageName + "(av=" + appIsAvailable(appPackageName) + ")";
         }
 
         @NonNull
@@ -98,6 +104,11 @@ public final class TranslationUtils {
         return getTranslator().toUserDisplayableString();
     }
 
+    @NonNull
+    public static ImageParam getTranslationIcon() {
+        return getTranslator().getIcon();
+    }
+
 
 
     public static void translate(final Activity activity, final String text) {
@@ -130,7 +141,15 @@ public final class TranslationUtils {
             final String text = textSupplier.get();
             translate(activity, text);
         });
-
+        if (isEnabled() && box != null && !Settings.getLanguagesToNotTranslate().isEmpty()) {
+            TranslateAccessor.get().guessLanguage(textSupplier.get(), lng -> {
+                if (Settings.getLanguagesToNotTranslate().contains(lng)) {
+                    realBox.setVisibility(View.GONE);
+                }
+            }, e -> {
+                //ignore
+            });
+        }
     }
 
     private static Translator getTranslator() {
@@ -151,15 +170,13 @@ public final class TranslationUtils {
     }
 
     private static boolean appIsAvailable(final String packageName) {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ProcessUtils.isLaunchable(packageName);
+        return ProcessUtils.isLaunchable(packageName);
     }
 
     private static void startTranslateViaApp(final Activity activity, final String packageName, final String text) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return;
-        }
         final Intent intent = new Intent();
         intent.setType("text/plain");
+        // intent.setAction(Intent.ACTION_TRANSLATE); doesn't seem to work
         intent.setAction(Intent.ACTION_PROCESS_TEXT);
         intent.putExtra(Intent.EXTRA_PROCESS_TEXT, text);
         intent.putExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true);

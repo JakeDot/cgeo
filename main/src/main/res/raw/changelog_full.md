@@ -1,6 +1,34 @@
 # Full changelog
 This changelog contains all changes which are not intermediate developing steps. It is sometimes more detailed than the changelogs we publish in our releases.
 
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2025.12.01 Bugfix Release
+
+- Fix: Syncing of personal notes not working
+- Fix: Favorite checkbox gets reset on reentering offline log screen
+- Fix: Geofence radius input box shows decimal number
+- Change: New icon for GPX track/route import in map track/route quick settings
+- Change: UnifiedMap set as default map for anyone (as part of our roadmap to UnifiedMap) You can switch back in "settings" - "map sources" for the time being. Removal of legacy maps is planned for spring 2026 in our regular releases.
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2025.10.31 Bugfix Release
+
+- Fix: Negative values in elevation chart not scaled
+- Fix: Coordinates near 0 broken in GPX exports
+- Fix: Some crashes
+- Try to fix: ANR on startup
+- Try to fix: Missing geocache data on live map
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2025.09.19 Bugfix Release
+
+- Fix: Hint text no longer selectable
+- Fix: Several Wherigo issues
+- Fix: Crash in keyword search
+- Fix: Crash in map
 
 <!-- --------------------------------------------------------------------------------- --->
 
