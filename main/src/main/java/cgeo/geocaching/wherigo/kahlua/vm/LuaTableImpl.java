@@ -36,7 +36,7 @@ import java.util.Objects;
 import cgeo.geocaching.wherigo.kahlua.stdlib.BaseLib;
 
 
-public class LuaTableImpl implements LuaTable {
+public class LuaTableImpl implements LuaTable, Serializable {
     private boolean weakKeys, weakValues;
 
     // Hash part
