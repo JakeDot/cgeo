@@ -1,0 +1,3 @@
+[submodule "main/src/main/java/cgeo/geocaching/wherigo/openwig"]
+	path = main/src/main/java/cgeo/geocaching/wherigo/openwig
+	url = https://github.com/JakeDot/openwig/master
