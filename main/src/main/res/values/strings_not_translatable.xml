@@ -340,4 +340,5 @@
 
     <!-- default marker -->
     <string translatable="false" name="hyphen">-</string>
+    <string name="pref_navigation_menu_jakedot" />
 </resources>

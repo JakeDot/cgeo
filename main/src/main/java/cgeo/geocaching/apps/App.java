@@ -3,8 +3,21 @@ package cgeo.geocaching.apps;
 import cgeo.geocaching.models.Geocache;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public interface App {
+
+    class Over extends AbstractApp {
+
+        public Over(@NonNull App app) {
+            this(app.getName(), null, null);
+        }
+
+        public Over(@NonNull String name, @Nullable String intent, @Nullable String packageName) {
+            super(name, intent, packageName);
+        }
+    }
+
     boolean isInstalled();
 
     /**
