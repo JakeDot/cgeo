@@ -54,14 +54,14 @@ public class DateRangeFilterViewHolder<F extends DateRangeGeocacheFilter> extend
         // Add "Ignore Year" checkbox
         ignoreYearCheckbox = new CheckBox(getActivity());
         ignoreYearCheckbox.setText(R.string.cache_filter_datefilter_ignoreyear);
-        LinearLayout.LayoutParams checkboxParams = new LinearLayout.LayoutParams(
+        final LinearLayout.LayoutParams checkboxParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         checkboxParams.setMargins(0, dpToPixel(5), 0, dpToPixel(10));
         mainLayout.addView(ignoreYearCheckbox, checkboxParams);
 
         dateRangeSelector = new DateRangeSelector(getActivity());
         
-        LinearLayout.LayoutParams dateRangeParams = new LinearLayout.LayoutParams(
+        final LinearLayout.LayoutParams dateRangeParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         mainLayout.addView(dateRangeSelector, dateRangeParams);
         
