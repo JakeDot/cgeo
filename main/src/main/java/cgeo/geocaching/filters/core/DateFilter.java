@@ -117,13 +117,8 @@ public class DateFilter {
     }
 
     public void setMinMaxDate(final Date min, final Date max) {
-        if (min != null && max != null && min.after(max)) {
-            this.minDate = max;
-            this.maxDate = min;
-        } else {
-            this.minDate = min;
-            this.maxDate = max;
-        }
+        this.minDate = min;
+        this.maxDate = max;
         this.isRelative = false;
     }
 
