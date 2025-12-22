@@ -30,6 +30,7 @@ public enum GeocacheFilterType {
     FAVORITES("favorites", R.string.cache_filter_favorites, R.string.cache_filtergroup_details, FavoritesGeocacheFilter::new),
     DISTANCE("distance", R.string.cache_filter_distance, R.string.cache_filtergroup_userspecific, DistanceGeocacheFilter::new),
     HIDDEN("hidden", R.string.cache_filter_hidden, R.string.cache_filtergroup_basic, HiddenGeocacheFilter::new),
+    DAY_OF_YEAR("day_of_year", R.string.cache_filter_day_of_year, R.string.cache_filtergroup_basic, DayOfYearGeocacheFilter::new),
     EVENT_DATE("eventdate", R.string.cache_filter_eventdate, R.string.cache_filtergroup_basic, HiddenGeocacheFilter::new),
     LOGS_COUNT("logs_count", R.string.cache_filter_logs_count, R.string.cache_filtergroup_details, LogsCountGeocacheFilter::new),
     LAST_FOUND("last_found", R.string.cache_filter_last_found, R.string.cache_filtergroup_details, LastFoundGeocacheFilter::new),
