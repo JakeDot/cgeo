@@ -66,9 +66,9 @@ public class DayOfYearFilter {
     }
 
     public void setMinMaxDayOfYear(final String min, final String max) {
-        // Simply store the values - wrapping around year boundary is handled in the matches() method
-        this.minDayOfYear = min;
-        this.maxDayOfYear = max;
+        // Validate values to prevent SQL injection
+        this.minDayOfYear = parseDayOfYear(min);
+        this.maxDayOfYear = parseDayOfYear(max);
     }
 
     public void setMinMaxDayOfYear(final Date min, final Date max) {
@@ -94,7 +94,12 @@ public class DayOfYearFilter {
         if (StringUtils.isBlank(text) || "-".equals(text)) {
             return null;
         }
-        // Validate format
+        // Validate format strictly - must be exactly MM-dd
+        if (!text.matches("^\\d{2}-\\d{2}$")) {
+            Log.w("Invalid day-of-year format (expected MM-dd): '" + text + "'");
+            return null;
+        }
+        // Validate that it's a valid date by parsing
         try {
             DAY_MONTH_FORMAT.parse(text);
             return text;
@@ -106,8 +111,9 @@ public class DayOfYearFilter {
 
     public void setJsonConfig(final JsonNode node) {
         if (node != null) {
-            minDayOfYear = JsonUtils.getText(node, "minDayOfYear", null);
-            maxDayOfYear = JsonUtils.getText(node, "maxDayOfYear", null);
+            // Validate values using parseDayOfYear to prevent SQL injection
+            minDayOfYear = parseDayOfYear(JsonUtils.getText(node, "minDayOfYear", null));
+            maxDayOfYear = parseDayOfYear(JsonUtils.getText(node, "maxDayOfYear", null));
         }
     }
 
