@@ -81,10 +81,10 @@ public class DayOfYearFilterTest {
     public void nullHandling() throws Exception {
         final DayOfYearFilter filter = new DayOfYearFilter();
         
-        // Empty filter matches everything
+        // Empty filter matches everything including null
         assertThat(filter.matches(null)).isTrue();
         
-        // Filter with range doesn't match null
+        // Filter with range returns null for null input (inconclusive)
         final Date date = FORMATTER.parse("2022-04-06");
         filter.setMinMaxDayOfYear(date, date);
         assertThat(filter.matches(null)).isNull();
