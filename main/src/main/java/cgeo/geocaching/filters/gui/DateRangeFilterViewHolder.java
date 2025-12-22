@@ -60,8 +60,12 @@ public class DateRangeFilterViewHolder<F extends DateRangeGeocacheFilter> extend
         mainLayout.addView(ignoreYearCheckbox, checkboxParams);
 
         dateRangeSelector = new DateRangeSelector(getActivity());
+        
+        LinearLayout.LayoutParams dateRangeParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mainLayout.addView(dateRangeSelector, dateRangeParams);
+        
         if (!allowRelativeSelection) {
-            mainLayout.addView(dateRangeSelector);
             return mainLayout;
         }
 
@@ -77,10 +81,6 @@ public class DateRangeFilterViewHolder<F extends DateRangeGeocacheFilter> extend
         LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         llp.setMargins(0, dpToPixel(20), 0, dpToPixel(5));
         mainLayout.addView(absoluteRelative, llp);
-
-        llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        llp.setMargins(0, dpToPixel(0), 0, dpToPixel(5));
-        mainLayout.addView(dateRangeSelector, llp);
 
         relativeSlider = new ItemRangeSlider<>(getActivity());
         relativeSlider.setScale(Arrays.asList(relativeValues), (i, v) -> relativeLabels[i], (i, v) -> relativeShortLabels[i]);
