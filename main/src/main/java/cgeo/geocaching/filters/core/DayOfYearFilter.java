@@ -66,14 +66,9 @@ public class DayOfYearFilter {
     }
 
     public void setMinMaxDayOfYear(final String min, final String max) {
-        if (min != null && max != null && min.compareTo(max) > 0) {
-            // Allow wrapping around year boundary
-            this.minDayOfYear = min;
-            this.maxDayOfYear = max;
-        } else {
-            this.minDayOfYear = min;
-            this.maxDayOfYear = max;
-        }
+        // Simply store the values - wrapping around year boundary is handled in the matches() method
+        this.minDayOfYear = min;
+        this.maxDayOfYear = max;
     }
 
     public void setMinMaxDayOfYear(final Date min, final Date max) {
@@ -83,7 +78,7 @@ public class DayOfYearFilter {
 
     public void setConfig(final List<String> config) {
         if (config != null && !config.isEmpty()) {
-            minDayOfYear = config.isEmpty() ? null : parseDayOfYear(config.get(0));
+            minDayOfYear = parseDayOfYear(config.get(0));
             maxDayOfYear = config.size() > 1 ? parseDayOfYear(config.get(1)) : null;
         }
     }
