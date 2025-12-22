@@ -112,4 +112,24 @@ public class DayOfYearFilterTest {
         
         assertThat(filter.isFilled()).isTrue();
     }
+
+    @Test
+    public void inputValidation() throws Exception {
+        final DayOfYearFilter filter = new DayOfYearFilter();
+        
+        // Valid input should work
+        filter.setMinMaxDayOfYear("01-15", "12-31");
+        assertThat(filter.getMinDayOfYear()).isEqualTo("01-15");
+        assertThat(filter.getMaxDayOfYear()).isEqualTo("12-31");
+        
+        // Invalid inputs should be rejected (SQL injection attempts)
+        filter.setMinMaxDayOfYear("01-15'; DROP TABLE caches; --", "12-31");
+        assertThat(filter.getMinDayOfYear()).isNull();
+        
+        filter.setMinMaxDayOfYear("2022-04-06", "12-31");
+        assertThat(filter.getMinDayOfYear()).isNull();
+        
+        filter.setMinMaxDayOfYear("1-15", "12-31");
+        assertThat(filter.getMinDayOfYear()).isNull();
+    }
 }
