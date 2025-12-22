@@ -115,9 +115,6 @@ public class FilterViewHolderCreator {
                         LocalizationUtils.getStringArray(R.array.cache_filter_hidden_since_stored_values_label),
                         LocalizationUtils.getStringArray(R.array.cache_filter_hidden_since_stored_values_label_short));
                 break;
-            case DAY_OF_YEAR:
-                result = new DayOfYearFilterViewHolder();
-                break;
             case EVENT_DATE:
                 result = new DateRangeFilterViewHolder<HiddenGeocacheFilter>(true,
                         LocalizationUtils.getIntArray(R.array.cache_filter_event_date_stored_values_d),
