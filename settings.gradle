@@ -28,3 +28,4 @@ develocity {
         termsOfUseAgree = "yes"
     }
 }
+include ':openwig'
