@@ -437,6 +437,15 @@ dependencies {
     // used by mapsforge
     implementation 'com.caverock:androidsvg:1.4'
 
+    // Maps.ME integration
+    implementation project(":mapswithme-api")
+
+    // Organic Maps integration
+    implementation project(":organicmaps-api")
+
+    // openwig library
+    implementation project(":openwig")
+
     // Metadata Extractor, EXIF location extraction from images
     implementation 'com.drewnoakes:metadata-extractor:2.19.0'
 
