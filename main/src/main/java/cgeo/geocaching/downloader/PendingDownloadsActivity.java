@@ -145,7 +145,10 @@ public class PendingDownloadsActivity extends AbstractActionBarActivity {
                         append(sb, c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES), "Bytes Total", (i) -> formatBytes(c.getLong(i)));
                         append(sb, c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR), "Bytes Current", (i) -> formatBytes(c.getLong(i)));
                         append(sb, c.getColumnIndex(DownloadManager.COLUMN_LAST_MODIFIED_TIMESTAMP), "Last Modified", (i) -> formatDateForFilename(c.getLong(i)));
-                        append(sb, c.getColumnIndex(DownloadManager.COLUMN_URI), "Remote URI", c::getString);
+                        append(sb, c.getColumnIndex(DownloadManager.COLUMN_URI), "Remote URI", (i) -> {
+                            final String uri = c.getString(i);
+                            return uri != null ? "[" + uri + "](" + uri + ")" : null;
+                        });
                         append(sb, c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI), "Local URI", c::getString);
                     }
                 }
