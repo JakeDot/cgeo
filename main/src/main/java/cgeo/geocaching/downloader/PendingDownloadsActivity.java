@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -198,6 +199,7 @@ public class PendingDownloadsActivity extends AbstractActionBarActivity {
             super(itemView);
             title = itemView.findViewById(R.id.title);
             detail = itemView.findViewById(R.id.detail);
+            detail.setMovementMethod(LinkMovementMethod.getInstance());
 
             buttonResume = itemView.findViewById(R.id.button_left);
             buttonResume.setIconResource(R.drawable.ic_menu_refresh);
