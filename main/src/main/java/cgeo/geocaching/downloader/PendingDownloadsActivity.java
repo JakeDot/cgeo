@@ -5,6 +5,7 @@ import cgeo.geocaching.SplashActivity;
 import cgeo.geocaching.activity.AbstractActionBarActivity;
 import cgeo.geocaching.models.Download;
 import cgeo.geocaching.storage.extension.PendingDownload;
+import cgeo.geocaching.ui.AnchorAwareLinkMovementMethod;
 import cgeo.geocaching.ui.TextParam;
 import cgeo.geocaching.ui.ViewUtils;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
@@ -19,7 +20,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -199,7 +199,7 @@ public class PendingDownloadsActivity extends AbstractActionBarActivity {
             super(itemView);
             title = itemView.findViewById(R.id.title);
             detail = itemView.findViewById(R.id.detail);
-            detail.setMovementMethod(LinkMovementMethod.getInstance());
+            detail.setMovementMethod(AnchorAwareLinkMovementMethod.getInstance());
 
             buttonResume = itemView.findViewById(R.id.button_left);
             buttonResume.setIconResource(R.drawable.ic_menu_refresh);
