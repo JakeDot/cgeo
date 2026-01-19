@@ -58,18 +58,22 @@ public class MBTilesLayerHelper {
 
         // First, try the new location: public offline maps folder
         // Only process if the folder is FILE-based (not SAF/content URI based)
-        if (PersistableFolder.BACKGROUND_MAPS.getFolder().getBaseType() == Folder.FolderType.FILE) {
+        final Folder backgroundMapsFolder = PersistableFolder.BACKGROUND_MAPS.getFolder();
+        if (backgroundMapsFolder.getBaseType() == Folder.FolderType.FILE) {
             for (ContentStorage.FileInformation fi : ContentStorage.get().list(PersistableFolder.BACKGROUND_MAPS)) {
                 if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
                     // For FILE-based folders, we can directly convert the URI to a File
-                    final File file = new File(fi.uri.getPath());
-                    if (file.exists()) {
-                        result.add(file);
+                    final String path = fi.uri.getPath();
+                    if (path != null) {
+                        final File file = new File(path);
+                        if (file.exists()) {
+                            result.add(file);
+                        }
                     }
                 }
             }
         }
-        
+
         // Fallback to old location: app-specific media folder
         final File[] legacyFiles = context.getExternalMediaDirs()[0].listFiles((dir, name) -> StringUtils.endsWith(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
         if (legacyFiles != null) {
@@ -77,7 +81,7 @@ public class MBTilesLayerHelper {
                 result.add(file);
             }
         }
-        
+
         return result.toArray(new File[0]);
     }
 
