@@ -60,7 +60,7 @@ public class MBTilesLayerHelper {
         // Only process if the folder is FILE-based (not SAF/content URI based)
         final Folder backgroundMapsFolder = PersistableFolder.BACKGROUND_MAPS.getFolder();
         if (backgroundMapsFolder.getBaseType() == Folder.FolderType.FILE) {
-            for (ContentStorage.FileInformation fi : ContentStorage.get().list(PersistableFolder.BACKGROUND_MAPS)) {
+            for (ContentStorage.FileInformation fi : ContentStorage.get().list(backgroundMapsFolder)) {
                 if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
                     // For FILE-based folders, we can directly convert the URI to a File
                     final String path = fi.uri.getPath();
@@ -75,10 +75,13 @@ public class MBTilesLayerHelper {
         }
 
         // Fallback to old location: app-specific media folder
-        final File[] legacyFiles = context.getExternalMediaDirs()[0].listFiles((dir, name) -> StringUtils.endsWith(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
-        if (legacyFiles != null) {
-            for (File file : legacyFiles) {
-                result.add(file);
+        final File[] externalMediaDirs = context.getExternalMediaDirs();
+        if (externalMediaDirs != null && externalMediaDirs.length > 0) {
+            final File[] legacyFiles = externalMediaDirs[0].listFiles((dir, name) -> StringUtils.endsWith(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
+            if (legacyFiles != null) {
+                for (File file : legacyFiles) {
+                    result.add(file);
+                }
             }
         }
 
