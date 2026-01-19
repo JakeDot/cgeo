@@ -10,6 +10,8 @@ import android.content.Context;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mapsforge.map.android.graphics.AndroidGraphicFactory;
@@ -19,16 +21,28 @@ import org.mapsforge.map.layer.cache.InMemoryTileCache;
 import org.mapsforge.map.view.MapView;
 import org.oscim.android.tiling.source.mbtiles.MBTilesBitmapTileSource;
 import org.oscim.layers.tile.bitmap.BitmapTileLayer;
-import org.oscim.map.Map;
 
 public class MBTilesLayerHelper {
+
+    // Cache to track which URIs have been copied to temp files to avoid re-copying on every map load
+    private static final Map<String, CachedTempFile> TEMP_FILE_CACHE = new HashMap<>();
+
+    private static class CachedTempFile {
+        final File file;
+        final long lastModified;
+
+        CachedTempFile(final File file, final long lastModified) {
+            this.file = file;
+            this.lastModified = lastModified;
+        }
+    }
 
     private MBTilesLayerHelper() {
         //no instance
     }
 
     /** returns a list of BitmapTileLayers for all .mbtiles used for background maps (VTM variant) */
-    public static ArrayList<BitmapTileLayer> getBitmapTileLayersVTM(final Context context, final Map map) {
+    public static ArrayList<BitmapTileLayer> getBitmapTileLayersVTM(final Context context, final org.oscim.map.Map map) {
         final ArrayList<BitmapTileLayer> result = new ArrayList<>();
         final File[] files = getMBTilesSources(context);
         if (files != null) {
@@ -57,12 +71,11 @@ public class MBTilesLayerHelper {
         final ArrayList<File> result = new ArrayList<>();
 
         // First, try the new location: public offline maps folder
-        // Only process if the folder is FILE-based (not SAF/content URI based)
         final Folder backgroundMapsFolder = PersistableFolder.BACKGROUND_MAPS.getFolder();
         if (backgroundMapsFolder.getBaseType() == Folder.FolderType.FILE) {
+            // For FILE-based folders, we can directly use the files
             for (ContentStorage.FileInformation fi : ContentStorage.get().list(backgroundMapsFolder)) {
                 if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
-                    // For FILE-based folders, we can directly convert the URI to a File
                     final String path = fi.uri.getPath();
                     if (path != null) {
                         final File file = new File(path);
@@ -72,12 +85,23 @@ public class MBTilesLayerHelper {
                     }
                 }
             }
+        } else {
+            // For DOCUMENT-based (SAF) folders, we need to copy files to temp cache
+            // since MBTiles libraries require File objects
+            for (ContentStorage.FileInformation fi : ContentStorage.get().list(backgroundMapsFolder)) {
+                if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
+                    final File cachedFile = getCachedTempFile(fi);
+                    if (cachedFile != null && cachedFile.exists()) {
+                        result.add(cachedFile);
+                    }
+                }
+            }
         }
 
         // Fallback to old location: app-specific media folder
         final File[] externalMediaDirs = context.getExternalMediaDirs();
         if (externalMediaDirs != null && externalMediaDirs.length > 0) {
-            final File[] legacyFiles = externalMediaDirs[0].listFiles((dir, name) -> StringUtils.endsWith(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
+            final File[] legacyFiles = externalMediaDirs[0].listFiles((dir, name) -> StringUtils.endsWithIgnoreCase(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
             if (legacyFiles != null) {
                 for (File file : legacyFiles) {
                     result.add(file);
@@ -86,6 +110,30 @@ public class MBTilesLayerHelper {
         }
 
         return result.toArray(new File[0]);
+    }
+
+    /**
+     * Gets a cached temporary file for a content:// URI.
+     * If the file is already cached and hasn't changed, returns the cached version.
+     * Otherwise, copies the content to a new temp file.
+     */
+    private static File getCachedTempFile(final ContentStorage.FileInformation fi) {
+        final String uriString = fi.uri.toString();
+        final CachedTempFile cached = TEMP_FILE_CACHE.get(uriString);
+
+        // Check if we have a valid cached file that hasn't been modified
+        if (cached != null && cached.file.exists() && cached.lastModified == fi.lastModified) {
+            Log.d("Using cached temp file for: " + fi.name);
+            return cached.file;
+        }
+
+        // Need to copy the file to temp storage
+        Log.d("Copying " + fi.name + " to temp cache for MBTiles access");
+        final File tempFile = ContentStorage.get().writeUriToTempFile(fi.uri, "mbtiles_" + fi.name);
+        if (tempFile != null) {
+            TEMP_FILE_CACHE.put(uriString, new CachedTempFile(tempFile, fi.lastModified));
+        }
+        return tempFile;
     }
 
 }
