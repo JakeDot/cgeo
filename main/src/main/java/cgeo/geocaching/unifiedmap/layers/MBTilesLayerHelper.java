@@ -1,10 +1,10 @@
 package cgeo.geocaching.unifiedmap.layers;
 
 import cgeo.geocaching.storage.ContentStorage;
+import cgeo.geocaching.storage.Folder;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.utils.FileUtils;
 import cgeo.geocaching.utils.Log;
-import cgeo.geocaching.utils.UriUtils;
 
 import android.content.Context;
 
@@ -55,13 +55,17 @@ public class MBTilesLayerHelper {
     /** returns a list of .mbtiles files found in public folder with fallback to app-specific media folder */
     private static File[] getMBTilesSources(final Context context) {
         final ArrayList<File> result = new ArrayList<>();
-        
+
         // First, try the new location: public offline maps folder
-        for (ContentStorage.FileInformation fi : ContentStorage.get().list(PersistableFolder.BACKGROUND_MAPS)) {
-            if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
-                final File file = UriUtils.toFile(fi.uri);
-                if (file != null && file.exists()) {
-                    result.add(file);
+        // Only process if the folder is FILE-based (not SAF/content URI based)
+        if (PersistableFolder.BACKGROUND_MAPS.getFolder().getBaseType() == Folder.FolderType.FILE) {
+            for (ContentStorage.FileInformation fi : ContentStorage.get().list(PersistableFolder.BACKGROUND_MAPS)) {
+                if (!fi.isDirectory && StringUtils.endsWithIgnoreCase(fi.name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION)) {
+                    // For FILE-based folders, we can directly convert the URI to a File
+                    final File file = new File(fi.uri.getPath());
+                    if (file.exists()) {
+                        result.add(file);
+                    }
                 }
             }
         }
