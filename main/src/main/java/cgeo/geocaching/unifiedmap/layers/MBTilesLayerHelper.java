@@ -10,8 +10,8 @@ import android.content.Context;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mapsforge.map.android.graphics.AndroidGraphicFactory;
@@ -24,8 +24,11 @@ import org.oscim.layers.tile.bitmap.BitmapTileLayer;
 
 public class MBTilesLayerHelper {
 
+    private static final String TAG = "MBTilesLayerHelper";
+
     // Cache to track which URIs have been copied to temp files to avoid re-copying on every map load
-    private static final Map<String, CachedTempFile> TEMP_FILE_CACHE = new HashMap<>();
+    // Using ConcurrentHashMap for thread-safety
+    private static final Map<String, CachedTempFile> TEMP_FILE_CACHE = new ConcurrentHashMap<>();
 
     private static class CachedTempFile {
         final File file;
@@ -100,7 +103,7 @@ public class MBTilesLayerHelper {
 
         // Fallback to old location: app-specific media folder
         final File[] externalMediaDirs = context.getExternalMediaDirs();
-        if (externalMediaDirs != null && externalMediaDirs.length > 0) {
+        if (externalMediaDirs != null && externalMediaDirs.length > 0 && externalMediaDirs[0] != null) {
             final File[] legacyFiles = externalMediaDirs[0].listFiles((dir, name) -> StringUtils.endsWithIgnoreCase(name, FileUtils.BACKGROUND_MAP_FILE_EXTENSION));
             if (legacyFiles != null) {
                 for (File file : legacyFiles) {
@@ -123,12 +126,12 @@ public class MBTilesLayerHelper {
 
         // Check if we have a valid cached file that hasn't been modified
         if (cached != null && cached.file.exists() && cached.lastModified == fi.lastModified) {
-            Log.d("Using cached temp file for: " + fi.name);
+            Log.d(TAG + ": Using cached temp file for: " + fi.name);
             return cached.file;
         }
 
         // Need to copy the file to temp storage
-        Log.d("Copying " + fi.name + " to temp cache for MBTiles access");
+        Log.d(TAG + ": Copying " + fi.name + " to temp cache for MBTiles access");
         final File tempFile = ContentStorage.get().writeUriToTempFile(fi.uri, "mbtiles_" + fi.name);
         if (tempFile != null) {
             TEMP_FILE_CACHE.put(uriString, new CachedTempFile(tempFile, fi.lastModified));
