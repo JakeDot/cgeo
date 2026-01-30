@@ -191,7 +191,7 @@ public class RouteItem implements Parcelable {
      * For geocaches and waypoints, returns the actual name.
      * For coordinates, returns a formatted coordinate string.
      *
-     * @return the display name
+     * @return the display name, never null
      */
     @NonNull
     public String getName() {
@@ -201,17 +201,17 @@ public class RouteItem implements Parcelable {
                 return cache.getName();
             }
             // Fallback to geocode if name not available
-            return cacheGeocode != null ? cacheGeocode : identifier;
+            if (cacheGeocode != null) {
+                return cacheGeocode;
+            }
         } else if (type == RouteItemType.WAYPOINT) {
             final Waypoint waypoint = getWaypoint();
             if (waypoint != null && waypoint.getName() != null) {
                 return waypoint.getName();
             }
-            // Fallback to identifier
-            return identifier;
         }
-        // For COORDS type, return the identifier which contains formatted coordinates
-        return identifier;
+        // For COORDS type or as final fallback, return the identifier
+        return StringUtils.defaultString(identifier);
     }
 
     private void setDetails(final INamedGeoCoordinate item) {
