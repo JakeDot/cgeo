@@ -4,7 +4,6 @@ import cgeo.geocaching.enumerations.CacheType;
 import cgeo.geocaching.location.Geopoint;
 
 import org.junit.Test;
-
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
 public class GeocacheUnitTest {
