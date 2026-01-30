@@ -83,7 +83,8 @@ public class IndividualRouteExportTask extends AsyncTaskWithProgress<RouteSegmen
             gpx.endTag(NS_GPX, "metadata");
 
             for (RouteSegment loc : trail) {
-                exportPoint(gpx, "wpt", loc.getItem().getPoint(), loc.getItem().getIdentifier());
+                // Export waypoints with cache/waypoint name for better readability and GPX compatibility
+                exportPoint(gpx, "wpt", loc.getItem().getPoint(), loc.getItem().getName());
             }
 
             gpx.startTag(NS_GPX, exportAsTrack ? "trk" : "rte");
