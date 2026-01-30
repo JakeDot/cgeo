@@ -163,6 +163,34 @@ public class RouteItem implements Parcelable {
         return point;
     }
 
+    /**
+     * Get the display name for this route item.
+     * For geocaches and waypoints, returns the actual name.
+     * For coordinates, returns a formatted coordinate string.
+     *
+     * @return the display name
+     */
+    @NonNull
+    public String getName() {
+        if (type == RouteItemType.GEOCACHE) {
+            final Geocache cache = getGeocache();
+            if (cache != null && cache.getName() != null) {
+                return cache.getName();
+            }
+            // Fallback to geocode if name not available
+            return cacheGeocode != null ? cacheGeocode : identifier;
+        } else if (type == RouteItemType.WAYPOINT) {
+            final Waypoint waypoint = getWaypoint();
+            if (waypoint != null && waypoint.getName() != null) {
+                return waypoint.getName();
+            }
+            // Fallback to identifier
+            return identifier;
+        }
+        // For COORDS type, return the identifier which contains formatted coordinates
+        return identifier;
+    }
+
     private void setDetails(final INamedGeoCoordinate item) {
         if (item instanceof Waypoint) {
             setDetails(buildIdentifier(item), item.getCoords(), RouteItemType.WAYPOINT, item.getGeocode(), ((Waypoint) item).getId(), item.getName());
