@@ -3,6 +3,7 @@ import com.getkeepsafe.dexcount.OutputFormat
 import javax.inject.Inject
 
 import static org.gradle.api.provider.ValueSourceParameters.None
+import org.gradle.api.attributes.java.TargetJvmEnvironment
 
 /*
  * Run "gradlew" or "gradlew cgeoHelp" in the parent directory for a help of how to use this build file.
@@ -60,6 +61,9 @@ android {
         buildConfigField "String[]", "TRANSLATION_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
 
         resourceConfigurations += locales
+
+        // Library modules don't have flavor dimensions, so we need to specify which default to use
+        missingDimensionStrategy 'javaCompilerTime', 'basic'
     }
 
     // signing is handled via private.properties
