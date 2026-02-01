@@ -95,7 +95,7 @@ public class IndividualRouteExportTask extends AsyncTaskWithProgress<RouteSegmen
             gpx.attribute("", "creator", "c:geo - http://www.cgeo.org/");
             gpx.attribute(NS_XSI, "schemaLocation", NS_GPX + " " + GPX_SCHEMA + " " + NS_GROUNDSPEAK + " " + GROUNDSPEAK_SCHEMA + " " + NS_GSAK + " " + GSAK_SCHEMA);
 
-            final String timeInfo = CalendarUtils.formatDateTime("yyyy-MM-dd") + "T" + CalendarUtils.formatDateTime("hh:mm:ss") + "Z";
+            final String timeInfo = CalendarUtils.formatDateTime("yyyy-MM-dd") + "T" + CalendarUtils.formatDateTime("HH:mm:ss") + "Z";
 
             gpx.startTag(NS_GPX, "metadata");
             XmlUtils.simpleText(gpx, NS_GPX, "name", "c:geo individual route");
@@ -253,6 +253,9 @@ public class IndividualRouteExportTask extends AsyncTaskWithProgress<RouteSegmen
     }
 
     private static String integerIfPossible(final double value) {
+        if (!Double.isFinite(value)) {
+            return String.format(Locale.ENGLISH, "%s", value);
+        }
         if (value == (long) value) {
             return String.format(Locale.ENGLISH, "%d", (long) value);
         }
