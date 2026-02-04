@@ -102,6 +102,8 @@ That will install the necessary build framework and display how to build c:geo.
 `gradlew assembleBasicDebug` might be a good start.
 Alternatively you can use "make" in Android Studio ("Build" => "Make Project").
 
+When building the basic debug variant with `gradlew assembleBasicDebug`, the generated APK will automatically be copied to the `artifacts/` folder in the project root for easy access.
+
 To be able to create an installable Android package (APK), you need to create a signing key first.
 In Android Studio go to "Build" => "Generate Signed Bundle & APK", select "APK", and follow the instructions.
 You will create a key storage and a project-specific key.
