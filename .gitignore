@@ -52,4 +52,4 @@ captures/
 main/usage.txt
 
 # artifacts directory - keep directory but ignore APK files
-artifacts/*.apk
+artifacts/**/*.apk
