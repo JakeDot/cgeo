@@ -333,8 +333,11 @@ tasks.register('copyBasicDebugApkToArtifacts', Copy) {
     into rootProject.file('artifacts')
 }
 
-// Make assembleBasicDebug depend on the copy task
+// Automatically copy APK to artifacts folder after assembleBasicDebug completes
 afterEvaluate {
+    tasks.named('copyBasicDebugApkToArtifacts') {
+        dependsOn tasks.named('assembleBasicDebug')
+    }
     tasks.named('assembleBasicDebug') {
         finalizedBy tasks.named('copyBasicDebugApkToArtifacts')
     }
