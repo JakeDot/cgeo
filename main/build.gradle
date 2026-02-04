@@ -325,6 +325,21 @@ androidComponents {
     }
 }
 
+// Task to copy the basic debug APK to the artifacts folder
+tasks.register('copyBasicDebugApkToArtifacts', Copy) {
+    group = 'build'
+    description = 'Copies the basic debug APK to the artifacts folder'
+    from layout.buildDirectory.file('outputs/apk/basic/debug/cgeo-debug.apk')
+    into rootProject.file('artifacts')
+}
+
+// Make assembleBasicDebug depend on the copy task
+afterEvaluate {
+    tasks.named('assembleBasicDebug') {
+        finalizedBy tasks.named('copyBasicDebugApkToArtifacts')
+    }
+}
+
 dependencies {
     // desugaring of Java 8 APIs
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
