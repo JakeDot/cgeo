@@ -556,7 +556,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         }
 
         Settings.addToHistoryList(R.string.pref_search_history_owner, userName);
-        CacheListActivity.startActivityOwner(this, userName);
+        CacheListActivity.startActivityOwner(this, Collections.singletonMap("default", userName));
         ActivityMixin.overrideTransitionToFade(this);
     }
 
@@ -564,7 +564,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         if (connectorToUsernameMap == null || connectorToUsernameMap.isEmpty()) {
             return;
         }
-        CacheListActivity.startActivityOwnerMultiConnector(this, connectorToUsernameMap);
+        CacheListActivity.startActivityOwner(this, connectorToUsernameMap);
         ActivityMixin.overrideTransitionToFade(this);
     }
 

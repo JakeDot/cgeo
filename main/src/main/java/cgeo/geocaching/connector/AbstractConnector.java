@@ -29,6 +29,7 @@ import androidx.annotation.StringRes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -365,7 +366,7 @@ public abstract class AbstractConnector implements IConnector {
         if (this instanceof ISearchByFilter) {
             final ISearchByFilter sbf = (ISearchByFilter) this;
             if (sbf.getFilterCapabilities().contains(GeocacheFilterType.OWNER)) {
-                actions.add(new UserAction(R.string.user_menu_view_hidden, R.drawable.ic_menu_owned, context -> CacheListActivity.startActivityOwner(context.getContext(), context.userName)));
+                actions.add(new UserAction(R.string.user_menu_view_hidden, R.drawable.ic_menu_owned, context -> CacheListActivity.startActivityOwner(context.getContext(), Collections.singletonMap("default", context.userName))));
             }
             if (sbf.getFilterCapabilities().contains(GeocacheFilterType.LOG_ENTRY)) {
                 actions.add(new UserAction(R.string.user_menu_view_found, R.drawable.ic_menu_emoticons, context -> CacheListActivity.startActivityFinder(context.getContext(), context.userName)));

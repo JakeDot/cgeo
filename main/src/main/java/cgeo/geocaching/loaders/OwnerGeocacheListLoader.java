@@ -18,18 +18,10 @@ import java.util.Map;
 
 public class OwnerGeocacheListLoader extends LiveFilterGeocacheListLoader {
 
-    @Nullable private final String singleUsername;
-    @Nullable private final Map<String, String> connectorUsernameMap;
+    @NonNull private final Map<String, String> connectorUsernameMap;
 
-    public OwnerGeocacheListLoader(final Activity activity, final GeocacheSort sort, @NonNull final String username) {
+    public OwnerGeocacheListLoader(final Activity activity, final GeocacheSort sort, @NonNull final Map<String, String> connectorToUsername) {
         super(activity, sort);
-        this.singleUsername = username;
-        this.connectorUsernameMap = null;
-    }
-
-    public OwnerGeocacheListLoader(final Activity activity, final GeocacheSort sort, @Nullable final Map<String, String> connectorToUsername) {
-        super(activity, sort);
-        this.singleUsername = null;
         this.connectorUsernameMap = connectorToUsername;
     }
 
@@ -40,42 +32,45 @@ public class OwnerGeocacheListLoader extends LiveFilterGeocacheListLoader {
 
     @Override
     public IGeocacheFilter getAdditionalFilterParameter() {
-        if (connectorUsernameMap != null && !connectorUsernameMap.isEmpty()) {
-            return buildMultiConnectorFilter();
-        } else if (singleUsername != null) {
-            return buildSingleUsernameFilter(singleUsername);
+        final OrGeocacheFilter aggregator = new OrGeocacheFilter();
+        
+        for (final Map.Entry<String, String> pair : connectorUsernameMap.entrySet()) {
+            final String platformName = pair.getKey();
+            final String ownerName = pair.getValue();
+            
+            final boolean skipConnectorCheck = platformName == null || platformName.equals("default");
+            
+            if (skipConnectorCheck) {
+                aggregator.addChild(createOwnerOnlyFilter(ownerName));
+                continue;
+            }
+            
+            final IConnector platform = cgeo.geocaching.connector.ConnectorFactory.getConnectorByName(platformName);
+            if (platform == null) {
+                continue;
+            }
+            
+            aggregator.addChild(createPlatformAndOwnerFilter(platform, ownerName));
         }
-        return null;
+        
+        return aggregator;
     }
-
-    private IGeocacheFilter buildSingleUsernameFilter(final String ownerName) {
+    
+    private OwnerGeocacheFilter createOwnerOnlyFilter(final String ownerName) {
         final OwnerGeocacheFilter filter = GeocacheFilterType.OWNER.create();
         filter.getStringFilter().setTextValue(ownerName);
         return filter;
     }
-
-    private IGeocacheFilter buildMultiConnectorFilter() {
-        final OrGeocacheFilter outerOr = new OrGeocacheFilter();
+    
+    private AndGeocacheFilter createPlatformAndOwnerFilter(final IConnector platform, final String ownerName) {
+        final AndGeocacheFilter combo = new AndGeocacheFilter();
         
-        for (final Map.Entry<String, String> entry : connectorUsernameMap.entrySet()) {
-            final IConnector connector = cgeo.geocaching.connector.ConnectorFactory.getConnectorByName(entry.getKey());
-            if (connector == null) {
-                continue;
-            }
-            
-            final AndGeocacheFilter innerAnd = new AndGeocacheFilter();
-            
-            final OriginGeocacheFilter connectorFilter = GeocacheFilterType.ORIGIN.create();
-            connectorFilter.addValue(connector);
-            innerAnd.addChild(connectorFilter);
-            
-            final OwnerGeocacheFilter ownerFilter = GeocacheFilterType.OWNER.create();
-            ownerFilter.getStringFilter().setTextValue(entry.getValue());
-            innerAnd.addChild(ownerFilter);
-            
-            outerOr.addChild(innerAnd);
-        }
+        final OriginGeocacheFilter platformPart = GeocacheFilterType.ORIGIN.create();
+        platformPart.addValue(platform);
+        combo.addChild(platformPart);
         
-        return outerOr;
+        combo.addChild(createOwnerOnlyFilter(ownerName));
+        
+        return combo;
     }
 }

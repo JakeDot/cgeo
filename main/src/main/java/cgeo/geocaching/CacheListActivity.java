@@ -1606,24 +1606,14 @@ public class CacheListActivity extends AbstractListActivity implements FilteredA
         context.startActivity(getActivityOfflineIntent(context));
     }
 
-    public static void startActivityOwner(final Context context, final String userName) {
-        if (!checkNonBlankUsername(context, userName)) {
+    public static void startActivityOwner(final Context context, @NonNull final Map<String, String> platformToOwnerMapping) {
+        if (platformToOwnerMapping.isEmpty()) {
             return;
         }
-        final Intent cachesIntent = new Intent(context, CacheListActivity.class);
-        Intents.putListType(cachesIntent, CacheListType.OWNER);
-        cachesIntent.putExtra(Intents.EXTRA_USERNAME, userName);
-        context.startActivity(cachesIntent);
-    }
-
-    public static void startActivityOwnerMultiConnector(final Context context, final HashMap<String, String> connectorToUsernameMap) {
-        if (connectorToUsernameMap == null || connectorToUsernameMap.isEmpty()) {
-            return;
-        }
-        final Intent cachesIntent = new Intent(context, CacheListActivity.class);
-        Intents.putListType(cachesIntent, CacheListType.OWNER);
-        cachesIntent.putExtra(Intents.EXTRA_CONNECTOR_USERNAMES, connectorToUsernameMap);
-        context.startActivity(cachesIntent);
+        final Intent intentForCaches = new Intent(context, CacheListActivity.class);
+        Intents.putListType(intentForCaches, CacheListType.OWNER);
+        intentForCaches.putExtra(Intents.EXTRA_CONNECTOR_USERNAMES, new HashMap<>(platformToOwnerMapping));
+        context.startActivity(intentForCaches);
     }
 
     public static void startActivityFilter(final Context context) {
@@ -1882,16 +1872,12 @@ public class CacheListActivity extends AbstractListActivity implements FilteredA
                     loader = new SearchFilterGeocacheListLoader(this, currentCacheFilter.get(), sortContext.getSort());
                     break;
                 case OWNER:
-                    final String ownerName = extras.getString(Intents.EXTRA_USERNAME);
                     @SuppressWarnings("unchecked")
                     final HashMap<String, String> connectorUsernames = (HashMap<String, String>) extras.getSerializable(Intents.EXTRA_CONNECTOR_USERNAMES);
                     
                     if (connectorUsernames != null && !connectorUsernames.isEmpty()) {
                         title = listNameMemento.rememberTerm(res.getString(R.string.search_own_caches));
                         loader = new OwnerGeocacheListLoader(this, sortContext.getSort(), connectorUsernames);
-                    } else if (ownerName != null) {
-                        title = listNameMemento.rememberTerm(ownerName);
-                        loader = new OwnerGeocacheListLoader(this, sortContext.getSort(), ownerName);
                     }
                     markerId = EmojiUtils.NO_EMOJI;
                     break;
