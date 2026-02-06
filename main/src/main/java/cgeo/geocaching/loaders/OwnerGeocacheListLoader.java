@@ -27,7 +27,7 @@ public class OwnerGeocacheListLoader extends LiveFilterGeocacheListLoader {
         this.connectorUsernameMap = null;
     }
 
-    public OwnerGeocacheListLoader(final Activity activity, final GeocacheSort sort, @NonNull final Map<String, String> connectorToUsername) {
+    public OwnerGeocacheListLoader(final Activity activity, final GeocacheSort sort, @Nullable final Map<String, String> connectorToUsername) {
         super(activity, sort);
         this.singleUsername = null;
         this.connectorUsernameMap = connectorToUsername;
