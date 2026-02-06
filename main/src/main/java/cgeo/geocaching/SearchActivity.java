@@ -561,11 +561,6 @@ public class SearchActivity extends AbstractNavigationBarActivity {
     }
 
     private void findByOwnerFn(final HashMap<String, String> connectorToUsernameMap) {
-        if (connectorToUsernameMap == null || connectorToUsernameMap.isEmpty()) {
-            SimpleDialog.of(this).setTitle(R.string.warn_search_help_title).setMessage(R.string.warn_search_help_user).show();
-            return;
-        }
-
         CacheListActivity.startActivityOwnerMultiConnector(this, connectorToUsernameMap);
         ActivityMixin.overrideTransitionToFade(this);
     }

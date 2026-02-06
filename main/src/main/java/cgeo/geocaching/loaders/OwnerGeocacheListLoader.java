@@ -58,10 +58,14 @@ public class OwnerGeocacheListLoader extends LiveFilterGeocacheListLoader {
         final OrGeocacheFilter outerOr = new OrGeocacheFilter();
         
         for (final Map.Entry<String, String> entry : connectorUsernameMap.entrySet()) {
+            final IConnector connector = cgeo.geocaching.connector.ConnectorFactory.getConnectorByName(entry.getKey());
+            if (connector == null) {
+                continue;
+            }
+            
             final AndGeocacheFilter innerAnd = new AndGeocacheFilter();
             
             final OriginGeocacheFilter connectorFilter = GeocacheFilterType.ORIGIN.create();
-            final IConnector connector = cgeo.geocaching.connector.ConnectorFactory.getConnectorByName(entry.getKey());
             connectorFilter.addValue(connector);
             innerAnd.addChild(connectorFilter);
             
