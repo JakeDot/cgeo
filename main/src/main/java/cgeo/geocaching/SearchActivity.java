@@ -58,6 +58,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.cardview.widget.CardView;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -471,10 +472,30 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         addSearchCardWithField(R.string.search_tb, R.drawable.trackable_all, null, this::findTrackableFn, DataStore::getSuggestionsTrackableCode, () -> Settings.getHistoryList(R.string.pref_search_history_trackable), value -> Settings.removeFromHistoryList(R.string.pref_search_history_trackable, value), new InputFilter.AllCaps());
 
         addSearchCard(R.string.search_own_caches, R.drawable.ic_menu_owned)
-                .addOnClickListener(() -> findByOwnerFn(Settings.getUserName()));
+                .addOnClickListener(() -> {
+                    final HashMap<String, String> connectorUserMap = collectActiveConnectorUsernames();
+                    if (!connectorUserMap.isEmpty()) {
+                        findByOwnerFn(connectorUserMap);
+                    } else {
+                        SimpleDialog.of(this).setTitle(R.string.warn_search_help_title).setMessage(R.string.warn_search_help_user).show();
+                    }
+                });
 
         addSearchCard(R.string.caches_history, R.drawable.ic_menu_recent_history)
                 .addOnClickListener(() -> startActivity(CacheListActivity.getHistoryIntent(this)));
+    }
+
+    private HashMap<String, String> collectActiveConnectorUsernames() {
+        final HashMap<String, String> result = new HashMap<>();
+        for (final cgeo.geocaching.connector.capability.ILogin loginConnector : ConnectorFactory.getActiveLiveConnectors()) {
+            if (loginConnector.isLoggedIn()) {
+                final String username = loginConnector.getUserName();
+                if (StringUtils.isNotBlank(username)) {
+                    result.put(loginConnector.getName(), username);
+                }
+            }
+        }
+        return result;
     }
 
     private String getGeocodeFromClipboard() {
@@ -536,6 +557,16 @@ public class SearchActivity extends AbstractNavigationBarActivity {
 
         Settings.addToHistoryList(R.string.pref_search_history_owner, userName);
         CacheListActivity.startActivityOwner(this, userName);
+        ActivityMixin.overrideTransitionToFade(this);
+    }
+
+    private void findByOwnerFn(final HashMap<String, String> connectorToUsernameMap) {
+        if (connectorToUsernameMap == null || connectorToUsernameMap.isEmpty()) {
+            SimpleDialog.of(this).setTitle(R.string.warn_search_help_title).setMessage(R.string.warn_search_help_user).show();
+            return;
+        }
+
+        CacheListActivity.startActivityOwnerMultiConnector(this, connectorToUsernameMap);
         ActivityMixin.overrideTransitionToFade(this);
     }
 
