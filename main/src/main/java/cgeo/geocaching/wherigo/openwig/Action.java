@@ -7,7 +7,8 @@ package cgeo.geocaching.wherigo.openwig;
 import cgeo.geocaching.wherigo.kahlua.vm.LuaState;
 import cgeo.geocaching.wherigo.kahlua.vm.LuaTable;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Action extends EventTable {
 
@@ -16,7 +17,7 @@ public class Action extends EventTable {
     private boolean enabled;
 
     private Thing actor = null;
-    private Vector targets = new Vector();
+    private final List<Thing> targets = new ArrayList<>();
     private boolean universal;
 
     public String text;
@@ -37,27 +38,25 @@ public class Action extends EventTable {
     public void associateWithTargets () {
         if (!hasParameter()) return;
         if (isReciprocal()) {
-            for (int j = 0; j < targets.size(); j++) {
-                Thing t = (Thing)targets.elementAt(j);
+            for (final Thing t : targets) {
                 if (!t.actions.contains(this))
-                    t.actions.addElement(this);
+                    t.actions.add(this);
             }
         }
         if (isUniversal() && !Engine.instance.cartridge.universalActions.contains(this)) {
-            Engine.instance.cartridge.universalActions.addElement(this);
+            Engine.instance.cartridge.universalActions.add(this);
         }
     }
 
     public void dissociateFromTargets () {
         if (!hasParameter()) return;
         if (isReciprocal()) {
-            for (int j = 0; j < targets.size(); j++) {
-                Thing t = (Thing)targets.elementAt(j);
-                t.actions.removeElement(this);
+            for (final Thing t : targets) {
+                t.actions.remove(this);
             }
         }
         if (isUniversal()) {
-            Engine.instance.cartridge.universalActions.removeElement(this);
+            Engine.instance.cartridge.universalActions.remove(this);
         }
     }
 
@@ -86,10 +85,10 @@ public class Action extends EventTable {
             associateWithTargets();
         } else if ("WorksWithList".equals(key)) {
             dissociateFromTargets();
-            LuaTable lt = (LuaTable)value;
+            final LuaTable lt = (LuaTable)value;
             Object i = null;
             while ((i = lt.next(i)) != null) {
-                targets.addElement(lt.rawget(i));
+                targets.add((Thing) lt.rawget(i));
             }
             associateWithTargets();
         } else if ("MakeReciprocal".equals(key)) {
