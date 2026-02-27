@@ -220,19 +220,27 @@ public final class GpxSerializer {
     }
 
     private void writeGsakExtensions(@NonNull final Waypoint waypoint) throws IOException {
-        gpx.startTag(NS_GSAK, "wptExtension");
+        writeGsakExtensions(gpx, waypoint, NS_GSAK);
+    }
 
-        gpx.startTag(NS_GSAK, "Parent");
+    /**
+     * Writes GSAK waypoint extensions to the given XmlSerializer.
+     * This method can be used by other exporters to write GSAK extensions.
+     */
+    static void writeGsakExtensions(final XmlSerializer gpx, @NonNull final Waypoint waypoint, final String nsGsak) throws IOException {
+        gpx.startTag(nsGsak, "wptExtension");
+
+        gpx.startTag(nsGsak, "Parent");
         gpx.text(waypoint.getGeocode());
-        gpx.endTag(NS_GSAK, "Parent");
+        gpx.endTag(nsGsak, "Parent");
 
         if (waypoint.isUserDefined()) {
-            gpx.startTag(NS_GSAK, "Child_ByGSAK");
+            gpx.startTag(nsGsak, "Child_ByGSAK");
             gpx.text("true");
-            gpx.endTag(NS_GSAK, "Child_ByGSAK");
+            gpx.endTag(nsGsak, "Child_ByGSAK");
         }
 
-        gpx.endTag(NS_GSAK, "wptExtension");
+        gpx.endTag(nsGsak, "wptExtension");
     }
 
     private void writeCGeoAttributes(@NonNull final Waypoint waypoint) throws IOException {
@@ -257,7 +265,7 @@ public final class GpxSerializer {
      * @return XML schema compliant boolean representation of the boolean flag. This must be either true, false, 0 or 1,
      * but no other value (also not upper case True/False).
      */
-    private static String gpxBoolean(final boolean boolFlag) {
+    static String gpxBoolean(final boolean boolFlag) {
         return boolFlag ? "true" : "false";
     }
 
@@ -442,10 +450,58 @@ public final class GpxSerializer {
         return cache.getLocation();
     }
 
-    private static String integerIfPossible(final double value) {
+    static String integerIfPossible(final double value) {
+        if (!Double.isFinite(value)) {
+            return String.format(Locale.ENGLISH, "%s", value);
+        }
         if (value == (long) value) {
             return String.format(Locale.ENGLISH, "%d", (long) value);
         }
         return String.format(Locale.ENGLISH, "%s", value);
+    }
+
+    /**
+     * Writes groundspeak cache extension to the given XmlSerializer.
+     * This is a simplified version suitable for route exports.
+     */
+    static void writeGroundspeakCache(final XmlSerializer gpx, @NonNull final Geocache cache, final String nsGroundspeak) throws IOException {
+        gpx.startTag(nsGroundspeak, "cache");
+        gpx.attribute("", "id", cache.getCacheId());
+        gpx.attribute("", "available", !cache.isDisabled() ? "True" : "False");
+        gpx.attribute("", "archived", cache.isArchived() ? "True" : "False");
+
+        XmlUtils.multipleTexts(gpx, nsGroundspeak,
+                "name", cache.getName(),
+                "placed_by", cache.getOwnerDisplayName(),
+                "type", cache.getType().pattern,
+                "container", cache.getSize().id,
+                "difficulty", integerIfPossible(cache.getDifficulty()),
+                "terrain", integerIfPossible(cache.getTerrain()));
+
+        gpx.endTag(nsGroundspeak, "cache");
+    }
+
+    /**
+     * Writes GSAK cache extensions to the given XmlSerializer.
+     * This is a simplified version suitable for route exports.
+     */
+    static void writeGsakCacheExtensions(final XmlSerializer gpx, @NonNull final Geocache cache, final String nsGsak, final SynchronizedDateFormat dateFormat) throws IOException {
+        gpx.startTag(nsGsak, "wptExtension");
+        XmlUtils.multipleTexts(gpx, nsGsak,
+                "Watch", gpxBoolean(cache.isOnWatchlist()),
+                "IsPremium", gpxBoolean(cache.isPremiumMembersOnly()),
+                "FavPoints", Integer.toString(cache.getFavoritePoints()),
+                "GcNote", StringUtils.trimToEmpty(cache.getPersonalNote()));
+
+        if (cache.isFound()) {
+            final long visited = cache.getVisitedDate();
+            if (0 != visited) {
+                gpx.startTag(nsGsak, "UserFound");
+                gpx.text(dateFormat.format(new Date(visited)));
+                gpx.endTag(nsGsak, "UserFound");
+            }
+        }
+
+        gpx.endTag(nsGsak, "wptExtension");
     }
 }

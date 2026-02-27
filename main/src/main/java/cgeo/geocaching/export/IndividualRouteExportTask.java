@@ -31,7 +31,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Locale;
 
 import org.apache.commons.io.IOUtils;
@@ -192,74 +191,15 @@ public class IndividualRouteExportTask extends AsyncTaskWithProgress<RouteSegmen
 
     private void addGeocacheExtensions(final XmlSerializer gpx, @NonNull final Geocache cache) throws IOException {
         // Add groundspeak cache extension
-        gpx.startTag(NS_GROUNDSPEAK, "cache");
-        gpx.attribute("", "id", cache.getCacheId());
-        gpx.attribute("", "available", !cache.isDisabled() ? "True" : "False");
-        gpx.attribute("", "archived", cache.isArchived() ? "True" : "False");
-
-        XmlUtils.multipleTexts(gpx, NS_GROUNDSPEAK,
-                "name", cache.getName(),
-                "placed_by", cache.getOwnerDisplayName(),
-                "type", cache.getType().pattern,
-                "container", cache.getSize().id,
-                "difficulty", integerIfPossible(cache.getDifficulty()),
-                "terrain", integerIfPossible(cache.getTerrain()));
-
-        gpx.endTag(NS_GROUNDSPEAK, "cache");
+        GpxSerializer.writeGroundspeakCache(gpx, cache, NS_GROUNDSPEAK);
 
         // Add GSAK extension
-        gpx.startTag(NS_GSAK, "wptExtension");
-        XmlUtils.multipleTexts(gpx, NS_GSAK,
-                "Watch", gpxBoolean(cache.isOnWatchlist()),
-                "IsPremium", gpxBoolean(cache.isPremiumMembersOnly()),
-                "FavPoints", Integer.toString(cache.getFavoritePoints()),
-                "GcNote", StringUtils.trimToEmpty(cache.getPersonalNote()));
-
-        if (cache.isFound()) {
-            final long visited = cache.getVisitedDate();
-            if (0 != visited) {
-                gpx.startTag(NS_GSAK, "UserFound");
-                gpx.text(dateFormatZ.format(new Date(visited)));
-                gpx.endTag(NS_GSAK, "UserFound");
-            }
-        }
-
-        gpx.endTag(NS_GSAK, "wptExtension");
+        GpxSerializer.writeGsakCacheExtensions(gpx, cache, NS_GSAK, dateFormatZ);
     }
 
     private void addWaypointExtensions(final XmlSerializer gpx, @NonNull final Waypoint waypoint) throws IOException {
         // Add GSAK extension for waypoint parent reference
-        gpx.startTag(NS_GSAK, "wptExtension");
-
-        gpx.startTag(NS_GSAK, "Parent");
-        gpx.text(waypoint.getGeocode());
-        gpx.endTag(NS_GSAK, "Parent");
-
-        if (waypoint.isUserDefined()) {
-            gpx.startTag(NS_GSAK, "Child_ByGSAK");
-            gpx.text("true");
-            gpx.endTag(NS_GSAK, "Child_ByGSAK");
-        }
-
-        gpx.endTag(NS_GSAK, "wptExtension");
-    }
-
-    /**
-     * @return XML schema compliant boolean representation of the boolean flag. This must be either true, false, 0 or 1,
-     * but no other value (also not upper case True/False).
-     */
-    private static String gpxBoolean(final boolean boolFlag) {
-        return boolFlag ? "true" : "false";
-    }
-
-    private static String integerIfPossible(final double value) {
-        if (!Double.isFinite(value)) {
-            return String.format(Locale.ENGLISH, "%s", value);
-        }
-        if (value == (long) value) {
-            return String.format(Locale.ENGLISH, "%d", (long) value);
-        }
-        return String.format(Locale.ENGLISH, "%s", value);
+        GpxSerializer.writeGsakExtensions(gpx, waypoint, NS_GSAK);
     }
 
     @Override
