@@ -436,7 +436,7 @@ public class HtmlImage implements Html.ImageGetter {
     private String makeAbsoluteURL(@NonNull final String url) {
         // Check if uri is absolute or not, if not attach the connector hostname
         if (Uri.parse(url).isAbsolute()) {
-            return url;
+            return ImageUtils.fixDropboxImageUrl(url);
         }
 
         final String hostUrl = ConnectorFactory.getConnector(geocode).getHostUrl();
