@@ -63,6 +63,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 public class TrackableActivity extends TabbedViewPagerActivity {
 
@@ -142,7 +143,7 @@ public class TrackableActivity extends TabbedViewPagerActivity {
             // check if port part needs to be removed
             String address = uri.toString();
             if (uri.getPort() > 0) {
-                address = StringUtils.remove(address, ":" + uri.getPort());
+                address = Strings.CS.remove(address, ":" + uri.getPort());
             }
             geocode = ConnectorFactory.getTrackableFromURL(address);
             final TrackableTrackingCode tbTrackingCode = ConnectorFactory.getTrackableTrackingCodeFromURL(address);
@@ -152,6 +153,9 @@ public class TrackableActivity extends TabbedViewPagerActivity {
                 geocode = uri.getQueryParameter("tracker");
                 if (StringUtils.isBlank(geocode)) {
                     geocode = uri.getQueryParameter("TB");
+                }
+                if (StringUtils.isBlank(geocode)) {
+                    geocode = uri.getQueryParameter("tb");
                 }
                 guid = uri.getQueryParameter("guid");
                 id = uri.getQueryParameter("id");
@@ -409,7 +413,6 @@ public class TrackableActivity extends TabbedViewPagerActivity {
                 activity.imageGallery.setImageCountChangeCallback((ig, c) -> reinitializeTitle());
             }
         }
-
     }
 
     @Override
@@ -448,7 +451,7 @@ public class TrackableActivity extends TabbedViewPagerActivity {
     }
 
     public static class DetailsViewCreator extends TabbedViewPagerFragment<TrackableDetailsViewBinding> {
-        private boolean descriptionTranslated = false;
+        private final boolean descriptionTranslated = false;
 
         @Override
         public TrackableDetailsViewBinding createView(@NonNull final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
@@ -684,7 +687,6 @@ public class TrackableActivity extends TabbedViewPagerActivity {
                         }
                     });
         }
-
     }
 
     public void addShareAction(final TextView view) {

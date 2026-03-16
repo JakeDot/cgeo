@@ -379,7 +379,7 @@ dependencies {
     implementation "com.squareup.leakcanary:plumber-android:$leakCanaryVersion"
 
     // Locus Maps integration
-    implementation "com.asamm:locus-api-android:0.9.55"
+    implementation 'com.github.asamm.locus-api:locus-api-android:0.9.72'
 
     // -- Mapsforge / Mapsforge --
 
@@ -548,7 +548,7 @@ dependencies {
     // For Wherigos: GIF support
     // ani gif support
     // minSdk=17 from version 1.2.16
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.30'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.31'
 
     implementation 'androidx.cardview:cardview:1.0.0'
 

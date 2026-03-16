@@ -46,8 +46,9 @@ import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -57,16 +58,16 @@ public final class Network {
     /**
      * User agent id
      */
-    public static final String USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:9.0.1) Gecko/20100101 Firefox/9.0.1 cgeo/" + BuildConfig.VERSION_NAME;
+    public static final String USER_AGENT = "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 cgeo/" + BuildConfig.VERSION_NAME;
 
     private static final Pattern PATTERN_PASSWORD = Pattern.compile("(?<=[\\?&])[Pp]ass(w(or)?d)?=[^&#$]+");
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    protected static final OkHttpClient OK_HTTP_CLIENT = getNewHttpClient();
+    static final OkHttpClient OK_HTTP_CLIENT = getNewHttpClient();
 
-    protected static final MediaType MEDIA_TYPE_APPLICATION_JSON = MediaType.parse("application/json; charset=utf-8");
-    protected static final MediaType MEDIA_TYPE_TEXT_PLAIN = MediaType.parse("text/plain; charset=utf-8");
+    static final MediaType MEDIA_TYPE_APPLICATION_JSON = MediaType.parse("application/json; charset=utf-8");
+    static final MediaType MEDIA_TYPE_TEXT_PLAIN = MediaType.parse("text/plain; charset=utf-8");
 
     private static OkHttpClient getNewHttpClient() {
         final OkHttpClient.Builder client = new OkHttpClient.Builder()
@@ -172,7 +173,6 @@ public final class Network {
                                             final String fileFieldName, final String fileContentType, final File file) {
         return postRequest(uri, params, headers, fileFieldName, fileContentType, file).flatMap(getResponseData).map(js -> mapper.readValue(js, clazz));
     }
-
 
     /**
      * POST HTTP request with Json POST DATA
@@ -463,7 +463,6 @@ public final class Network {
         return request("GET", uri, params, null, cacheFile);
     }
 
-
     /**
      * GET HTTP request
      *
@@ -610,7 +609,7 @@ public final class Network {
                 final String uri = resp.request().url().toString();
                 if (resp.isSuccessful()) {
                     final MediaType mediaType = MediaType.parse(resp.header("content-type", ""));
-                    if (mediaType == null || !StringUtils.equals(mediaType.type(), "text") || !StringUtils.equals(mediaType.subtype(), "html")) {
+                    if (mediaType == null || !Strings.CS.equals(mediaType.type(), "text") || !Strings.CS.equals(mediaType.subtype(), "html")) {
                         throw new IOException("unable to parse non HTML page with media type " + mediaType + " for " + uri);
                     }
                     final InputStream inputStream = resp.body().byteStream();
@@ -680,7 +679,7 @@ public final class Network {
     @Nullable
     public static String rfc3986URLEncode(final String text) {
         final String encoded = encode(text);
-        return encoded != null ? StringUtils.replace(encoded.replace("+", "%20"), "%7E", "~") : null;
+        return encoded != null ? Strings.CS.replace(encoded.replace("+", "%20"), "%7E", "~") : null;
     }
 
     @Nullable
@@ -716,5 +715,4 @@ public final class Network {
         final NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
-
 }

@@ -148,8 +148,8 @@ final class FormulaNode {
     // Sichtbarkeit für Formula
     @NonNull
     CharSequence evalToCharSequence(final Function<String, Value> vars, final int rangeIdx) {
-        final Object result = evalToCharSequenceInternal(vars == null ? x -> null : vars, rangeIdx);
-        if (result instanceof FormulaError.ErrorValue) {
+        final Value result = evalToCharSequenceInternal(vars == null ? x -> null : vars, rangeIdx);
+        if (FormulaError.ErrorValue.isError(result)) {
             return TextUtils.setSpan(((FormulaError.ErrorValue) result).getAsCharSequence(), FormulaError.createWarningSpan(), -1, -1, 5);
         }
         return result.toString();
@@ -170,7 +170,7 @@ final class FormulaNode {
         boolean hasError = false;
         for (FormulaNode child : children) {
             final Value v = child.evalToCharSequenceInternal(variables, rangeIdx);
-            if (v instanceof FormulaError.ErrorValue) {
+            if (FormulaError.ErrorValue.isError(v)) {
                 hasError = true;
             }
             childValues.add(v);

@@ -189,6 +189,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -308,7 +309,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             }
 
             if (uriHost.contains("geocaching.com")) {
-                if (StringUtils.startsWith(uriPath, "/geocache/gc")) {
+                if (Strings.CS.startsWith(uriPath, "/geocache/gc")) {
                     geocode = StringUtils.substringBefore(uriPath.substring(10), "_").toUpperCase(Locale.US);
                 } else {
                     geocode = uri.getQueryParameter("wp");
@@ -418,7 +419,6 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             });
         }
 
-
         // get notified on async cache changes (e.g.: waypoint creation from map or background refresh)
         getLifecycle().addObserver(new GeocacheChangedBroadcastReceiver(this, true) {
             @Override
@@ -430,7 +430,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         });
 
         // "go to" functionality deprecation notice
-        if (StringUtils.equals(geocode, InternalConnector.GEOCODE_HISTORY_CACHE)) {
+        if (Strings.CS.equals(geocode, InternalConnector.GEOCODE_HISTORY_CACHE)) {
             Dialogs.basicOneTimeMessage(this, OneTimeDialogs.DialogType.GOTO_DEPRECATION_NOTICE);
         }
     }
@@ -762,10 +762,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             menu.findItem(R.id.menu_export).setVisible(true);
 
             // submenu advanced
-            if (connector instanceof IIgnoreCapability) {
-                menu.findItem(R.id.menu_ignore).setVisible(((IIgnoreCapability) connector).canIgnoreCache(cache));
-            }
-            menu.findItem(R.id.menu_set_cache_icon).setVisible(cache.isOffline());
+            menu.findItem(R.id.menu_ignore).setVisible(connector instanceof IIgnoreCapability && ((IIgnoreCapability) connector).canIgnoreCache(cache));
+            menu.findItem(R.id.menu_set_cache_icon).setVisible(true);
             menu.findItem(R.id.menu_advanced).setVisible(cache.getCoords() != null);
         }
 
@@ -857,6 +855,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
     }
 
     private void setCacheIcon(final int newCacheIcon) {
+        ensureSaved();
         cache.setAssignedEmoji(newCacheIcon);
         saveAndNotify(LoadFlags.SAVE_ALL);
         ViewUtils.showShortToast(this, R.string.cache_icon_updated);
@@ -1776,7 +1775,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             final String compare = CacheAttribute.WIRELESSBEACON.getValue(true);
             boolean isEnabled = false;
             for (String current : cache.getAttributes()) {
-                if (StringUtils.equals(current, compare)) {
+                if (Strings.CS.equals(current, compare)) {
                     isEnabled = true;
                     break;
                 }
@@ -2068,7 +2067,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
                         }
                         binding.descriptionTranslatedByGoogle.setVisibility(translator != null ? View.VISIBLE : View.GONE);
 
-                        if (status == null || StringUtils.equals(status.getSourceLanguage().getCode(), OfflineTranslateUtils.LANGUAGE_INVALID)) {
+                        if (status == null || Strings.CS.equals(status.getSourceLanguage().getCode(), OfflineTranslateUtils.LANGUAGE_INVALID)) {
                             OfflineTranslateUtils.initializeListingTranslatorInTabbedViewPagerActivity((CacheDetailActivity) getActivity(), binding.descriptionTranslate, binding.description.getText().toString() + " " + binding.hint.getText().toString(), this::translateListing);
                         }
 
@@ -2496,7 +2495,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
 
             // user note
             final TextView userNoteView = holder.binding.userNote;
-            if (StringUtils.isNotBlank(wpt.getUserNote()) && !StringUtils.equals(wpt.getNote(), wpt.getUserNote())) {
+            if (StringUtils.isNotBlank(wpt.getUserNote()) && !Strings.CS.equals(wpt.getNote(), wpt.getUserNote())) {
                 userNoteView.setOnClickListener(new DecryptTextClickListener(userNoteView));
                 userNoteView.setVisibility(View.VISIBLE);
                 userNoteView.setText(wpt.getUserNote());
@@ -2755,7 +2754,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
         String descriptionText = cache.getDescription();
         final String shortDescriptionText = cache.getShortDescription();
         if (StringUtils.isNotBlank(shortDescriptionText)) {
-            final int index = StringUtils.indexOf(descriptionText, shortDescriptionText);
+            final int index = Strings.CS.indexOf(descriptionText, shortDescriptionText);
             // allow up to 200 characters of HTML formatting
             if (index < 0 || index > 200) {
                 descriptionText = shortDescriptionText + "\n" + descriptionText;
@@ -3158,5 +3157,4 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
     public void setNeedsRefresh() {
         refreshOnResume = true;
     }
-
 }
