@@ -80,6 +80,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.TooltipCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.util.Pair;
 import androidx.core.view.MenuCompat;
 
@@ -91,6 +92,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 public class MainActivity extends AbstractNavigationBarActivity {
 
@@ -142,8 +144,8 @@ public class MainActivity extends AbstractNavigationBarActivity {
                         private void fillView(final View connectorInfo, final ILogin conn) {
 
                             final TextView connectorStatus = connectorInfo.findViewById(R.id.item_status);
-                            final boolean isLoggingIn = StringUtils.equals(conn.getLoginStatusString(), activity.getString(R.string.init_login_popup_working));
-                            final boolean isLoggingOk = StringUtils.equals(conn.getLoginStatusString(), activity.getString(R.string.init_login_popup_ok));
+                            final boolean isLoggingIn = Strings.CS.equals(conn.getLoginStatusString(), activity.getString(R.string.init_login_popup_working));
+                            final boolean isLoggingOk = Strings.CS.equals(conn.getLoginStatusString(), activity.getString(R.string.init_login_popup_ok));
                             final StringBuilder connInfo = new StringBuilder(conn.getNameAbbreviated()).append(Formatter.SEPARATOR).append(conn.getLoginStatusString());
                             if (conn instanceof GCConnector && Network.isConnected() && !isLoggingIn && !isLoggingOk) {
                                 final Pair<String, Long> lastError = Settings.getLastLoginErrorGC();
@@ -309,6 +311,12 @@ public class MainActivity extends AbstractNavigationBarActivity {
             binding.getRoot().post(() -> Log.d("Post after MainActivity.onCreate"));
         }
 
+    }
+
+    @Override
+    @NonNull
+    protected Insets calculateInsetsForActivityContent(@NonNull final Insets def) {
+        return calculateInsetsWithToolbarInPortrait(def);
     }
 
     private void configureMessageCenterPolling() {
