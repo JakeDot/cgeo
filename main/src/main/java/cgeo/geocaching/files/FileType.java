@@ -6,6 +6,5 @@ public enum FileType {
     GPX,
     ZIP,
     MAP,
-    WHERIGO,
-    WHERIGO_ZIP
+    WHERIGO
 }

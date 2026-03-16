@@ -82,6 +82,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
@@ -797,10 +798,6 @@ public class Settings {
         return getBooleanDirect(getKey(R.string.pref_feature_wherigo_debug) + "_" + code, false);
     }
 
-    public static String getWherigoGwzCompileServiceUrl() {
-        return getString(R.string.pref_wherigo_gwz_compile_service_url, "https://wherigofoundation.com/tools/compiler.aspx");
-    }
-
 
     public static boolean isFeatureEnabledDefaultFalse(@StringRes final int featureKeyId) {
         return getBoolean(featureKeyId, false);
@@ -1479,13 +1476,13 @@ public class Settings {
 
     public static Intent getStartscreenIntent(final @NonNull Activity activity) {
         final String startscreen = getString(R.string.pref_startscreen, activity.getString(R.string.pref_value_startscreen_home));
-        if (StringUtils.equals(startscreen, activity.getString(R.string.pref_value_startscreen_stored))) {
+        if (Strings.CS.equals(startscreen, activity.getString(R.string.pref_value_startscreen_stored))) {
             return AbstractNavigationBarActivity.getBottomNavigationIntent(activity, AbstractNavigationBarActivity.MENU_LIST);
-        } else if (StringUtils.equals(startscreen, activity.getString(R.string.pref_value_startscreen_map))) {
+        } else if (Strings.CS.equals(startscreen, activity.getString(R.string.pref_value_startscreen_map))) {
             return AbstractNavigationBarActivity.getBottomNavigationIntent(activity, AbstractNavigationBarActivity.MENU_MAP);
-        } else if (StringUtils.equals(startscreen, activity.getString(R.string.pref_value_startscreen_search))) {
+        } else if (Strings.CS.equals(startscreen, activity.getString(R.string.pref_value_startscreen_search))) {
             return AbstractNavigationBarActivity.getBottomNavigationIntent(activity, AbstractNavigationBarActivity.MENU_SEARCH);
-        } else if (StringUtils.equals(startscreen, activity.getString(R.string.pref_value_startscreen_nearby))) {
+        } else if (Strings.CS.equals(startscreen, activity.getString(R.string.pref_value_startscreen_nearby))) {
             return AbstractNavigationBarActivity.getBottomNavigationIntent(activity, AbstractNavigationBarActivity.MENU_CUSTOM);
         } else {
             return AbstractNavigationBarActivity.getBottomNavigationIntent(activity, AbstractNavigationBarActivity.MENU_HOME);
@@ -2089,7 +2086,7 @@ public class Settings {
     }
 
     private static boolean outdatedPhoneModelOrSdk() {
-        return !StringUtils.equals(PHONE_MODEL_AND_SDK, getString(R.string.pref_phone_model_and_sdk, null));
+        return !Strings.CS.equals(PHONE_MODEL_AND_SDK, getString(R.string.pref_phone_model_and_sdk, null));
     }
 
     public static String getLastCacheLog() {
@@ -2182,7 +2179,7 @@ public class Settings {
     public static ArrayList<Integer> getInfoItems(final @StringRes int prefKey, final int defaultSource) {
         final ArrayList<Integer> result = new ArrayList<>();
         final String pref = getString(prefKey, "-");
-        if (StringUtils.equals(pref, "-")) {
+        if (Strings.CS.equals(pref, "-")) {
             if (defaultSource == 1) {
                 result.add(QuickLaunchItem.VALUES.MANUAL.id);
                 result.add(QuickLaunchItem.VALUES.FAQ.id);
@@ -2280,7 +2277,7 @@ public class Settings {
         }
         // check if interval is completed
         final long now = System.currentTimeMillis() / 1000;
-        return (lastCheck + (interval * DAYS_TO_SECONDS)) <= now;
+        return (lastCheck + ((long) interval * DAYS_TO_SECONDS)) <= now;
     }
 
     private static int getAutomaticBackupInterval() {
@@ -2666,7 +2663,7 @@ public class Settings {
 
     public static OfflineTranslateUtils.Language getTranslationTargetLanguage() {
         final OfflineTranslateUtils.Language rawLanguage = getTranslationTargetLanguageRaw();
-        if (StringUtils.equals(rawLanguage.getCode(), OfflineTranslateUtils.LANGUAGE_AUTOMATIC)) {
+        if (Strings.CS.equals(rawLanguage.getCode(), OfflineTranslateUtils.LANGUAGE_AUTOMATIC)) {
             return OfflineTranslateUtils.getAppLanguageOrDefault();
         }
 

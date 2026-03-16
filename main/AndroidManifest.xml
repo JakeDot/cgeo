@@ -239,10 +239,6 @@
             >
         </activity>
         <activity
-            android:name=".helper.QueryMapFile"
-            android:exported="true">
-        </activity>
-        <activity
             android:name=".EditWaypointActivity"
             android:label="@string/waypoint_edit_title"
             android:windowSoftInputMode="stateHidden" >
@@ -330,18 +326,6 @@
                 <data android:mimeType="*/*" />
                 <data android:scheme="content" />
                 <data android:pathSuffix=".gwc" />
-            </intent-filter>
-            <intent-filter android:label="c:geo Wherigo GWZ cartridge handler">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.ALTERNATIVE" />
-                <category android:name="android.intent.category.SELECTED_ALTERNATIVE" />
-
-                <data android:mimeType="*/*" />
-                <data android:scheme="content" />
-                <data android:pathSuffix=".gwz" />
             </intent-filter>
         </activity>
         <activity
