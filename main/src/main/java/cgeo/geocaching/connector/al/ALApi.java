@@ -171,8 +171,14 @@ final class ALApi {
                 for (Geocache matchedLabCache : matchedLabCaches) {
                     if (matchedLabCache.getGeocode().equals(geocode)) {
                         gc.setFound(matchedLabCache.isFound());
+                        if (matchedLabCache.isFound()) {
+                            for (final Waypoint wpt : gc.getWaypoints()) {
+                                wpt.setVisited(true);
+                            }
+                        }
                     }
                 }
+                DataStore.saveCache(gc, EnumSet.of(SaveFlag.DB));
             }
             return gc;
         } catch (final Exception ex) {
@@ -419,6 +425,12 @@ final class ALApi {
                 wpt.setGeocode(geocode);
                 wpt.setPrefix(String.valueOf(stageCounter));
                 wpt.setGeofence((float) wptResponse.get("GeofencingRadius").asDouble());
+                if (!Settings.isALCfoundStateManual()) {
+                    final JsonNode isCompleteNode = wptResponse.get("IsComplete");
+                    if (isCompleteNode != null && isCompleteNode.asBoolean()) {
+                        wpt.setVisited(true);
+                    }
+                }
 
                 final StringBuilder note = new StringBuilder("<img src=\"" + ilink + "\"></img><p><p>" + desc);
                 if (Settings.isALCAdvanced()) {
