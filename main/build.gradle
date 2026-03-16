@@ -278,39 +278,7 @@ android {
         }
     }
 
-    // remove the "-basic" flavour name from the generated APK, have the flavor remain only for special builds
-    applicationVariants.configureEach { variant ->
-        variant.outputs.configureEach { output ->
-            outputFileName = outputFileName.replace('-basic-', '-')
-        }
-    }
-
-    // special version code for nightly and rc builds
-    applicationVariants.configureEach { variant ->
-        if (variant.buildType.name == 'nightly') {
-            variant.outputs.configureEach {
-                setVersionCodeOverride(versionCodeFromDate(10000000))
-            }
-        }
-        if (variant.buildType.name == 'rc') {
-            variant.outputs.configureEach {
-                setVersionCodeOverride(versionCodeFromDate(-1))
-            }
-        }
-        if (variant.buildType.name == 'legacy') {
-            String legacyName = System.getenv('LEGACY_VERSION_NAME')
-            Integer legacyVersion = System.getenv('LEGACY_VERSION_CODE') as Integer
-            if (legacyName != null && legacyVersion != null) {
-                variant.outputs.configureEach {
-                    setVersionNameOverride(legacyName)
-                    setVersionCodeOverride(legacyVersion)
-                }
-            }
-        }
-        // debug and release builds have offset zero, no special handling here
-    }
-
-    // tests rely on JUnit-based classes
+    // tests rely on JUnit-based libraries
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
 }
@@ -322,6 +290,34 @@ androidComponents {
     }
     onVariants(selector().withBuildType("nightly")) {
         packaging.jniLibs.useLegacyPackaging.set(true)
+    }
+
+    // remove the "-basic" flavour name from the generated APK, have the flavor remain only for special builds
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(output.outputFileName.map { it.replace('-basic-', '-') })
+        }
+    }
+
+    // special version code for nightly and rc builds
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            if (variant.buildType == 'nightly') {
+                output.versionCode.set(versionCodeFromDate(10000000))
+            }
+            if (variant.buildType == 'rc') {
+                output.versionCode.set(versionCodeFromDate(-1))
+            }
+            if (variant.buildType == 'legacy') {
+                String legacyName = System.getenv('LEGACY_VERSION_NAME')
+                Integer legacyVersion = System.getenv('LEGACY_VERSION_CODE') as Integer
+                if (legacyName != null && legacyVersion != null) {
+                    output.versionCode.set(legacyVersion)
+                    output.versionName.set(legacyName)
+                }
+            }
+            // debug and release builds have offset zero, no special handling here
+        }
     }
 }
 
