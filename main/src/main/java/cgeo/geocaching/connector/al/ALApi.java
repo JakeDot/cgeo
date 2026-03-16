@@ -383,7 +383,8 @@ final class ALApi {
             cache.setDisabled(false);
             cache.setHidden(parseDate(response.get("PublishedUtc").asText()));
             cache.setOwnerDisplayName(response.get("OwnerUsername").asText());
-            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode));
+            final boolean isAdventureComplete = response.path("IsComplete").asBoolean(false);
+            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode, isAdventureComplete));
             final boolean isLinear = response.get("IsLinear").asBoolean();
             if (isLinear) {
                 cache.setAlcMode(1);
@@ -404,7 +405,7 @@ final class ALApi {
     }
 
     @Nullable
-    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode) {
+    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode, final boolean isAdventureComplete) {
         List<Waypoint> result = null;
         final Geopoint pointZero = new Geopoint(0, 0);
         int stageCounter = 0;
@@ -441,6 +442,9 @@ final class ALApi {
                     // ignore exception
                 }
                 wpt.setNote(note.toString());
+                if (isAdventureComplete || wptResponse.path("IsComplete").asBoolean(false)) {
+                    wpt.setVisited(true);
+                }
 
                 final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
                 if (!pt.equals(pointZero)) {
