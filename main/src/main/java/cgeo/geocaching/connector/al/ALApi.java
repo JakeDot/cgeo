@@ -385,12 +385,7 @@ final class ALApi {
             cache.setOwnerDisplayName(response.get("OwnerUsername").asText());
             final boolean isAdventureComplete = response.path("IsComplete").asBoolean(false);
             cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode, isAdventureComplete));
-            final boolean isLinear = response.get("IsLinear").asBoolean();
-            if (isLinear) {
-                cache.setAlcMode(1);
-            } else {
-                cache.setAlcMode(0);
-            }
+            cache.setAlcMode(response.path("IsLinear").asBoolean(false) ? 1 : 0);
             Log.d("_AL mode from JSON: IsLinear: " + cache.isLinearAlc());
             final Geocache oldCache = DataStore.loadCache(geocode, LoadFlags.LOAD_CACHE_OR_DB);
             final String personalNote = (oldCache != null && oldCache.getPersonalNote() != null) ? oldCache.getPersonalNote() : "";
@@ -406,62 +401,66 @@ final class ALApi {
 
     @Nullable
     private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode, final boolean isAdventureComplete) {
-        List<Waypoint> result = null;
+        final List<Waypoint> result = new ArrayList<>(wptsJson.size());
         final Geopoint pointZero = new Geopoint(0, 0);
         int stageCounter = 0;
         for (final JsonNode wptResponse : wptsJson) {
             stageCounter++;
-            try {
-                final Waypoint wpt = new Waypoint("S" + stageCounter + ": " + wptResponse.get(TITLE).asText(), WaypointType.PUZZLE, false);
-                final JsonNode location = wptResponse.at(LOCATION);
-                final String ilink = wptResponse.get("KeyImageUrl").asText();
-                final String desc = wptResponse.get("Description").asText();
-
-                wpt.setGeocode(geocode);
-                wpt.setPrefix(String.valueOf(stageCounter));
-                wpt.setGeofence((float) wptResponse.get("GeofencingRadius").asDouble());
-
-                final StringBuilder note = new StringBuilder("<img src=\"" + ilink + "\"></img><p><p>" + desc);
-                if (Settings.isALCAdvanced()) {
-                    note.append("<p><p>").append(wptResponse.get("Question").asText());
-                }
-
-                try {
-                    final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
-                    if (jn instanceof ArrayNode) { // implicitly covers null case as well
-                        final ArrayNode multiChoiceOptions = (ArrayNode) jn;
-                        if (!multiChoiceOptions.isEmpty()) {
-                            note.append("<ul>");
-                            for (final JsonNode mc : multiChoiceOptions) {
-                                note.append("<li>").append(mc.get("Text").asText()).append("</li>");
-                            }
-                            note.append("</ul>");
-                        }
-                    }
-                } catch (Exception ignore) {
-                    // ignore exception
-                }
-                wpt.setNote(note.toString());
-                if (isAdventureComplete || wptResponse.path("IsComplete").asBoolean(false)) {
-                    wpt.setVisited(true);
-                }
-
-                final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
-                if (!pt.equals(pointZero)) {
-                    wpt.setCoords(pt);
-                } else {
-                    wpt.setOriginalCoordsEmpty(true);
-                }
-                if (result == null) {
-                    result = new ArrayList<>();
-                }
-
-                result.add(wpt);
-            } catch (final NullPointerException e) {
-                Log.e("_AL ALApi.parseWaypoints", e);
+            final Waypoint waypoint = parseWaypoint(wptResponse, geocode, stageCounter, pointZero, isAdventureComplete);
+            if (waypoint != null) {
+                result.add(waypoint);
             }
         }
-        return result;
+        return result.isEmpty() ? null : result;
+    }
+
+    @Nullable
+    private static Waypoint parseWaypoint(final JsonNode wptResponse, final String geocode, final int stageCounter, final Geopoint pointZero, final boolean isAdventureComplete) {
+        try {
+            final Waypoint wpt = new Waypoint("S" + stageCounter + ": " + wptResponse.get(TITLE).asText(), WaypointType.PUZZLE, false);
+            final JsonNode location = wptResponse.at(LOCATION);
+
+            wpt.setGeocode(geocode);
+            wpt.setPrefix(String.valueOf(stageCounter));
+            wpt.setGeofence((float) wptResponse.get("GeofencingRadius").asDouble());
+            wpt.setNote(buildWaypointNote(wptResponse));
+            if (isAdventureComplete || wptResponse.path("IsComplete").asBoolean(false)) {
+                wpt.setVisited(true);
+            }
+
+            final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
+            if (!pt.equals(pointZero)) {
+                wpt.setCoords(pt);
+            } else {
+                wpt.setOriginalCoordsEmpty(true);
+            }
+            return wpt;
+        } catch (final NullPointerException e) {
+            Log.e("_AL ALApi.parseWaypoints", e);
+            return null;
+        }
+    }
+
+    private static String buildWaypointNote(final JsonNode wptResponse) {
+        final StringBuilder note = new StringBuilder("<img src=\"" + wptResponse.get("KeyImageUrl").asText() + "\"></img><p><p>" + wptResponse.get("Description").asText());
+        if (Settings.isALCAdvanced()) {
+            note.append("<p><p>").append(wptResponse.get("Question").asText());
+        }
+
+        appendMultiChoiceOptions(note, wptResponse.path(MULTICHOICEOPTIONS));
+        return note.toString();
+    }
+
+    private static void appendMultiChoiceOptions(final StringBuilder note, final JsonNode multiChoiceOptionsNode) {
+        if (!(multiChoiceOptionsNode instanceof ArrayNode) || multiChoiceOptionsNode.isEmpty()) {
+            return;
+        }
+        final ArrayNode multiChoiceOptions = (ArrayNode) multiChoiceOptionsNode;
+        note.append("<ul>");
+        for (final JsonNode mc : multiChoiceOptions) {
+            note.append("<li>").append(mc.get("Text").asText()).append("</li>");
+        }
+        note.append("</ul>");
     }
 
     @Nullable
