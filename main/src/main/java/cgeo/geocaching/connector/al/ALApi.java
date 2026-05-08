@@ -165,14 +165,14 @@ final class ALApi {
         try {
             final Response response = apiRequest(geocode.substring(2), null, headers).blockingGet();
             final Geocache gc = importCacheFromJSON(response);
-            if (!Settings.isALCfoundStateManual()) {
+            if (gc != null && !Settings.isALCfoundStateManual()) {
                 final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
-                for (Geocache matchedLabCache : matchedLabCaches) {
+                for (final Geocache matchedLabCache : matchedLabCaches) {
                     if (matchedLabCache.getGeocode().equals(geocode)) {
                         gc.setFound(matchedLabCache.isFound());
                         // If the Adventure Lab is found (complete), mark all waypoints as visited
                         if (matchedLabCache.isFound() && gc.hasWaypoints()) {
-                            for (Waypoint waypoint : gc.getWaypoints()) {
+                            for (final Waypoint waypoint : gc.getWaypoints()) {
                                 waypoint.setVisited(true);
                             }
                         }
