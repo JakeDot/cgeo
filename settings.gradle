@@ -10,8 +10,7 @@ plugins {
 rootProject.name = "cgeo"
 
 // included sub projects
-include ':mapswithme-api'
-include ':organicmaps-api'
+include ':wherigo'
 include ':main'
 
 // Configure the built-in local build cache to a pre-defined directory.

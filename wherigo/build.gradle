@@ -3,9 +3,8 @@ plugins {
 }
 
 android {
-    namespace = 'com.mapwithme.maps.api'
+    namespace = 'cgeo.geocaching.wherigo'
     compileSdk = 36
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,12 +16,6 @@ android {
         targetSdk = 35
     }
 
-    sourceSets.main {
-        manifest.srcFile 'AndroidManifest.xml'
-        java.srcDirs = ['src']
-        res.srcDirs = ['res']
-    }
-
     lint {
         // generally we accept lint errors when building
         abortOnError = false
@@ -30,9 +23,12 @@ android {
         // abort release builds in case of FATAL errors
         checkReleaseBuilds = true
     }
+}
 
-    dependencies {
-        // Android annotations
-        implementation 'androidx.annotation:annotation:1.9.1'
-    }
+dependencies {
+    // Android annotations
+    implementation 'androidx.annotation:annotation:1.9.1'
+
+    // Apache Commons Collections - needed for IteratorUtils used in Lua VM
+    implementation 'org.apache.commons:commons-collections4:4.5.0'
 }

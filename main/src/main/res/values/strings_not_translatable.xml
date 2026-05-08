@@ -341,4 +341,9 @@
 
     <!-- default marker -->
     <string translatable="false" name="hyphen">-</string>
+
+    <!-- Organic Maps API -->
+    <string translatable="false" name="om_should_be_installed">Organic Maps app is required to proceed. We have integrated with Organic Maps to provide you with offline maps of the entire world.\nTo continue please download the app:</string>
+    <string translatable="false" name="download">Download Organic Maps</string>
+    <string translatable="false" name="url">https://omaps.app/get?api</string>
 </resources>
