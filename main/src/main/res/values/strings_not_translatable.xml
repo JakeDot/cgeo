@@ -204,9 +204,6 @@
     <string translatable="false" name="favorite_count_percent">%1$d (%2$.0f%%)</string>
 
     <!-- cache menu -->
-    <string translatable="false" name="caches_map_mapswithme">Maps.me</string>
-    <string translatable="false" name="cache_menu_mapswithme">Maps.me</string>
-    <string translatable="false" name="caches_menu_organicmaps">Organic Maps</string>
     <string translatable="false" name="faq_link"><a href="">faq.cgeo.org</a></string>
     <string translatable="false" name="website_link"><a href="">cgeo.org</a></string>
     <string translatable="false" name="support_mail"><a href="">support@cgeo.org</a></string>
@@ -341,9 +338,4 @@
 
     <!-- default marker -->
     <string translatable="false" name="hyphen">-</string>
-
-    <!-- Organic Maps API -->
-    <string translatable="false" name="om_should_be_installed">Organic Maps app is required to proceed. We have integrated with Organic Maps to provide you with offline maps of the entire world.\nTo continue please download the app:</string>
-    <string translatable="false" name="download">Download Organic Maps</string>
-    <string translatable="false" name="url">https://omaps.app/get?api</string>
 </resources>

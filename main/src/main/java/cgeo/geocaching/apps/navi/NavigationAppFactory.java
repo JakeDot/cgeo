@@ -107,8 +107,6 @@ public final class NavigationAppFactory {
         GOOGLE_MAPS_DIRECTIONS(new GoogleMapsDirectionApp(), 13, R.string.pref_navigation_menu_google_maps_directions),
 
         PEBBLE(new PebbleApp(), 17, R.string.pref_navigation_menu_pebble),
-        MAPSWITHME(new MapsMeApp(), 22, R.string.pref_navigation_menu_mapswithme),
-        ORGANICMAP(new OrganicMapsApp(), 29, R.string.pref_navigation_menu_organicmaps),
         CRUISER(new CruiserNavigationApp(), 28, R.string.pref_navigation_menu_cruiser);
 
         NavigationAppsEnum(final App app, final int id, final int preferenceKey) {
