@@ -10,7 +10,6 @@ plugins {
 rootProject.name = "cgeo"
 
 // included sub projects
-include ':wherigo'
 include ':main'
 
 // Configure the built-in local build cache to a pre-defined directory.

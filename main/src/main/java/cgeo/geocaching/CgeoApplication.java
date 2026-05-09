@@ -34,7 +34,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.oscim.backend.CanvasAdapter;
+
 
 public class CgeoApplication extends Application {
 
@@ -166,9 +166,7 @@ public class CgeoApplication extends Application {
     }
 
     private void applyVTMScales() {
-        CanvasAdapter.userScale = Settings.getInt(R.string.pref_vtmUserScale, 100) / 100.0f;
-        CanvasAdapter.textScale = Settings.getInt(R.string.pref_vtmTextScale, 100) / 100f;
-        CanvasAdapter.symbolScale = Settings.getInt(R.string.pref_vtmSymbolScale, 100) / 100f;
+        VtmSettings.applyUserScale();
     }
 
     @Override
