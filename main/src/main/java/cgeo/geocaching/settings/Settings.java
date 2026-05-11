@@ -1828,7 +1828,7 @@ public class Settings {
     }
 
     /**
-     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeSettingsFragment}!
+     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper}!
      */
     public static void setSelectedMapRenderThemeStyle(final String prefKey, final String style) {
         putStringDirect(prefKey, style);
@@ -1842,7 +1842,7 @@ public class Settings {
     }
 
     /**
-     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeSettingsFragment}!
+     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper}!
      */
     public static String getMapRenderScalePreferenceKey(final String themeStyleId, final RenderThemeScaleType scaleType) {
         return themeStyleId + "-" + scaleType;

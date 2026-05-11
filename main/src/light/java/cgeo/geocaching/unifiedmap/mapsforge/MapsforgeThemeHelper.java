@@ -42,16 +42,4 @@ public class MapsforgeThemeHelper {
     public boolean themeOptionsAvailable() {
         return false;
     }
-
-    public static boolean isThemeSynchronizationActive() {
-        return false;
-    }
-
-    public static RenderThemeType getRenderThemeType() {
-        return RenderThemeType.RTT_NONE;
-    }
-
-    public static void resynchronizeOrDeleteMapThemeFolder() {
-        // not available in light build
-    }
 }

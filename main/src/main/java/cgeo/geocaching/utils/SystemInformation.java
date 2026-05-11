@@ -22,7 +22,6 @@ import cgeo.geocaching.storage.FolderUtils;
 import cgeo.geocaching.storage.LocalStorage;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.PersistableUri;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
 import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.utils.html.HtmlUtils;
 import cgeo.geocaching.wherigo.WherigoGame;
@@ -148,7 +147,6 @@ public final class SystemInformation {
         appendDirectory(body, "\n- System internal c:geo dir: ", LocalStorage.getInternalCgeoDirectory());
         appendDirectory(body, "\n- Legacy User storage c:geo dir: ", LocalStorage.getExternalPublicCgeoDirectory());
         appendDirectory(body, "\n- Geocache data: ", LocalStorage.getGeocacheDataDirectory());
-        appendDirectory(body, "\n- Internal theme sync (is turned " + (MapsforgeThemeHelper.isThemeSynchronizationActive() ? "ON" : "off") + "): ", LocalStorage.getMapThemeInternalSyncDir());
         body.append("\n- Map render theme path: ").append(Settings.getSelectedMapRenderTheme());
         appendPublicFolders(body);
         appendPersistedDocumentUris(body);

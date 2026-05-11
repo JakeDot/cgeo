@@ -34,7 +34,6 @@ import cgeo.geocaching.settings.fragments.PreferencesFragmentRoot;
 import cgeo.geocaching.storage.ContentStorageActivityHelper;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.PersistableUri;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
 import cgeo.geocaching.utils.BackupUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
@@ -118,7 +117,7 @@ public class SettingsActivity extends CustomMenuEntryActivity implements Prefere
                         }
                     }
                     if (PersistableFolder.OFFLINE_MAP_THEMES.equals(folder)) {
-                        MapsforgeThemeHelper.resynchronizeOrDeleteMapThemeFolder();
+                        // theme folder sync removed
                     }
                 })
                 .addSelectActionCallback(ContentStorageActivityHelper.SelectAction.SELECT_FILE, Uri.class, file -> {

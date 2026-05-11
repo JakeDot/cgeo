@@ -27,7 +27,6 @@ import cgeo.geocaching.ui.GeoItemSelectorUtils;
 import cgeo.geocaching.ui.dialog.Dialogs;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
 import cgeo.geocaching.unifiedmap.DefaultMap;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.BackupUtils;
 import cgeo.geocaching.utils.ContextLogger;
@@ -566,8 +565,7 @@ public abstract class AbstractNavigationBarActivity extends AbstractActionBarAct
             LocalStorage.migrateLocalStorage(this);
             cLog.add("mls");
 
-            //sync map Theme folder
-            MapsforgeThemeHelper.resynchronizeOrDeleteMapThemeFolder();
+            //sync map Theme folder — removed (theme selection UI removed)
             cLog.add("rth");
 
             // automated backup check

@@ -18,7 +18,6 @@ import cgeo.geocaching.utils.AngleUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -404,17 +403,6 @@ public class MapsforgeFragment extends AbstractMapFragment implements Observer {
 
     // ========================================================================
     // theme & language related methods
-
-    @Override
-    public void selectTheme(final Activity activity) {
-        themeHelper.selectMapTheme(((AbstractMapsforgeTileProvider) currentTileProvider).getTileLayer(), tileCache);
-    }
-
-    @Override
-    public void selectThemeOptions(final Activity activity) {
-        themeHelper.selectMapThemeOptions();
-        doReapplyTheme = true;
-    }
 
     @Override
     public void applyTheme() {
