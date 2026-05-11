@@ -149,7 +149,7 @@ public class WherigoGame {
     }
 
     public void notifyListeners(final NotifyType type) {
-        listeners.forEachListener(l -> l.accept(type));
+        listeners.execute(null, l -> l.accept(type));
     }
 
     public void setContextGeocode(final String geocode) {

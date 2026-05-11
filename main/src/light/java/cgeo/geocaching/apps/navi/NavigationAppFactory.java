@@ -1,5 +1,6 @@
 package cgeo.geocaching.apps.navi;
 
+import cgeo.geocaching.R;
 import cgeo.geocaching.apps.App;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.models.Geocache;
@@ -43,11 +44,17 @@ public final class NavigationAppFactory {
     }
 
     public enum NavigationAppsEnum {
-        ;
+        COMPASS(0, R.string.pref_navigation_menu_compass),
+        INTERNAL_MAP(2, R.string.pref_navigation_menu_internal_map);
 
         public final App app = NOOP_APP;
-        public final int id = -1;
-        public final int preferenceKey = -1;
+        public final int id;
+        public final int preferenceKey;
+
+        NavigationAppsEnum(final int id, final int preferenceKey) {
+            this.id = id;
+            this.preferenceKey = preferenceKey;
+        }
 
         @Override
         public String toString() {
@@ -55,7 +62,7 @@ public final class NavigationAppFactory {
         }
     }
 
-    public static void showNavigationMenu(final Activity activity, final Geocache cache, final Waypoint waypoint, final Geopoint destination, final boolean showInternalMap, final boolean showDefaultNavigation) {
+    public static void showNavigationMenu(final Activity activity, final Geocache cache, final Waypoint waypoint, final Geopoint destination, final boolean showInternalMap, final boolean showDefaultNavigation, final int menuResToEnableOnDismiss) {
         // not available in light build
     }
 
