@@ -19,9 +19,6 @@ inputs:
   MAPS_API_KEY_MARKET:
     description: Google Maps API key for ???
     required: false
-  MAPS_API2_KEY:
-    description: Google Maps API key
-    required: false
   OCDE_OKAPI_CONSUMER_KEY:
     description: OC.de OKAPI consumer key
     required: false
@@ -202,7 +199,6 @@ runs:
         # Google Maps
         maps.api.key=${{ inputs.MAPS_API_KEY }}
         maps.api.key.market=${{ inputs.MAPS_API_KEY_MARKET }}
-        maps.api2.key=${{ inputs.MAPS_API2_KEY }}
 
         # Opencaching.de
         ocde.okapi.consumer.key=${{ inputs.OCDE_OKAPI_CONSUMER_KEY }}

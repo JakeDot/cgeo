@@ -68,7 +68,6 @@ jobs:
           KEY_ALIAS_PASSWORD: ${{ secrets.KEY_ALIAS_PASSWORD }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
           MAPS_API_KEY_MARKET: ${{ secrets.MAPS_API_KEY_MARKET }}
-          MAPS_API2_KEY: ${{ secrets.MAPS_API2_KEY }}
           OCDE_OKAPI_CONSUMER_KEY: ${{ secrets.OCDE_OKAPI_CONSUMER_KEY }}
           OCDE_OKAPI_CONSUMER_SECRET: ${{ secrets.OCDE_OKAPI_CONSUMER_SECRET }}
           OCPL_OKAPI_CONSUMER_KEY: ${{ secrets.OCPL_OKAPI_CONSUMER_KEY }}

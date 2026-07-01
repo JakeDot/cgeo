@@ -2573,24 +2573,6 @@ public class Settings {
         putInt(R.string.pref_attributeFilterSources, value);
     }
 
-    public static void setSelectedGoogleMapTheme(final String mapTheme) {
-        putString(R.string.pref_google_map_theme, mapTheme);
-    }
-
-    public static String getSelectedGoogleMapTheme() {
-        return getString(R.string.pref_google_map_theme, "DEFAULT");
-    }
-
-    public static boolean isGoogleMapOptionEnabled(final String option, final boolean defaultValue) {
-        final String key = getKey(R.string.pref_google_map_option_enabled) + "." + option;
-        return getBooleanDirect(key, defaultValue);
-    }
-
-    public static void setGoogleMapOptionEnabled(final String option, final boolean enabled) {
-        final String key = getKey(R.string.pref_google_map_option_enabled) + "." + option;
-        putBooleanDirect(key, enabled);
-    }
-
     public static boolean getHintAsRot13() {
         return getBoolean(R.string.pref_rot13_hint, true);
     }

@@ -8,7 +8,6 @@ import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.utils.CollectionStream;
 import cgeo.geocaching.utils.FileUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
-import cgeo.geocaching.utils.Log;
 import cgeo.geocaching.utils.ProcessUtils;
 import cgeo.geocaching.utils.TextUtils;
 import static cgeo.geocaching.unifiedmap.mapsforge.MapsforgeFileUtils.isValidMapFile;
@@ -95,13 +94,6 @@ public class TileProviderFactory {
         // online-based map providers
         // --------------------------------------------------------------------
 
-        // Google Map based tile providers
-        if (isGoogleMapsInstalled()) {
-            registerTileProvider(new GoogleMapSource());
-            registerTileProvider(new GoogleSatelliteSource());
-            registerTileProvider(new GoogleTerrainSource());
-        }
-
         // OSM online tile providers (Mapsforge)
         if (Settings.showMapsforgeInUnifiedMap()) {
             registerTileProvider(new OsmOrgSource());
@@ -175,25 +167,6 @@ public class TileProviderFactory {
         // --------------------------------------------------------------------
         // "no map" tile provider
         registerTileProvider(new NoMapMapsforgeTileProvider());
-    }
-
-    private static boolean isGoogleMapsInstalled() {
-        // Check if API key is available
-        final String mapsKey = LocalizationUtils.getPlainString(R.string.maps_api2_key);
-        if (StringUtils.length(mapsKey) < 30 || Strings.CS.contains(mapsKey, "key")) {
-            Log.w("No Google API key available.");
-            return false;
-        }
-
-        // Check if API is available
-        try {
-            Class.forName("com.google.android.gms.maps.SupportMapFragment");
-        } catch (final ClassNotFoundException ignored) {
-            return false;
-        }
-
-        // Assume that Google Maps is available and working
-        return true;
     }
 
     private static void registerTileProvider(final AbstractTileProvider tileProvider) {
