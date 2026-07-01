@@ -34,7 +34,7 @@ import cgeo.geocaching.settings.fragments.PreferencesFragmentRoot;
 import cgeo.geocaching.storage.ContentStorageActivityHelper;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.PersistableUri;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
+import cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper;
 import cgeo.geocaching.utils.BackupUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;

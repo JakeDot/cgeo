@@ -8,7 +8,6 @@ import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.unifiedmap.tileproviders.TileProviderFactory;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
-import cgeo.geocaching.utils.PreferenceUtils;
 import cgeo.geocaching.utils.SettingsUtils;
 import cgeo.geocaching.utils.ShareUtils;
 import static cgeo.geocaching.utils.SettingsUtils.initPublicFolders;
@@ -46,17 +45,6 @@ public class PreferenceMapSourcesFragment extends BasePreferenceFragment {
         hideTileprovidersPref.setEntries(tpEntries);
         hideTileprovidersPref.setEntryValues(tpValues);
 
-        setUserDefinedTileProviderUriSummary(Settings.getUserDefinedTileProviderUri());
-        PreferenceUtils.setOnPreferenceChangeListener(findPreference(getString(R.string.pref_userDefinedTileProviderUri)), (preference, newValue) -> {
-            setUserDefinedTileProviderUriSummary(String.valueOf(newValue));
-            setFlagForRestartRequired();
-            return true;
-        });
-
-        final ListPreference unifiedMapVariants = findPreference(getString(R.string.pref_unifiedMapVariants));
-        unifiedMapVariants.setEntries(new String[]{ "Mapsforge", "VTM", "Mapsforge + VTM" });
-        unifiedMapVariants.setEntryValues(new String[]{ String.valueOf(Settings.UNIFIEDMAP_VARIANT_MAPSFORGE), String.valueOf(Settings.UNIFIEDMAP_VARIANT_VTM), String.valueOf(Settings.UNIFIEDMAP_VARIANT_BOTH) });
-        setFlagForRestartRequired(R.string.pref_unifiedMapVariants);
     }
 
     @Override
@@ -113,10 +101,6 @@ public class PreferenceMapSourcesFragment extends BasePreferenceFragment {
             return true;
         });
 
-    }
-
-    private void setUserDefinedTileProviderUriSummary(final String uri) {
-        SettingsUtils.setPrefSummary(this, R.string.pref_userDefinedTileProviderUri, LocalizationUtils.getString(R.string.settings_userDefinedTileProviderUri) + "\n\n" + uri);
     }
 
 }

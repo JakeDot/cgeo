@@ -22,7 +22,7 @@ import cgeo.geocaching.storage.FolderUtils;
 import cgeo.geocaching.storage.LocalStorage;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.PersistableUri;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
+import cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper;
 import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.utils.html.HtmlUtils;
 import cgeo.geocaching.wherigo.WherigoGame;
@@ -268,8 +268,7 @@ public final class SystemInformation {
     private static void appendMapModeSettings(@NonNull final StringBuilder body) {
         body
             .append("\n- Map mode: UnifiedMap")
-            .append(Settings.isLiveMap() ? " / live" : "")
-            .append(" / OSM multi-threading: ").append(Settings.hasOSMMultiThreading() ? Settings.getMapOsmThreads() : "off");
+            .append(Settings.isLiveMap() ? " / live" : "");
     }
 
     private static void appendMapSourceInformation(@NonNull final StringBuilder body, @NonNull final Context ctx) {

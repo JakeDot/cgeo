@@ -27,7 +27,7 @@ import cgeo.geocaching.ui.GeoItemSelectorUtils;
 import cgeo.geocaching.ui.dialog.Dialogs;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
 import cgeo.geocaching.unifiedmap.DefaultMap;
-import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
+import cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.BackupUtils;
 import cgeo.geocaching.utils.ContextLogger;

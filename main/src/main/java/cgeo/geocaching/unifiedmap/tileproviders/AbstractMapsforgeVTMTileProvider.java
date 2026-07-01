@@ -1,6 +1,5 @@
 package cgeo.geocaching.unifiedmap.tileproviders;
 
-import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.unifiedmap.AbstractMapFragment;
 import cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeVtmFragment;
 
@@ -18,7 +17,7 @@ public abstract class AbstractMapsforgeVTMTileProvider extends AbstractTileProvi
 
     public AbstractMapsforgeVTMTileProvider(final String name, final Uri uri, final int zoomMin, final int zoomMax, final Pair<String, Boolean> mapAttribution) {
         super(zoomMin, zoomMax, mapAttribution);
-        this.tileProviderName = name + (Settings.showMapsforgeInUnifiedMap() ? " (VTM)" : "");
+        this.tileProviderName = name;
         this.mapUri = uri;
     }
 

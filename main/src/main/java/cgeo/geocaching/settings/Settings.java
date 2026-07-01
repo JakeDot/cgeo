@@ -110,10 +110,6 @@ public class Settings {
     public static final int CUSTOMBNITEM_NONE = -1;
     public static final int CUSTOMBNITEM_NEARBY = 0;
 
-    public static final int UNIFIEDMAP_VARIANT_MAPSFORGE = 1;
-    public static final int UNIFIEDMAP_VARIANT_VTM = 2;
-    public static final int UNIFIEDMAP_VARIANT_BOTH = 3;
-
     public static final int HOURS_TO_SECONDS = 60 * 60;
     public static final int DAYS_TO_SECONDS = 24 * HOURS_TO_SECONDS;
 
@@ -523,7 +519,6 @@ public class Settings {
                 final Editor e = sharedPrefs.edit();
                 e.putString(getKey(R.string.pref_tileprovider), StringUtils.isBlank(tileprovider) ? "cgeo.geocaching.unifiedmap.tileproviders.GoogleMapSource" : tileprovider);
                 e.putBoolean(getKey(R.string.old_pref_useLegacyMap), false);
-                e.putString(getKey(R.string.pref_unifiedMapVariants), String.valueOf(UNIFIEDMAP_VARIANT_MAPSFORGE));
                 e.apply();
                 Log.e("Migrated map mode to UnifiedMap: " + tileprovider);
             }
@@ -1155,14 +1150,6 @@ public class Settings {
         return getInt(prefKeyId, getKeyInt(defaultValueKeyId));
     }
 
-    public static boolean hasOSMMultiThreading() {
-        return getBoolean(R.string.pref_map_osm_multithreaded, false);
-    }
-
-    public static int getMapOsmThreads() {
-        return hasOSMMultiThreading() ? Math.max(1, getInt(R.string.pref_map_osm_threads, Math.min(Runtime.getRuntime().availableProcessors() + 1, 4))) : 1;
-    }
-
     public static int getCompactIconMode() {
         final String prefValue = getString(R.string.pref_compactIconMode, "");
         if (prefValue.equals(getKey(R.string.pref_compacticon_on))) {
@@ -1280,6 +1267,14 @@ public class Settings {
         }
     }
 
+    public static boolean hasAttemptedDefaultOfflineMapDownload() {
+        return getBoolean(R.string.pref_attemptedDefaultOfflineMapDownload, false);
+    }
+
+    public static void setAttemptedDefaultOfflineMapDownload(final boolean value) {
+        putBoolean(R.string.pref_attemptedDefaultOfflineMapDownload, value);
+    }
+
     public static AbstractTileProvider getPreviousTileProvider() {
         final String tileProviderId = getString(R.string.pref_previous_tileprovider, null);
         tileProvider = TileProviderFactory.getTileProvider(tileProviderId);
@@ -1315,25 +1310,6 @@ public class Settings {
     public static int getMapLanguageId() {
         final String language = getMapLanguage();
         return StringUtils.isBlank(language) ? MAP_LANGUAGE_DEFAULT_ID : language.hashCode();
-    }
-
-    /** use Mapsforge as map view for UnifiedMap */
-    public static boolean showMapsforgeInUnifiedMap() {
-        return (getUnifiedMapVariant() & UNIFIEDMAP_VARIANT_MAPSFORGE) > 0;
-    }
-
-    /** use VTM as map view for UnifiedMap */
-    public static boolean showVTMInUnifiedMap() {
-        return (getUnifiedMapVariant() & UNIFIEDMAP_VARIANT_VTM) > 0;
-    }
-
-    /** which variants are enabled for UnifiedMap */
-    private static int getUnifiedMapVariant() {
-        try {
-            return Integer.parseInt(getString(R.string.pref_unifiedMapVariants, String.valueOf(UNIFIEDMAP_VARIANT_MAPSFORGE)));
-        } catch (NumberFormatException ignore) {
-            return UNIFIEDMAP_VARIANT_MAPSFORGE;
-        }
     }
 
     public static void setMapDownloaderSource(final int source) {

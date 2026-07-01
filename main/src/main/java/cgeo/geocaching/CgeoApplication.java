@@ -1,5 +1,6 @@
 package cgeo.geocaching;
 
+import cgeo.geocaching.downloader.DefaultOfflineMapDownloader;
 import cgeo.geocaching.network.Cookies;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.DataStore;
@@ -193,6 +194,10 @@ public class CgeoApplication extends Application {
                 // building list of tileproviders is costly, it includes file system reads
                 // + validity check for offline map files, thus preload list in background
                 AndroidRxUtils.computationScheduler.scheduleDirect(Settings::getTileProvider);
+
+                // one-time background fetch of a small default offline map, so the map isn't
+                // blank before the user downloads their own offline maps
+                DefaultOfflineMapDownloader.downloadIfNeededInBackground();
             }
         }
     }

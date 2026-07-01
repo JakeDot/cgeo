@@ -116,7 +116,6 @@ public class PreferenceAppearanceFragment extends BasePreferenceFragment {
         super.onResume();
         final FragmentActivity activity = requireActivity();
         activity.setTitle(R.string.settings_title_appearance);
-        findPreference(getString(R.string.pref_fakekey_vtmScaling)).setVisible(Settings.showVTMInUnifiedMap());
         final boolean systemTheme = Settings.isSystemTheme(activity);
         final boolean lightSkin = Settings.isLightSkin(activity);
         findPreference(getString(R.string.pref_colored_theme_light)).setVisible(systemTheme || lightSkin);

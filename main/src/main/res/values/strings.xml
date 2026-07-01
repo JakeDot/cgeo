@@ -1007,9 +1007,6 @@
     <string name="settings_title_map_style">Map style</string>
     <string name="settings_hide_tileproviders_title">Hide Map Sources</string>
     <string name="settings_hide_tileproviders_summary">Exclude one or more map sources from map source selection</string>
-    <string name="settings_unifiedMapVariants_title">UnifiedMap variants</string>
-    <string name="settings_userDefinedTileProvider">User-defined tile provider</string>
-    <string name="settings_userDefinedTileProviderUri">Enter full Uri (without trailing slash) to tile provider, or enter full Uri with parameters (including {X}, {Y} and {Z}). Make sure you have checked and comply to their usage conditions.</string>
     <string name="settings_title_data_dir">Geocache data folder</string>
     <string name="settings_title_data_dir_usage">Geocache data folder (%1$s used)</string>
     <string name="calculate_dataDir_title">Geocache data usage</string>
@@ -1424,9 +1421,6 @@
     <string name="init_cachedetail_behaviour">Behaviour</string>
     <string name="init_cachedetail_note">Personal Cache Note</string>
     <string name="init_maplines_title">Map colors customization</string>
-    <string name="init_map_other">Other</string>
-    <string name="init_map_osm_multithreaded">Multi-threaded (OSM)</string>
-    <string name="init_summary_map_osm_multithreaded">Use multiple threads to render OpenStreetMap maps</string>
     <string name="category_unifiedMap">Unified Map</string>
     <string name="localstorage_migrate_title">Migration of local files</string>
     <string name="localstorage_migrate_status_major">Version %1$d</string>

@@ -210,7 +210,6 @@
     <string translatable="false" name="pref_tileprovider">tileprovider</string>
     <string translatable="false" name="pref_previous_tileprovider">previous_tileprovider</string>
     <string translatable="false" name="pref_tileprovider_hidden">tileprovider_hidden</string>
-    <string translatable="false" name="pref_userDefinedTileProviderUri">userDefinedTileProviderUri</string>
 
     <!-- category offline maps -->
     <string translatable="false" name="pref_fakekey_info_offline_maps">fakekey_info_offline_maps</string>
@@ -218,6 +217,7 @@
     <string translatable="false" name="pref_mapDownloadsKeepTemporaryFiles">mapDownloadsKeepTemporaryFiles</string>
     <string translatable="false" name="pref_mapAutoDownloadsInterval">mapAutoDownloadsInterval</string>
     <string translatable="false" name="pref_persistablefolder_offlinemaps">persistablefolder_offlinemaps</string>
+    <string translatable="false" name="pref_attemptedDefaultOfflineMapDownload">attemptedDefaultOfflineMapDownload</string>
 
     <!-- category offline map themes -->
     <string translatable="false" name="pref_fakekey_info_offline_mapthemes">fakekey_info_offline_mapthemes</string>
@@ -234,9 +234,6 @@
     <!-- category background maps -->
     <string translatable="false" name="pref_mapbackgroundmap_show_layer">mapbackgroundmap_show_layer</string>
     <string translatable="false" name="pref_persistablefolder_backgroundmaps">persistablefolder_backgroundmaps</string>
-
-    <!-- category other -->
-    <string translatable="false" name="pref_map_osm_multithreaded">map_osm_multithreaded</string>
 
 
     <!-- ============================================================================================================================================================================== -->
@@ -570,7 +567,6 @@
     <string translatable="false" name="pref_showCircles">showCircles</string>
     <string translatable="false" name="pref_supersizeDistance">supersizeDistanceToggle</string>
     <string translatable="false" name="pref_mapLanguage">mapLanguage</string>
-    <string translatable="false" name="pref_map_osm_threads">map_osm_threads</string>
     <string translatable="false" name="pref_compactIconMode">compactIconMode</string>
     <string translatable="false" name="pref_maplive">maplive</string>
     <string translatable="false" name="pref_lastmapzoom">mapzoom</string>
@@ -589,7 +585,6 @@
     <string translatable="false" name="pref_mapCacheScaling">mapCacheScaling</string>
     <string translatable="false" name="pref_mapWpScaling">mapWpScaling</string>
     <string translatable="false" name="pref_mapScaleOnly">mapScaleOnly</string>
-    <string translatable="false" name="pref_unifiedMapVariants">unifiedMapVariants</string>
     <string translatable="false" name="pref_autorenameDownloads">autorenameDownloads</string>
     <string translatable="false" name="pref_elevationChartExpanded">elevationChartExpanded</string>
 

@@ -9,8 +9,6 @@ import cgeo.geocaching.utils.CollectionStream;
 import cgeo.geocaching.utils.FileUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.ProcessUtils;
-import cgeo.geocaching.utils.TextUtils;
-import static cgeo.geocaching.unifiedmap.mapsforge.MapsforgeFileUtils.isValidMapFile;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -22,8 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.view.MenuCompat;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +30,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.oscim.tiling.source.mapfile.MapFileTileSource;
+import org.oscim.tiling.source.mapfile.MapInfo;
 
 public class TileProviderFactory {
     public static final int MAP_LANGUAGE_DEFAULT_ID = 432198765;
@@ -60,13 +59,11 @@ public class TileProviderFactory {
             }
             if (!hide) {
                 final int id = tileProvider.getNumericalId();
-                final boolean isOfflineMap = (tileProvider instanceof AbstractMapsforgeOfflineTileProvider)
-                        || (tileProvider instanceof AbstractMapsforgeVTMOfflineTileProvider);
                 final String displayName = tileProvider.getDisplayName(null);
-                parentMenu.add(isOfflineMap ? R.id.menu_group_map_sources_offline : R.id.menu_group_map_sources_online, id, i, (displayName != null
-                        ? displayName + (tileProvider instanceof AbstractMapsforgeVTMTileProvider && Settings.showMapsforgeInUnifiedMap() ? " (VTM)" : "")
+                parentMenu.add(R.id.menu_group_map_sources_offline, id, i, displayName != null
+                        ? displayName
                         : tileProvider.getTileProviderName()
-                )).setCheckable(true).setChecked(id == currentTileProvider);
+                ).setCheckable(true).setChecked(id == currentTileProvider);
             }
             i++;
         }
@@ -91,82 +88,35 @@ public class TileProviderFactory {
         tileProviders.clear();
 
         // --------------------------------------------------------------------
-        // online-based map providers
+        // single offline map provider, combining all downloaded offline map files
         // --------------------------------------------------------------------
 
-        // OSM online tile providers (Mapsforge)
-        if (Settings.showMapsforgeInUnifiedMap()) {
-            registerTileProvider(new OsmOrgSource());
-            registerTileProvider(new OsmDeSource());
-            registerTileProvider(new CyclosmSource());
-            registerTileProvider(new OpenTopoMapSource());
-
-            if (UserDefinedMapsforgeOnlineSource.isConfigured()) {
-                registerTileProvider(new UserDefinedMapsforgeOnlineSource());
-            }
-        }
-
-        // OSM online tile providers (VTM)
-        if (Settings.showVTMInUnifiedMap()) {
-            registerTileProvider(new OsmOrgVTMSource());
-            registerTileProvider(new OsmDeVTMSource());
-            registerTileProvider(new CyclosmVTMSource());
-            registerTileProvider(new OpenTopoMapVTMSource());
-
-            if (UserDefinedMapsforgeVTMOnlineSource.isConfigured()) {
-                registerTileProvider(new UserDefinedMapsforgeVTMOnlineSource());
-            }
-        }
-
-        // --------------------------------------------------------------------
-        // offline-based map providers
-        // --------------------------------------------------------------------
-
-        // collect available offline map files
         final List<ImmutablePair<String, Uri>> temp =
                 CollectionStream.of(ContentStorage.get().list(PersistableFolder.OFFLINE_MAPS, true))
                         .filter(fi -> !fi.isDirectory && fi.name.toLowerCase(Locale.getDefault()).endsWith(FileUtils.MAP_FILE_EXTENSION) && isValidMapFile(fi.uri))
                         .map(fi -> new ImmutablePair<>(StringUtils.capitalize(StringUtils.substringBeforeLast(fi.name, ".")), fi.uri)).toList();
 
-        // OSM offline tile providers (Mapsforge)
-        if (Settings.showMapsforgeInUnifiedMap()) {
-            if (temp.size() > 1) {
-                registerTileProvider(new MapsforgeMultiOfflineTileProvider(temp));
-            }
+        registerTileProvider(new MapsforgeVTMMultiOfflineTileProvider(temp));
+    }
 
-            // sort according to displayName and register
-            final List<ImmutablePair<String, AbstractMapsforgeOfflineTileProvider>> offlineMaps = new ArrayList<>();
-            for (ImmutablePair<String, Uri> data : temp) {
-                final AbstractMapsforgeOfflineTileProvider tp = new AbstractMapsforgeOfflineTileProvider(data.left, data.right, 2, 18); // @todo: get actual values for zoomMin/zoomMax
-                offlineMaps.add(new ImmutablePair<>(tp.getDisplayName(data.left), tp));
-            }
-            Collections.sort(offlineMaps, (o1, o2) -> TextUtils.COLLATOR.compare(o1.left, o2.left));
-            for (ImmutablePair<String, AbstractMapsforgeOfflineTileProvider> data : offlineMaps) {
-                registerTileProvider(data.right);
+    /**
+     * checks whether the given Uri is a valid VTM-readable offline map file
+     */
+    private static boolean isValidMapFile(final Uri filePath) {
+        MapFileTileSource source = null;
+        try {
+            source = new MapFileTileSource();
+            source.setMapFileInputStream((FileInputStream) ContentStorage.get().openForRead(filePath, true));
+            source.open();
+            final MapInfo info = source.getMapInfo();
+            return info != null;
+        } catch (final Exception e) {
+            return false;
+        } finally {
+            if (source != null) {
+                source.close();
             }
         }
-
-        // OSM offline tile providers (VTM)
-        if (Settings.showVTMInUnifiedMap()) {
-            if (temp.size() > 1) {
-                registerTileProvider(new MapsforgeVTMMultiOfflineTileProvider(temp));
-            }
-
-            // sort according to displayName and register
-            final List<ImmutablePair<String, AbstractMapsforgeVTMOfflineTileProvider>> offlineMaps = new ArrayList<>();
-            for (ImmutablePair<String, Uri> data : temp) {
-                final AbstractMapsforgeVTMOfflineTileProvider tp = new AbstractMapsforgeVTMOfflineTileProvider(data.left, data.right, 2, 18); // @todo: get actual values for zoomMin/zoomMax
-                offlineMaps.add(new ImmutablePair<>(tp.getDisplayName(data.left), tp));
-            }
-            Collections.sort(offlineMaps, (o1, o2) -> TextUtils.COLLATOR.compare(o1.left, o2.left));
-            for (ImmutablePair<String, AbstractMapsforgeVTMOfflineTileProvider> data : offlineMaps) {
-                registerTileProvider(data.right);
-            }
-        }
-
-        // --------------------------------------------------------------------
-        // "no map" tile provider
-        registerTileProvider(new NoMapMapsforgeTileProvider());
     }
 
     private static void registerTileProvider(final AbstractTileProvider tileProvider) {
