@@ -807,24 +807,6 @@
         </service>
 
         <activity
-            android:name=".connector.oc.OCAuthorizationActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:launchMode="singleTask"
-            android:windowSoftInputMode="stateHidden"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:host="www.cgeo.org"/>
-                <data android:pathPrefix="/opencaching"/>
-                <data android:pathPrefix="/opencache"/>
-                <data android:scheme="callback" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".CreateShortcutActivity"
             android:label="@string/cgeo_shortcut"
             android:exported="true">

@@ -234,18 +234,6 @@
     <string translatable="false" name="settings_title_gc">Geocaching.com</string>
     <string translatable="false" name="settings_title_ec">Extremcaching.com</string>
     <string translatable="false" name="settings_title_lc">Geocaching.com Adventure Lab</string>
-    <string translatable="false" name="init_oc">Opencaching.de</string>
-    <string translatable="false" name="auth_ocde">opencaching.de</string>
-    <string translatable="false" name="init_oc_pl">Opencaching.pl</string>
-    <string translatable="false" name="auth_ocpl">opencaching.pl</string>
-    <string translatable="false" name="init_oc_nl">Opencaching.nl</string>
-    <string translatable="false" name="auth_ocnl">opencaching.nl</string>
-    <string translatable="false" name="init_oc_us">Opencaching.us</string>
-    <string translatable="false" name="auth_ocus">opencaching.us</string>
-    <string translatable="false" name="init_oc_ro">Opencaching.ro</string>
-    <string translatable="false" name="auth_ocro">opencaching.ro</string>
-    <string translatable="false" name="init_oc_uk">opencache.uk</string>
-    <string translatable="false" name="auth_ocuk">opencache.uk</string>
     <string translatable="false" name="init_su">Geocaching.su</string>
     <string translatable="false" name="auth_su">geocaching.su</string>
     <string translatable="false" name="init_bettercacher">BetterCacher.org</string>

@@ -1,16 +1,12 @@
 package cgeo.watchdog;
 
-import cgeo.geocaching.SearchResult;
 import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.IConnector;
 import cgeo.geocaching.connector.ec.ECConnector;
 import cgeo.geocaching.connector.gc.GCLogAPITest;
 import cgeo.geocaching.connector.internal.InternalConnector;
-import cgeo.geocaching.connector.oc.OCApiConnector;
 import cgeo.geocaching.connector.oc.OCCZConnector;
 import cgeo.geocaching.connector.trackable.TrackableConnector;
-import cgeo.geocaching.enumerations.LoadFlags;
-import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.network.Network;
 import cgeo.geocaching.test.NotForIntegrationTests;
 
@@ -31,42 +27,6 @@ public class WatchdogTest {
 
     @NotForIntegrationTests
     @Test
-    public void testOpenCachingDE() {
-        downloadOpenCaching("OC1234");
-    }
-
-    @NotForIntegrationTests
-    @Test
-    public void testOpenCachingNL() {
-        downloadOpenCaching("OB1AF6");
-    }
-
-    @NotForIntegrationTests
-    @Test
-    public void testOpenCachingPL() {
-        downloadOpenCaching("OP89HC");
-    }
-
-    @NotForIntegrationTests
-    @Test
-    public void testOpenCachingRO() {
-        downloadOpenCaching("OR011D");
-    }
-
-    @NotForIntegrationTests
-    @Test
-    public void testOpenCacheUK() {
-        downloadOpenCaching("OK0384");
-    }
-
-    @NotForIntegrationTests
-    @Test
-    public void testOpenCachingUS() {
-        downloadOpenCaching("OU0331");
-    }
-
-    @NotForIntegrationTests
-    @Test
     public void testGeocachingLogCache() {
         new GCLogAPITest().cacheLoggingLifecycleTest();
     }
@@ -75,18 +35,6 @@ public class WatchdogTest {
     @Test
     public void testGeocachingLogTrackable() {
         new GCLogAPITest().trackableLoggingLifecycleTest();
-    }
-
-    private static void downloadOpenCaching(final String geocode) {
-        final OCApiConnector connector = (OCApiConnector) ConnectorFactory.getConnector(geocode);
-        assertThat(connector).overridingErrorMessage("Did not find c:geo connector for %s", geocode).isNotNull();
-        final SearchResult searchResult = connector.searchByGeocode(geocode, null, null);
-        assertThat(searchResult).overridingErrorMessage("Failed to get response from %s", connector.getName()).isNotNull();
-        assertThat(searchResult.getCount()).overridingErrorMessage("Failed to download %s from %s", geocode, connector.getName()).isGreaterThan(0);
-
-        final Geocache geocache = searchResult.getFirstCacheFromResult(LoadFlags.LOAD_CACHE_OR_DB);
-        assertThat(geocache).isNotNull();
-        assertThat(geocache.getGeocode()).isEqualTo(geocode);
     }
 
     private static void checkWebsite(final String connectorName, final String url) {

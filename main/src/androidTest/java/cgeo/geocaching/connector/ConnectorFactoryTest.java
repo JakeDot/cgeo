@@ -2,8 +2,6 @@ package cgeo.geocaching.connector;
 
 import cgeo.geocaching.connector.gc.GCConnector;
 import cgeo.geocaching.connector.oc.OCCZConnector;
-import cgeo.geocaching.connector.oc.OCConnector;
-import cgeo.geocaching.connector.oc.OCDEConnector;
 import cgeo.geocaching.connector.unknown.UnknownConnector;
 import cgeo.geocaching.test.mock.GC1ZXX2;
 
@@ -34,12 +32,6 @@ public class ConnectorFactoryTest {
     @Test
     public void testGeocodeOpenCaching() {
         assertThat(ConnectorFactory.getConnector("OZ12345")).isInstanceOf(OCCZConnector.class); // opencaching CZ
-        assertThat(ConnectorFactory.getConnector("OZ12345")).isNotInstanceOf(OCConnector.class); // opencaching CZ got is no longer subclassed from OCConnector
-        assertThat(ConnectorFactory.getConnector("OC12345")).isInstanceOf(OCConnector.class); // opencaching DE
-        assertThat(ConnectorFactory.getConnector("OU12345")).isInstanceOf(OCConnector.class); // opencaching US
-        assertThat(ConnectorFactory.getConnector("OK12345")).isInstanceOf(OCConnector.class); // opencaching UK
-        assertThat(ConnectorFactory.getConnector("OB12345")).isInstanceOf(OCConnector.class); // opencaching NL
-        assertThat(ConnectorFactory.getConnector("OP12345")).isInstanceOf(OCConnector.class); // opencaching PL
     }
 
     @Test
@@ -83,13 +75,6 @@ public class ConnectorFactoryTest {
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://www.coord.info/GC12ABC")).isEqualTo("GC12ABC");
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://www.geocaching.com/geocache/GC12ABC_die-muhlen-im-schondratal-muhle-munchau")).isEqualTo("GC12ABC");
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://geocaching.com/geocache/GC12ABC_die-muhlen-im-schondratal-muhle-munchau")).isEqualTo("GC12ABC");
-
-        // OC
-        assertThat(ConnectorFactory.getGeocodeFromURL("https://www.opencaching.de/viewcache.php?wp=OC10F41&log=A#log1186982")).isEqualTo("OC10F41");
-        assertThat(ConnectorFactory.getGeocodeFromURL("https://www.OpenCaching.de/viewcache.php?cacheid=172530&log=A#log1186982")).isEqualTo("OC10F41");
-        assertThat(ConnectorFactory.getGeocodeFromURL("https://opencaching.de/OC10DA9")).isEqualTo("OC10DA9");
-        assertThat(new OCDEConnector().getGeocodeFromUrl("https://www.opencaching.cz/viewcache.php?cacheid=172530&log=A#log1186982")).isNull();
-        assertThat(new OCDEConnector().getGeocodeFromUrl("https://www.opencaching.cz/viewcache.php?wp=OZ10F41&log=A#log1186982")).isNull();
 
         // CZ
         assertThat(new OCCZConnector().getGeocodeFromUrl("https://www.opencaching.cz/viewcache.php?wp=OZ10F41&log=A#log1186982")).isEqualTo("OZ10F41");

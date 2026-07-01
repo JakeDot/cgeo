@@ -25,48 +25,6 @@
             app:title="@string/settings_title_lc"
             app:iconSpaceReserved="false" />
 
-        <!-- Opencaching.de -->
-        <Preference
-            android:key="@string/pref_fakekey_ocde_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencachingDeFragment"
-            app:title="@string/init_oc"
-            app:iconSpaceReserved="false" />
-
-        <!-- Opencaching.pl -->
-        <Preference
-            android:key="@string/pref_fakekey_ocpl_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencachingPlFragment"
-            app:title="@string/init_oc_pl"
-            app:iconSpaceReserved="false" />
-
-        <!-- Opencaching.nl -->
-        <Preference
-            android:key="@string/pref_fakekey_ocnl_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencachingNlFragment"
-            app:title="@string/init_oc_nl"
-            app:iconSpaceReserved="false" />
-
-        <!-- Opencaching.us -->
-        <Preference
-            android:key="@string/pref_fakekey_ocus_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencachingUsFragment"
-            app:title="@string/init_oc_us"
-            app:iconSpaceReserved="false" />
-
-        <!-- Opencaching.ro -->
-        <Preference
-            android:key="@string/pref_fakekey_ocro_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencachingRoFragment"
-            app:title="@string/init_oc_ro"
-            app:iconSpaceReserved="false" />
-
-        <!-- Opencache.uk -->
-        <Preference
-            android:key="@string/pref_fakekey_ocuk_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceOpencacheUkFragment"
-            app:title="@string/init_oc_uk"
-            app:iconSpaceReserved="false" />
-
         <!-- Extremcaching.com -->
         <Preference
             android:key="@string/pref_fakekey_ec_authorization"

@@ -1,7 +1,6 @@
 package cgeo.geocaching.connector;
 
 import cgeo.geocaching.R;
-import cgeo.geocaching.connector.oc.OkapiError.OkapiErrors;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
@@ -21,20 +20,6 @@ public class UserInfo {
 
         UserInfoStatus(@StringRes final int resId) {
             this.resId = resId;
-        }
-
-        @NonNull
-        public static UserInfoStatus getFromOkapiError(final OkapiErrors result) {
-            switch (result) {
-                case NO_ERROR:
-                    return SUCCESSFUL;
-                case INVALID_TIMESTAMP:
-                    return INVALID_TIMESTAMP;
-                case INVALID_TOKEN:
-                    return INVALID_TOKEN;
-                default:
-                    return FAILED;
-            }
         }
     }
 

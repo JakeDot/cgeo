@@ -2,8 +2,6 @@ package cgeo.geocaching.settings;
 
 import cgeo.geocaching.R;
 import cgeo.geocaching.activity.OAuthAuthorizationActivity.OAuthParameters;
-import cgeo.geocaching.connector.oc.OCAuthParams;
-import cgeo.geocaching.connector.oc.OCAuthorizationActivity;
 import cgeo.geocaching.connector.su.SuAuthorizationActivity;
 import cgeo.geocaching.connector.su.SuConnector;
 import cgeo.geocaching.utils.LocalizationUtils;
@@ -18,12 +16,6 @@ public class OAuthPreference extends AbstractClickablePreference {
 
     private enum OAuthActivityMapping {
         NONE(NO_KEY, null, null, -1, -1),
-        OCDE(R.string.pref_fakekey_ocde_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_DE_AUTH_PARAMS, -1, -1),
-        OCPL(R.string.pref_fakekey_ocpl_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_PL_AUTH_PARAMS, -1, -1),
-        OCNL(R.string.pref_fakekey_ocnl_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_NL_AUTH_PARAMS, -1, -1),
-        OCUS(R.string.pref_fakekey_ocus_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_US_AUTH_PARAMS, -1, -1),
-        OCRO(R.string.pref_fakekey_ocro_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_RO_AUTH_PARAMS, -1, -1),
-        OCUK(R.string.pref_fakekey_ocuk_authorization, OCAuthorizationActivity.class, OCAuthParams.OC_UK_AUTH_PARAMS, -1, -1),
         SU(R.string.pref_fakekey_su_authorization, SuAuthorizationActivity.class, SuAuthorizationActivity.SU_OAUTH_PARAMS, SuConnector.getInstance().getTokenPublicPrefKeyId(), SuConnector.getInstance().getTokenPublicPrefKeyId());
 
         public final int prefKeyId;
@@ -36,16 +28,8 @@ public class OAuthPreference extends AbstractClickablePreference {
             this.prefKeyId = prefKeyId;
             this.authActivity = authActivity;
             this.authParams = authParams;
-
-            final OCPreferenceKeys key = OCPreferenceKeys.getByAuthId(prefKeyId);
-            // Extract keys IDs from key for OC-based services
-            if (key != null) {
-                this.publicKeyId = key.publicTokenPrefId;
-                this.secretKeyId = key.privateTokenPrefId;
-            } else {
-                this.publicKeyId = publicKeyId;
-                this.secretKeyId = secretKeyId;
-            }
+            this.publicKeyId = publicKeyId;
+            this.secretKeyId = secretKeyId;
         }
     }
 

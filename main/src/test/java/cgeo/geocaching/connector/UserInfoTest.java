@@ -1,7 +1,5 @@
 package cgeo.geocaching.connector;
 
-import cgeo.geocaching.connector.oc.OkapiError.OkapiErrors;
-
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,31 +23,6 @@ public class UserInfoTest {
         assertThat(userInfo.getFinds()).isEqualTo(100);
         assertThat(userInfo.getStatus()).isEqualTo(UserInfo.UserInfoStatus.SUCCESSFUL);
         assertThat(userInfo.getRemainingFavoritePoints()).isEqualTo(50);
-    }
-
-    @Test
-    public void testGetFromOkapiErrorNoError() {
-        final UserInfo.UserInfoStatus status = UserInfo.UserInfoStatus.getFromOkapiError(OkapiErrors.NO_ERROR);
-        assertThat(status).isEqualTo(UserInfo.UserInfoStatus.SUCCESSFUL);
-    }
-
-    @Test
-    public void testGetFromOkapiErrorInvalidTimestamp() {
-        final UserInfo.UserInfoStatus status = UserInfo.UserInfoStatus.getFromOkapiError(OkapiErrors.INVALID_TIMESTAMP);
-        assertThat(status).isEqualTo(UserInfo.UserInfoStatus.INVALID_TIMESTAMP);
-    }
-
-    @Test
-    public void testGetFromOkapiErrorInvalidToken() {
-        final UserInfo.UserInfoStatus status = UserInfo.UserInfoStatus.getFromOkapiError(OkapiErrors.INVALID_TOKEN);
-        assertThat(status).isEqualTo(UserInfo.UserInfoStatus.INVALID_TOKEN);
-    }
-
-    @Test
-    public void testGetFromOkapiErrorOtherErrors() {
-        // Test that other errors map to FAILED
-        final UserInfo.UserInfoStatus status = UserInfo.UserInfoStatus.getFromOkapiError(OkapiErrors.UNSPECIFIED);
-        assertThat(status).isEqualTo(UserInfo.UserInfoStatus.FAILED);
     }
 
     @Test

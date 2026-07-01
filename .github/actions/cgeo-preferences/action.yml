@@ -19,42 +19,6 @@ inputs:
   MAPS_API_KEY_MARKET:
     description: Google Maps API key for ???
     required: false
-  OCDE_OKAPI_CONSUMER_KEY:
-    description: OC.de OKAPI consumer key
-    required: false
-  OCDE_OKAPI_CONSUMER_SECRET:
-    description: OC.de OKAPI consumer secret
-    required: false
-  OCPL_OKAPI_CONSUMER_KEY:
-    description: OC.pl OKAPI consumer key
-    required: false
-  OCPL_OKAPI_CONSUMER_SECRET:
-    description: OC.pl OKAPI consumer secret
-    required: false
-  OCUS_OKAPI_CONSUMER_KEY:
-    description: OC.us OKAPI consumer key
-    required: false
-  OCUS_OKAPI_CONSUMER_SECRET:
-    description: OC.us OKAPI consumer secret
-    required: false
-  OCNL_OKAPI_CONSUMER_KEY:
-    description: OC.nl OKAPI consumer key
-    required: false
-  OCNL_OKAPI_CONSUMER_SECRET:
-    description: OC.nl OKAPI consumer secret
-    required: false
-  OCRO_OKAPI_CONSUMER_KEY:
-    description: OC.ro OKAPI consumer key
-    required: false
-  OCRO_OKAPI_CONSUMER_SECRET:
-    description: OC.ro OKAPI consumer secret
-    required: false
-  OCUK_OKAPI_CONSUMER_KEY:
-    description: OC.uk OKAPI consumer key
-    required: false
-  OCUK_OKAPI_CONSUMER_SECRET:
-    description: OC.uk OKAPI consumer secret
-    required: false
   SU_CONSUMER_KEY:
     description: GC.su OKAPI consumer key
     required: false
@@ -102,17 +66,13 @@ runs:
             <boolean name="showcaptcha" value="false" />
             <long name="changelog_last_checksum" value="2686462252" />
             <string name="password">${{ inputs.PREF_PASSWORD }}</string>
-            <boolean name="connectorOCNLActive" value="false" />
             <boolean name="skin" value="false" />
             <string name="ec_icons">1</string>
-            <boolean name="connectorOCROActive" value="false" />
-            <boolean name="connectorOCPLActive" value="false" />
             <boolean name="twitter" value="false" />
             <string name="memberstatus">Premium</string>
             <string name="username">${{ inputs.PREF_USERNAME }}</string>
             <boolean name="sigautoinsert" value="true" />
             <boolean name="navigationStreetView" value="true" />
-            <boolean name="connectorOCActive" value="false" />
             <boolean name="opendetailslastpage" value="false" />
             <boolean name="connectorOXActive" value="false" />
             <boolean name="livelist" value="true" />
@@ -135,7 +95,6 @@ runs:
             <boolean name="navigationRmaps" value="true" />
             <boolean name="mapsforgeScaleText" value="true" />
             <boolean name="map_direction" value="true" />
-            <boolean name="connectorOCUKActive" value="false" />
             <string name="mapsource">658963267</string>
             <boolean name="navigationSygicWalking" value="true" />
             <boolean name="offlinemaps" value="true" />
@@ -146,7 +105,6 @@ runs:
             <boolean name="logimages" value="false" />
             <boolean name="debug" value="false" />
             <string name="webDeviceName">sdk</string>
-            <boolean name="connectorOCUSActive" value="false" />
             <int name="version" value="20140712" />
             <boolean name="navigationRadar" value="true" />
             <boolean name="navigationPebble" value="true" />
@@ -199,30 +157,6 @@ runs:
         # Google Maps
         maps.api.key=${{ inputs.MAPS_API_KEY }}
         maps.api.key.market=${{ inputs.MAPS_API_KEY_MARKET }}
-
-        # Opencaching.de
-        ocde.okapi.consumer.key=${{ inputs.OCDE_OKAPI_CONSUMER_KEY }}
-        ocde.okapi.consumer.secret=${{ inputs.OCDE_OKAPI_CONSUMER_SECRET }}
-
-        # Opencaching.pl
-        ocpl.okapi.consumer.key=${{ inputs.OCPL_OKAPI_CONSUMER_KEY }}
-        ocpl.okapi.consumer.secret=${{ inputs.OCPL_OKAPI_CONSUMER_SECRET }}
-
-        # Opencaching.us
-        ocus.okapi.consumer.key=${{ inputs.OCUS_OKAPI_CONSUMER_KEY }}
-        ocus.okapi.consumer.secret=${{ inputs.OCUS_OKAPI_CONSUMER_SECRET }}
-
-        # Opencaching.nl
-        ocnl.okapi.consumer.key=${{ inputs.OCNL_OKAPI_CONSUMER_KEY }}
-        ocnl.okapi.consumer.secret=${{ inputs.OCNL_OKAPI_CONSUMER_SECRET }}
-
-        # Opencaching.ro
-        ocro.okapi.consumer.key=${{ inputs.OCRO_OKAPI_CONSUMER_KEY }}
-        ocro.okapi.consumer.secret=${{ inputs.OCRO_OKAPI_CONSUMER_SECRET }}
-
-        # Opencache.uk
-        ocuk.okapi.consumer.key=${{ inputs.OCUK_OKAPI_CONSUMER_KEY }}
-        ocuk.okapi.consumer.secret=${{ inputs.OCUK_OKAPI_CONSUMER_SECRET }}
 
         # Geocaching.su
         su.consumer.key=${{ inputs.SU_CONSUMER_KEY }}

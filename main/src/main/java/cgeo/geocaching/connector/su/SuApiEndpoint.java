@@ -1,6 +1,6 @@
 package cgeo.geocaching.connector.su;
 
-import cgeo.geocaching.connector.oc.OCApiConnector.OAuthLevel;
+import cgeo.geocaching.connector.capability.IOAuthCapability.OAuthLevel;
 
 import androidx.annotation.NonNull;
 

@@ -74,42 +74,6 @@
     <string translatable="false" name="pref_fakekey_al_website">fakekey_al_website</string>
     <string translatable="false" name="pref_foundstate_al">foundstate_al</string>
 
-    <!-- settings for opencaching.de screen -->
-    <string translatable="false" name="preference_screen_ocde">preference_screen_ocde</string>
-    <string translatable="false" name="pref_connectorOCActive">connectorOCActive</string>
-    <string translatable="false" name="pref_fakekey_ocde_authorization">fakekey_ocde_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocde_website">fakekey_ocde_website</string>
-
-    <!-- settings for opencaching.pl screen -->
-    <string translatable="false" name="preference_screen_ocpl">preference_screen_ocpl</string>
-    <string translatable="false" name="pref_connectorOCPLActive">connectorOCPLActive</string>
-    <string translatable="false" name="pref_fakekey_ocpl_authorization">fakekey_ocpl_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocpl_website">fakekey_ocpl_website</string>
-
-    <!-- settings for opencaching.nl screen -->
-    <string translatable="false" name="preference_screen_ocnl">preference_screen_ocnl</string>
-    <string translatable="false" name="pref_connectorOCNLActive">connectorOCNLActive</string>
-    <string translatable="false" name="pref_fakekey_ocnl_authorization">fakekey_ocnl_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocnl_website">fakekey_ocnl_website</string>
-
-    <!-- settings for opencaching.us screen -->
-    <string translatable="false" name="preference_screen_ocus">preference_screen_ocus</string>
-    <string translatable="false" name="pref_connectorOCUSActive">connectorOCUSActive</string>
-    <string translatable="false" name="pref_fakekey_ocus_authorization">fakekey_ocus_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocus_website">fakekey_ocus_website</string>
-
-    <!-- settings for opencaching.ro screen -->
-    <string translatable="false" name="preference_screen_ocro">preference_screen_ocro</string>
-    <string translatable="false" name="pref_connectorOCROActive">connectorOCROActive</string>
-    <string translatable="false" name="pref_fakekey_ocro_authorization">fakekey_ocro_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocro_website">fakekey_ocro_website</string>
-
-    <!-- settings for opencache.uk screen -->
-    <string translatable="false" name="preference_screen_ocuk">preference_screen_ocuk</string>
-    <string translatable="false" name="pref_connectorOCUKActive">connectorOCUKActive</string>
-    <string translatable="false" name="pref_fakekey_ocuk_authorization">fakekey_ocuk_authorization</string>
-    <string translatable="false" name="pref_fakekey_ocuk_website">fakekey_ocuk_website</string>
-
     <!-- settings for extremcaching.com screen -->
     <string translatable="false" name="pref_fakekey_ec_authorization">fakekey_ec_authorization</string>
     <string translatable="false" name="pref_connectorECActive">connectorECActive</string>
@@ -512,36 +476,6 @@
     <string translatable="false" name="pref_gcLastLoginErrorStatus">gcLastLoginErrorStatus</string>
     <string translatable="false" name="pref_gcLastLoginError">gcLastLoginError</string>
     <string translatable="false" name="pref_gcLastLoginSuccess">gcLastLoginSuccess</string>
-
-    <string translatable="false" name="pref_ocde_tokensecret">ocde_tokensecret</string>
-    <string translatable="false" name="pref_ocde_tokenpublic">ocde_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocde_token_secret">ocde-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocde_token_public">ocde-temp-token-public</string>
-
-    <string translatable="false" name="pref_ocpl_tokensecret">ocpl_tokensecret</string>
-    <string translatable="false" name="pref_ocpl_tokenpublic">ocpl_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocpl_token_secret">ocpl-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocpl_token_public">ocpl-temp-token-public</string>
-
-    <string translatable="false" name="pref_ocnl_tokensecret">ocnl_tokensecret</string>
-    <string translatable="false" name="pref_ocnl_tokenpublic">ocnl_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocnl_token_secret">ocnl-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocnl_token_public">ocnl-temp-token-public</string>
-
-    <string translatable="false" name="pref_ocus_tokensecret">ocus_tokensecret</string>
-    <string translatable="false" name="pref_ocus_tokenpublic">ocus_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocus_token_secret">ocus-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocus_token_public">ocus-temp-token-public</string>
-
-    <string translatable="false" name="pref_ocro_tokensecret">ocro_tokensecret</string>
-    <string translatable="false" name="pref_ocro_tokenpublic">ocro_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocro_token_secret">ocro-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocro_token_public">ocro-temp-token-public</string>
-
-    <string translatable="false" name="pref_ocuk2_tokensecret">ocuk2_tokensecret</string>
-    <string translatable="false" name="pref_ocuk2_tokenpublic">ocuk2_tokenpublic</string>
-    <string translatable="false" name="pref_temp_ocuk2_token_secret">ocuk2-temp-token-secret</string>
-    <string translatable="false" name="pref_temp_ocuk2_token_public">ocuk2-temp-token-public</string>
 
     <string translatable="false" name="pref_su_tokensecret">su_tokensecret</string>
     <string translatable="false" name="pref_su_tokenpublic">su_tokenpublic</string>
