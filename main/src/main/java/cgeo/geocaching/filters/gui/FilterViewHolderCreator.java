@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class FilterViewHolderCreator {
 
     private static boolean listInfoFilled = false;
@@ -77,7 +79,7 @@ public class FilterViewHolderCreator {
                                         CacheType.EARTH, CacheType.CITO, CacheType.WEBCAM, CacheType.COMMUN_CELEBRATION, CacheType.VIRTUAL, CacheType.WHERIGO, CacheType.UNKNOWN, CacheType.ADVLAB, CacheType.USER_DEFINED))
                                 .setValueDisplayTextGetter(TypeGeocacheFilter::valueDisplayTextGetter)
                                 .setValueDrawableGetter(ct -> ImageParam.drawable(MapMarkerUtils.getCacheTypeMarker(activity.getResources(), ct))),
-                        2, null);
+                        2, null, true);
                 break;
             case SIZE:
                 result = new ChipChoiceFilterViewHolder<>(
@@ -151,7 +153,7 @@ public class FilterViewHolderCreator {
                                 .setSelectableValues(ConnectorFactory.getConnectors())
                                 .setValueDisplayTextGetter(IConnector::getDisplayName)
                                 .setValueDrawableGetter(ct -> ImageParam.id(R.drawable.ic_menu_upload)), 1,
-                        new HashSet<>(ConnectorFactory.getActiveConnectors()));
+                        new HashSet<>(ConnectorFactory.getActiveConnectors()), false);
                 break;
             case STORED_SINCE:
                 result = new DateRangeFilterViewHolder<HiddenGeocacheFilter>(true,
@@ -168,7 +170,7 @@ public class FilterViewHolderCreator {
                                 .setSelectableValues(Category.getAllCategoriesExceptUnknown())
                                 .setValueDisplayTextGetter(Category::getI18nText)
                                 .setValueDrawableGetter(c -> ImageParam.id(c.getIconId())),
-                        2, null);
+                        2, null, false);
                 break;
             case TIER:
                 result = new CheckboxFilterViewHolder<>(
@@ -176,7 +178,7 @@ public class FilterViewHolderCreator {
                                 .setSelectableValues(Tier.values())
                                 .setValueDisplayTextGetter(Tier::getI18nText)
                                 .setValueDrawableGetter(t -> ImageParam.id(t.getIconId())),
-                        2, null);
+                        2, null, false);
                 break;
             case HEALTH_SCORE:
                 result = new HealthScoreFilterViewHolder();
@@ -264,7 +266,7 @@ public class FilterViewHolderCreator {
                         .setSelectableValues(allLists)
                         .setFilterValueGetter(StoredListGeocacheFilter::getFilterLists)
                         .setFilterValueSetter(StoredListGeocacheFilter::setFilterLists)
-                        .setValueDrawableGetter(f -> f.markerId > 0 ? ImageParam.emoji(f.markerId) : ImageParam.id(R.drawable.ic_menu_list))
+                        .setValueDrawableGetter(f -> StringUtils.isNotBlank(f.emojiMarker) ? ImageParam.emoji(f.emojiMarker) : ImageParam.id(R.drawable.ic_menu_list))
                         .setValueDisplayTextGetter(f -> f.title)
                         .setGeocacheValueGetter((f, c) -> CollectionStream.of(c.getLists()).map(allListsById::get).toSet());
 
@@ -279,7 +281,7 @@ public class FilterViewHolderCreator {
                     .setSelectableValues(allNamedFilters)
                     .setFilterValueGetter(NamedFilterGeocacheFilter::getNamedFilters)
                     .setFilterValueSetter(NamedFilterGeocacheFilter::setNamedFilters)
-                    .setValueDrawableGetter(f -> f.getMarkerId() > 0 ? ImageParam.emoji(f.getMarkerId()) : ImageParam.id(R.drawable.ic_menu_marker))
+                    .setValueDrawableGetter(f -> StringUtils.isNotBlank(f.getMarkerId()) ? ImageParam.emoji(f.getMarkerId()) : ImageParam.id(R.drawable.ic_menu_marker))
                     .setValueDisplayTextGetter(NamedFilter::getName);
 
         return new NamedFilterFilterViewHolder<>(vgfa);

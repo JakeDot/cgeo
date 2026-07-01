@@ -1,6 +1,8 @@
 package cgeo.geocaching.filters.core;
 
 import cgeo.geocaching.R;
+import cgeo.geocaching.connector.IConnector;
+import cgeo.geocaching.filters.NamedFilter;
 import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.utils.JsonUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
@@ -18,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import static java.lang.Boolean.TRUE;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,14 +35,17 @@ public class GeocacheFilter implements Cloneable {
     private static final String CONFIG_KEY_ADV_MODE = "advanced";
     private static final String CONFIG_KEY_INCLUDE_INCLUSIVE = "inconclusive";
     private static final String CONFIG_KEY_TREE = "tree";
+    private static final String CONFIG_KEY_REFERENCES = "refFilter";
 
     private IGeocacheFilter tree;
 
     private final boolean openInAdvancedMode;
     private final boolean includeInconclusive;
+    private final int referencedNamedFilterId;
 
-    private GeocacheFilter(final boolean openInAdvancedMode, final boolean includeInconclusive, final IGeocacheFilter tree) {
+    private GeocacheFilter(final boolean openInAdvancedMode, final boolean includeInconclusive, final int refFilterId, final IGeocacheFilter tree) {
         this.tree = tree;
+        this.referencedNamedFilterId = refFilterId;
         this.openInAdvancedMode = openInAdvancedMode;
         this.includeInconclusive = includeInconclusive;
     }
@@ -56,9 +62,19 @@ public class GeocacheFilter implements Cloneable {
         return tree;
     }
 
+    @Nullable
+    public NamedFilter getReferencedNamedFilter() {
+        return NamedFilter.getById(referencedNamedFilterId);
+    }
+
     @NonNull
     public static GeocacheFilter create(final boolean openInAdvancedMode, final boolean includeInconclusive, final IGeocacheFilter tree) {
-        return new GeocacheFilter(openInAdvancedMode, includeInconclusive, tree);
+        return create(openInAdvancedMode, includeInconclusive, null, tree);
+    }
+
+    @NonNull
+    public static GeocacheFilter create(final boolean openInAdvancedMode, final boolean includeInconclusive, @Nullable final NamedFilter referencedNamedFilter, final IGeocacheFilter tree) {
+        return new GeocacheFilter(openInAdvancedMode, includeInconclusive, referencedNamedFilter == null ? -1 : referencedNamedFilter.getId(), tree);
     }
 
     @NonNull
@@ -68,7 +84,7 @@ public class GeocacheFilter implements Cloneable {
 
     @NonNull
     public static GeocacheFilter createEmpty(final boolean openInAdvancedMode) {
-        return new GeocacheFilter(openInAdvancedMode, false, null);
+        return new GeocacheFilter(openInAdvancedMode, false, -1, null);
     }
 
     @NonNull
@@ -79,6 +95,11 @@ public class GeocacheFilter implements Cloneable {
             //will never happen
             return createEmpty();
         }
+    }
+
+    @NonNull
+    public static GeocacheFilter createFromJson(final JsonNode node) {
+        return createInternalJson(node);
     }
 
     public static GeocacheFilter checkConfig(final String filterConfig) throws ParseException {
@@ -176,6 +197,14 @@ public class GeocacheFilter implements Cloneable {
     }
 
     public String toUserDisplayableString() {
+        final NamedFilter liveFilter = NamedFilter.getById(referencedNamedFilterId);
+        if (liveFilter != null) {
+            final String displayName = liveFilter.getNameAndMarker();
+            if (this.filtersSame(liveFilter.getFilter())) {
+                return displayName;
+            }
+            return "(" + displayName + ")*";
+        }
         if (getTree() == null) {
             return LocalizationUtils.getString(R.string.cache_filter_userdisplay_none);
         }
@@ -187,11 +216,18 @@ public class GeocacheFilter implements Cloneable {
     }
 
     public String toConfig() {
+        return JsonUtils.nodeToString(toJson());
+    }
+
+    public JsonNode toJson() {
         final ObjectNode node = JsonUtils.createObjectNode();
         JsonUtils.setBoolean(node, CONFIG_KEY_ADV_MODE, isOpenInAdvancedMode());
         JsonUtils.setBoolean(node, CONFIG_KEY_INCLUDE_INCLUSIVE, isIncludeInconclusive());
         JsonUtils.set(node, CONFIG_KEY_TREE, JsonConfigurationUtils.toJsonConfig(getTree()));
-        return JsonUtils.nodeToString(node);
+        if (referencedNamedFilterId >= 0) {
+            JsonUtils.setInt(node, CONFIG_KEY_REFERENCES, referencedNamedFilterId);
+        }
+        return node;
     }
 
 
@@ -202,11 +238,19 @@ public class GeocacheFilter implements Cloneable {
             if (throwOnParseError) {
                 throw new ParseException("Couldn't parse Json:" + pJsonConfig, -1);
             }
-            return new GeocacheFilter(false, false, null);
+            return createEmpty();
+        }
+        return createInternalJson(node);
+    }
+
+    private static GeocacheFilter createInternalJson(final JsonNode node) {
+        if (node == null) {
+            return createEmpty();
         }
 
         final boolean openInAdvancedMode = JsonUtils.getBoolean(node, CONFIG_KEY_ADV_MODE, false);
         final boolean includeInconclusive = JsonUtils.getBoolean(node, CONFIG_KEY_INCLUDE_INCLUSIVE, false);
+        final int refFilterId = JsonUtils.getInt(node, CONFIG_KEY_REFERENCES, -1);
 
         IGeocacheFilter tree = null;
         final JsonNode treeNode = node.get(CONFIG_KEY_TREE);
@@ -226,7 +270,7 @@ public class GeocacheFilter implements Cloneable {
                 return filterType.create();
             });
         }
-        return new GeocacheFilter(openInAdvancedMode, includeInconclusive, tree);
+        return new GeocacheFilter(openInAdvancedMode, includeInconclusive, refFilterId, tree);
     }
 
     /**
@@ -235,14 +279,22 @@ public class GeocacheFilter implements Cloneable {
      * * If this is an AND filter, extract the "AND" chain of Base filters.
      * * Otherwise return an empty list
      */
-    public List<BaseGeocacheFilter> getAndChainIfPossible() {
+    public List<BaseGeocacheFilter> getAndChainIfPossible(final IConnector connector) {
         final List<BaseGeocacheFilter> result = new ArrayList<>();
-        getAndChainIfPossibleInternal(this.getTree(), result);
+        final Function<IGeocacheFilter, Boolean> function = f -> {
+            if (connector != null && f instanceof OriginGeocacheFilter && !((OriginGeocacheFilter) f).allowsCachesOf(connector)) {
+                return false;
+            }
+            return null;
+        };
+        if (this.getTree() != null) {
+            getAndChainIfPossibleInternal(this.getTree().simplify(function), result);
+        }
         return result;
     }
 
     /**
-     * Helper method to be used in conjunction with {@link #getAndChainIfPossible()} by search providers
+     * Helper method to be used in conjunction with {@link #getAndChainIfPossible(IConnector)} ()} by search providers
      * only offering SPECIFIC filter capabilities. This method searches and returns specific base filters contained in a given filter list
      */
     @SuppressWarnings("unchecked")
@@ -300,7 +352,7 @@ public class GeocacheFilter implements Cloneable {
      */
     public Map<QuickFilter, Boolean> getQuickFilter() {
         final Map<QuickFilter, Boolean> result = new HashMap<>();
-        final StatusGeocacheFilter statusFilter = findInChain(getAndChainIfPossible(), StatusGeocacheFilter.class);
+        final StatusGeocacheFilter statusFilter = findInChain(getAndChainIfPossible(null), StatusGeocacheFilter.class);
         result.put(QuickFilter.FOUND, statusFilter == null || !Boolean.FALSE.equals(statusFilter.getStatusFound()));
         result.put(QuickFilter.OWNED, statusFilter == null || !Boolean.FALSE.equals(statusFilter.getStatusOwned()));
         result.put(QuickFilter.HAS_OFFLINE_FOUND_LOG, statusFilter == null || !Boolean.FALSE.equals(statusFilter.getStatusHasOfflineFoundLog()));
@@ -323,7 +375,7 @@ public class GeocacheFilter implements Cloneable {
             return;
         }
 
-        StatusGeocacheFilter statusFilter = findInChain(getAndChainIfPossible(), StatusGeocacheFilter.class);
+        StatusGeocacheFilter statusFilter = findInChain(getAndChainIfPossible(null), StatusGeocacheFilter.class);
         if (statusFilter == null) {
             statusFilter = GeocacheFilterType.STATUS.create();
             and(statusFilter);

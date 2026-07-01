@@ -127,6 +127,11 @@
                 android:enabled="false"
                 app:showAsAction="never"/>
             <item
+                android:id="@+id/menu_recalculate_health_score"
+                android:title="@string/caches_recalculate_health_score"
+                android:enabled="false"
+                app:showAsAction="never|withText"/>
+            <item
                 android:id="@+id/menu_create_internal_cache"
                 android:title="@string/create_internal_cache"
                 app:showAsAction="ifRoom|withText"/>
@@ -152,17 +157,8 @@
                 android:title="@string/list_menu_rename"
                 app:showAsAction="ifRoom|withText"/>
             <item
-                android:id="@+id/menu_rename_list_prefix"
-                android:title="@string/list_menu_rename_list_prefix"
-                app:showAsAction="never|withText"/>
-            <item
                 android:id="@+id/menu_make_list_unique"
                 android:title="@string/caches_make_list_unique"
-                android:enabled="false"
-                app:showAsAction="never|withText"/>
-            <item
-                android:id="@+id/menu_recalculate_health_score"
-                android:title="@string/caches_recalculate_health_score"
                 android:enabled="false"
                 app:showAsAction="never|withText"/>
             <item
@@ -174,6 +170,10 @@
                 android:title="@string/caches_askdeletion"
                 app:showAsAction="never"
                 android:visible="false"/>
+            <item
+                android:id="@+id/menu_rename_parent_lists"
+                android:title="@string/list_menu_rename_parent_lists"
+                app:showAsAction="never|withText"/>
         </menu>
     </item>
     <item
