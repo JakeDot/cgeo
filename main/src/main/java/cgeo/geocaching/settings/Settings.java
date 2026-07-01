@@ -27,7 +27,6 @@ import cgeo.geocaching.maps.routing.RoutingMode;
 import cgeo.geocaching.models.Download;
 import cgeo.geocaching.models.InfoItem;
 import cgeo.geocaching.network.HtmlImage;
-import cgeo.geocaching.playservices.GooglePlayServices;
 import cgeo.geocaching.sensors.DirectionData;
 import cgeo.geocaching.sensors.MagnetometerAndAccelerometerProvider;
 import cgeo.geocaching.sensors.OrientationProvider;
@@ -119,8 +118,6 @@ public class Settings {
     public static final int DAYS_TO_SECONDS = 24 * HOURS_TO_SECONDS;
 
     private static final int HISTORY_SIZE = 50;
-
-    private static final String PHONE_MODEL_AND_SDK = Build.MODEL + "/" + Build.VERSION.SDK_INT;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -860,17 +857,6 @@ public class Settings {
     @NonNull
     public static String getSignature() {
         return StringUtils.defaultString(getString(R.string.pref_signature, StringUtils.EMPTY));
-    }
-
-    public static void setUseGooglePlayServices(final boolean value) {
-        putBoolean(R.string.pref_googleplayservices, value);
-    }
-
-    public static boolean useGooglePlayServices() {
-        if (!GooglePlayServices.isAvailable()) {
-            return false;
-        }
-        return outdatedPhoneModelOrSdk() || getBoolean(R.string.pref_googleplayservices, true);
     }
 
     public static boolean useLowPowerMode() {
@@ -2092,10 +2078,6 @@ public class Settings {
 
     public static void clearRecentlyViewedHistory() {
         putStringList(R.string.pref_caches_history, new ArrayList<>());
-    }
-
-    private static boolean outdatedPhoneModelOrSdk() {
-        return !Strings.CS.equals(PHONE_MODEL_AND_SDK, getString(R.string.pref_phone_model_and_sdk, null));
     }
 
     public static String getLastCacheLog() {

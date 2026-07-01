@@ -84,11 +84,6 @@
             android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIsvD_aUSDMwWOf9NkwwxZ4kJJI_AG2EaxjSu2jw" />
 
-        <!-- required Google Play Services version. Updated automatically due to referring to version declaration in dependency. -->
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
-
         <!-- support also very wide screen devices. https://developer.android.com/guide/practices/screens_support.html#MaxAspectRatio -->
         <meta-data
             android:name="android.max_aspect"

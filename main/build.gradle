@@ -459,13 +459,6 @@ dependencies {
     // For local unit tests
     testImplementation "com.squareup.okhttp3:mockwebserver3:$okhttpVersion"
 
-    // Play Services
-    implementation 'com.google.android.gms:play-services-location:21.4.0'
-    // somehow there is a transitive play service dependency which we don't want
-    configurations.configureEach {
-        exclude module: "play-services-measurement"
-    }
-
     // Support Library Design
     implementation 'com.google.android.material:material:1.14.0'
 

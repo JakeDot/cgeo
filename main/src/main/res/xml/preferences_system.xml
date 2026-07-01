@@ -16,17 +16,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/init_location"
-        app:iconSpaceReserved="false">
-        <Preference android:summary="@string/init_location_note" app:iconSpaceReserved="false" />
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="@string/pref_googleplayservices"
-            android:title="@string/init_location_googleplayservices"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
         android:title="@string/init_low_power"
         app:iconSpaceReserved="false">
         <Preference android:summary="@string/init_low_power_note" app:iconSpaceReserved="false" />

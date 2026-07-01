@@ -1,7 +1,6 @@
 package cgeo.geocaching.sensors;
 
 import cgeo.geocaching.CgeoApplication;
-import cgeo.geocaching.playservices.GoogleLocationProvider;
 import cgeo.geocaching.sensors.GnssStatusProvider.Status;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.utils.AngleUtils;
@@ -21,13 +20,8 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
 
 /**
- * Provides access to Location data (GPS and direction).
- * <br>
- * This class is responsible for fusing different available Location providers of Android
- * system according to their availability and user preference. Examples for different providers:
- * * Google Play Location provider such as FusedLocationProvider (if Google Play Service is available)
- * * Location via Android Low-Level APIs (LocationManager from Service Context.LOCATION_SERVICE)
- * * Differentiation between LowPower-optimized and precision-optimized location data
+ * Provides access to Location data (GPS and direction) via Android's Location Manager
+ * (Context.LOCATION_SERVICE).
  */
 public class LocationDataProvider {
 
@@ -60,33 +54,18 @@ public class LocationDataProvider {
         return InstanceHolder.INSTANCE;
     }
 
-    private final Function<Throwable, Observable<GeoData>> fallbackToGeodataProvider = throwable -> {
-        Log.e("Cannot use Play Services location provider, falling back to GeoDataProvider", throwable);
-        Settings.setUseGooglePlayServices(false);
-        return GeoDataProvider.create(CgeoApplication.getInstance());
-    };
-
     public void initialize() {
-        setupGeoDataObservables(Settings.useGooglePlayServices(), Settings.useLowPowerMode());
+        setupGeoDataObservables();
         setupDirectionObservable();
     }
 
-    private void setupGeoDataObservables(final boolean useGooglePlayServices, final boolean useLowPowerLocation) {
+    private void setupGeoDataObservables() {
         if (geoDataObservable != null) {
             return;
         }
         final Application application = CgeoApplication.getInstance();
-        if (useGooglePlayServices) {
-            geoDataObservable = GoogleLocationProvider.getMostPrecise(application).onErrorResumeNext(fallbackToGeodataProvider).doOnNext(rememberGeodataAction);
-            if (useLowPowerLocation) {
-                geoDataObservableLowPower = GoogleLocationProvider.getLowPower(application).doOnNext(rememberGeodataAction).onErrorResumeWith(geoDataObservable);
-            } else {
-                geoDataObservableLowPower = geoDataObservable;
-            }
-        } else {
-            geoDataObservable = RxUtils.rememberLast(GeoDataProvider.create(application).doOnNext(rememberGeodataAction), null);
-            geoDataObservableLowPower = geoDataObservable;
-        }
+        geoDataObservable = RxUtils.rememberLast(GeoDataProvider.create(application).doOnNext(rememberGeodataAction), null);
+        geoDataObservableLowPower = geoDataObservable;
     }
 
     private static final Function<GeoData, DirectionData> GPS_TO_DIRECTION = geoData -> DirectionData.createFor(AngleUtils.reverseDirectionNow(geoData.getBearing()));
@@ -128,7 +107,7 @@ public class LocationDataProvider {
             // when can geoDataObservableLowPower be null? ->
             // this can happen in the very special case immediately after fresh and first installation of c:geo on a device when user goes into Settings BEFORE granting localization permission to c:geo
             // for some reason, c:geo does not ask for these permission immediately after installation but only later
-            setupGeoDataObservables(Settings.useGooglePlayServices(), Settings.useLowPowerMode());
+            setupGeoDataObservables();
         }
 
         final Observable<DirectionData> directionFromGpsObservable = geoDataObservableLowPower.filter(geoData -> {

@@ -382,9 +382,6 @@
     <string translatable="false" name="pref_persistablefolder_testdir">persistablefolder_testdir</string>
     <string translatable="false" name="pref_fakekey_local_filesystem">fakekey_local_filesystem</string>
 
-    <!-- category geolocation -->
-    <string translatable="false" name="pref_googleplayservices">googleplayservices</string>
-
     <!-- category low power mode -->
     <string translatable="false" name="pref_lowpowermode">lowpowerlocation</string>
 
@@ -649,7 +646,6 @@
     <string translatable="false" name="pref_search_history_geocode">search_history_geocode</string>
 
     <string translatable="false" name="pref_caches_history">caches_history</string>
-    <string translatable="false" name="pref_phone_model_and_sdk">phone_model_and_sdk</string>
     <string translatable="false" name="pref_last_cache_log">last_cache_log</string>
     <string translatable="false" name="pref_last_trackable_log">last_trackable_log</string>
     <string translatable="false" name="pref_home_location">home_location</string>

@@ -110,14 +110,6 @@
 -dontwarn org.codehaus.mojo.animal_sniffer.*
 -dontwarn okhttp3.OkHttpClient$Builder
 
-# Play Services -----------------------------------------------------------------------------------
-
-# Play Service references to classes introduced in higher API levels
--dontwarn com.google.android.gms.**
-
-# ignore reflection warnings
--dontnote com.google.android.gms.**
-
 # RxJava ------------------------------------------------------------------------------------------
 
 # rxjava includes references to the test frameworks within their class files

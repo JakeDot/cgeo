@@ -11,7 +11,6 @@ import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
 import cgeo.geocaching.maps.routing.RoutingMode;
 import cgeo.geocaching.permission.PermissionContext;
-import cgeo.geocaching.playservices.GooglePlayServices;
 import cgeo.geocaching.sensors.LocationDataProvider;
 import cgeo.geocaching.sensors.MagnetometerAndAccelerometerProvider;
 import cgeo.geocaching.sensors.OrientationProvider;
@@ -50,7 +49,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import com.google.android.gms.common.GoogleApiAvailability;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -84,7 +82,6 @@ public final class SystemInformation {
                 .append("\n- Android build: ").append(Build.DISPLAY);
         appendScreenResolution(context, body);
         body.append("\n- Sailfish OS detected: ").append(EnvironmentUtils.isSailfishOs());
-        appendGooglePlayServicesVersion(context, body);
         appendMemoryInfo(context, body);
         body.append("\n")
                 .append("\nSensor and location:")
@@ -349,19 +346,6 @@ public final class SystemInformation {
             .append("\n- Visible things: ").append(visibleThingsCounts)
             .append("\n- Cartridge File: ").append(cartridgeFileInfo)
             .append("\n- Load Slots: ").append(loadFileInfo);
-    }
-
-    private static void appendGooglePlayServicesVersion(final Context context, final StringBuilder body) {
-        final boolean googlePlayServicesAvailable = GooglePlayServices.isAvailable();
-        body.append("\n- Google Play services: ").append(googlePlayServicesAvailable ? (Settings.useGooglePlayServices() ? "enabled" : "disabled") : "unavailable");
-        if (googlePlayServicesAvailable) {
-            body.append(" - ");
-            try {
-                body.append(StringUtils.defaultIfBlank(context.getPackageManager().getPackageInfo(GoogleApiAvailability.GOOGLE_PLAY_SERVICES_PACKAGE, 0).versionName, "unknown version"));
-            } catch (final PackageManager.NameNotFoundException e) {
-                body.append("unretrievable version (").append(e.getMessage()).append(')');
-            }
-        }
     }
 
     private static void appendScreenResolution(final Context context, final StringBuilder body) {
