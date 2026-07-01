@@ -57,7 +57,6 @@ public class TravelBugLoggingManager extends AbstractTrackableLoggingManager {
 
     @Override
     public LogResult postLog(final Geocache cache, final TrackableLogEntry trackableLog) {
-        // 'cache' is not used here, but it is for GeokretyLoggingManager
         return GCLogAPI.createLogTrackable(trackableLog, trackableLog.getDate(), trackableLog.getLog());
     }
 

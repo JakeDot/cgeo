@@ -68,8 +68,6 @@ jobs:
           KEY_ALIAS_PASSWORD: ${{ secrets.KEY_ALIAS_PASSWORD }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
           MAPS_API_KEY_MARKET: ${{ secrets.MAPS_API_KEY_MARKET }}
-          SU_CONSUMER_KEY: ${{ secrets.SU_CONSUMER_KEY }}
-          SU_CONSUMER_SECRET: ${{ secrets.SU_CONSUMER_SECRET }}
           THUNDERFOREST_API_KEY: ${{ secrets.THUNDERFOREST_API_KEY }}
           ALC_CONSUMER_KEY: ${{ secrets.ALC_CONSUMER_KEY }}
           PREF_COOKIESTORE: ${{ secrets.PREF_COOKIESTORE }}

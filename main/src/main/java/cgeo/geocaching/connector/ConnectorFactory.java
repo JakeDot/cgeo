@@ -7,15 +7,8 @@ import cgeo.geocaching.connector.capability.ILogin;
 import cgeo.geocaching.connector.capability.ISearchByFilter;
 import cgeo.geocaching.connector.capability.ISearchByNextPage;
 import cgeo.geocaching.connector.capability.ISearchByViewPort;
-import cgeo.geocaching.connector.ec.ECConnector;
-import cgeo.geocaching.connector.ga.GeocachingAustraliaConnector;
 import cgeo.geocaching.connector.gc.GCConnector;
-import cgeo.geocaching.connector.ge.GeopeitusConnector;
 import cgeo.geocaching.connector.internal.InternalConnector;
-import cgeo.geocaching.connector.oc.OCCZConnector;
-import cgeo.geocaching.connector.su.SuConnector;
-import cgeo.geocaching.connector.tc.TerraCachingConnector;
-import cgeo.geocaching.connector.trackable.GeokretyConnector;
 import cgeo.geocaching.connector.trackable.TrackableBrand;
 import cgeo.geocaching.connector.trackable.TrackableConnector;
 import cgeo.geocaching.connector.trackable.TrackableTrackingCode;
@@ -57,14 +50,8 @@ public final class ConnectorFactory {
     @NonNull public static final UnknownConnector UNKNOWN_CONNECTOR = new UnknownConnector();
     @NonNull private static final Collection<IConnector> CONNECTORS = Collections.unmodifiableCollection(Arrays.<IConnector>asList(
             GCConnector.getInstance(),
-            ECConnector.getInstance(),
             ALConnector.getInstance(),
-            new OCCZConnector(),
-            new GeocachingAustraliaConnector(),
-            new GeopeitusConnector(),
-            new TerraCachingConnector(),
             new WaymarkingConnector(),
-            SuConnector.getInstance(),
             InternalConnector.getInstance(),
             UNKNOWN_CONNECTOR // the unknown connector MUST be the last one
     ));
@@ -76,9 +63,6 @@ public final class ConnectorFactory {
 
     private static Collection<TrackableConnector> getTbConnectors(final boolean forceAllConnectors) {
         final List<TrackableConnector> connectors = new ArrayList<>();
-        if (forceAllConnectors || Settings.isGeokretyConnectorActive()) {
-            connectors.add(new GeokretyConnector());
-        }
         // travel bugs second to last, as their secret codes overlap with other connectors
         connectors.add(TravelBugConnector.getInstance());
         // unknown trackable connector must be last

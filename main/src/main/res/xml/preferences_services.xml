@@ -25,19 +25,6 @@
             app:title="@string/settings_title_lc"
             app:iconSpaceReserved="false" />
 
-        <!-- Extremcaching.com -->
-        <Preference
-            android:key="@string/pref_fakekey_ec_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceExtremcachingComFragment"
-            app:title="@string/settings_title_ec"
-            app:iconSpaceReserved="false" />
-
-        <!-- Geocaching.su -->
-        <Preference
-            android:key="@string/pref_fakekey_su_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceGeocachingSuFragment"
-            app:title="@string/init_su"
-            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -70,13 +57,6 @@
     <PreferenceCategory
         android:title="@string/settings_category_geocaching_additionals"
         app:iconSpaceReserved="false" >
-
-        <!-- Geokrety.org -->
-        <Preference
-            android:key="@string/pref_fakekey_geokrety_authorization"
-            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceGeokretyOrgFragment"
-            app:title="@string/init_geokrety"
-            app:iconSpaceReserved="false" />
 
         <!-- Send2cgeo -->
         <Preference

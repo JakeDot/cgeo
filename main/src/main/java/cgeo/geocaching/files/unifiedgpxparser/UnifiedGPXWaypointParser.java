@@ -2,8 +2,6 @@ package cgeo.geocaching.files.unifiedgpxparser;
 
 import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.IConnector;
-import cgeo.geocaching.connector.tc.TerraCachingLogType;
-import cgeo.geocaching.connector.tc.TerraCachingType;
 import cgeo.geocaching.enumerations.CacheAttribute;
 import cgeo.geocaching.enumerations.CacheSize;
 import cgeo.geocaching.enumerations.CacheType;
@@ -19,7 +17,6 @@ import cgeo.geocaching.utils.EmojiUtilsLegacyMigration;
 import cgeo.geocaching.utils.Log;
 import cgeo.geocaching.utils.MatcherWrapper;
 import cgeo.geocaching.utils.SynchronizedDateFormat;
-import cgeo.geocaching.utils.html.HtmlUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,8 +38,7 @@ import org.xmlpull.v1.XmlPullParserException;
 /**
  * Parses a single {@code <wpt>} element into either a fully-populated {@link Geocache}
  * or a {@link ChildWaypoint} that belongs to another cache. Brings over every extension
- * dialect today's {@code GPXParser} understands: Groundspeak, GSAK, c:geo, OpenCaching
- * and TerraCaching.
+ * dialect today's {@code GPXParser} understands: Groundspeak, GSAK, c:geo, OpenCaching.
  * <p>
  * Namespace-agnostic on element local names. The only place namespace info is consulted
  * is the {@code <cache>} element, which is shared between Groundspeak and OpenCaching;
@@ -147,17 +143,6 @@ final class UnifiedGPXWaypointParser {
         @Nullable String descriptionPrefix;
         @Nullable CacheSize ocSize;
 
-        // TerraCaching
-        @Nullable String terraName;
-        @Nullable String terraOwner;
-        @Nullable CacheType terraType;
-        @Nullable CacheSize terraSize;
-        @Nullable String terraCountry;
-        @Nullable String terraState;
-        @Nullable String terraDescription;
-        @Nullable String terraHint;
-        boolean isTerraCache;
-
         Builder(@NonNull final ParseContext ctx) {
             this.ctx = ctx;
         }
@@ -216,7 +201,6 @@ final class UnifiedGPXWaypointParser {
                 case "userdefined":    wptUserDefined |= parseBoolText(parser); break;
                 case "originalCoordsEmpty": wptEmptyCoordinates = parseBoolText(parser); break;
                 case "cacheExtension": parseCgeoCacheExtension(parser); break;
-                case "terracache":     parseTerracache(parser); break;
                 default:
                     UnifiedGPXParser.skipSubtree(parser);
                     break;
@@ -270,7 +254,6 @@ final class UnifiedGPXWaypointParser {
                     case "userdefined":        wptUserDefined |= parseBoolText(parser); break;
                     case "originalCoordsEmpty": wptEmptyCoordinates = parseBoolText(parser); break;
                     case "cacheExtension":     parseCgeoCacheExtension(parser); break;
-                    case "terracache":         parseTerracache(parser); break;
                     default: UnifiedGPXParser.skipSubtree(parser); break;
                 }
             }
@@ -621,113 +604,6 @@ final class UnifiedGPXWaypointParser {
             }
         }
 
-        // --- TerraCaching -----------------------------------------------------
-        private void parseTerracache(final XmlPullParser parser) throws XmlPullParserException, IOException {
-            isTerraCache = true;
-            final int startDepth = parser.getDepth();
-            while (true) {
-                final int event = parser.next();
-                if (event == XmlPullParser.END_DOCUMENT) {
-                    break;
-                }
-                if (event == XmlPullParser.END_TAG && parser.getDepth() == startDepth) {
-                    break;
-                }
-                if (event != XmlPullParser.START_TAG) {
-                    continue;
-                }
-                switch (parser.getName()) {
-                    case "name":        terraName = StringUtils.trim(UnifiedGPXParser.readText(parser)); break;
-                    case "owner":       terraOwner = validate(UnifiedGPXParser.readText(parser)); break;
-                    case "style":       terraType = TerraCachingType.getCacheType(UnifiedGPXParser.readText(parser)); break;
-                    case "size":        terraSize = CacheSize.getById(UnifiedGPXParser.readText(parser)); break;
-                    case "country":     terraCountry = StringUtils.trim(UnifiedGPXParser.readText(parser)); break;
-                    case "state":       terraState = StringUtils.trim(UnifiedGPXParser.readText(parser)); break;
-                    case "description": terraDescription = trimHtml(UnifiedGPXParser.readText(parser)); break;
-                    case "hint":
-                        final String h = UnifiedGPXParser.readText(parser);
-                        if (h != null) {
-                            terraHint = HtmlUtils.extractText(h);
-                        }
-                        break;
-                    case "logs":        parseTerracachingLogs(parser); break;
-                    default: UnifiedGPXParser.skipSubtree(parser); break;
-                }
-            }
-        }
-
-        private void parseTerracachingLogs(final XmlPullParser parser) throws XmlPullParserException, IOException {
-            final int startDepth = parser.getDepth();
-            while (true) {
-                final int event = parser.next();
-                if (event == XmlPullParser.END_DOCUMENT) {
-                    break;
-                }
-                if (event == XmlPullParser.END_TAG && parser.getDepth() == startDepth) {
-                    break;
-                }
-                if (event != XmlPullParser.START_TAG) {
-                    continue;
-                }
-                if ("log".equals(parser.getName())) {
-                    final LogEntry log = parseTerracachingLog(parser);
-                    if (log != null && log.logType != LogType.UNKNOWN) {
-                        gsLogs.add(log);
-                    }
-                } else {
-                    UnifiedGPXParser.skipSubtree(parser);
-                }
-            }
-        }
-
-        @Nullable
-        private LogEntry parseTerracachingLog(final XmlPullParser parser) throws XmlPullParserException, IOException {
-            final LogEntry.Builder lb = new LogEntry.Builder();
-            final String idAttr = parser.getAttributeValue(null, "id");
-            if (idAttr != null) {
-                try {
-                    lb.setId(Integer.parseInt(idAttr));
-                } catch (final NumberFormatException ignored) {
-                    // skip
-                }
-            }
-            final int startDepth = parser.getDepth();
-            while (true) {
-                final int event = parser.next();
-                if (event == XmlPullParser.END_DOCUMENT) {
-                    break;
-                }
-                if (event == XmlPullParser.END_TAG && parser.getDepth() == startDepth) {
-                    break;
-                }
-                if (event != XmlPullParser.START_TAG) {
-                    continue;
-                }
-                switch (parser.getName()) {
-                    case "date":
-                        try {
-                            lb.setDate(parseDate(UnifiedGPXParser.readText(parser)).getTime());
-                        } catch (final Exception ignored) {
-                            // skip
-                        }
-                        break;
-                    case "type":
-                        lb.setLogType(TerraCachingLogType.getLogType(validate(UnifiedGPXParser.readText(parser))));
-                        break;
-                    case "user":
-                        lb.setAuthor(validate(UnifiedGPXParser.readText(parser)));
-                        break;
-                    case "entry":
-                        lb.setLog(trimHtml(validate(UnifiedGPXParser.readText(parser))));
-                        break;
-                    default:
-                        UnifiedGPXParser.skipSubtree(parser);
-                        break;
-                }
-            }
-            return lb.build();
-        }
-
         // --- build (decide cache vs waypoint, populate Geocache) -------------
         Parsed build() {
             // Populate a Geocache with everything we collected, even if it later turns out
@@ -847,29 +723,6 @@ final class UnifiedGPXWaypointParser {
                 cache.setVisitedDate(visitedDate);
             }
             applyOriginalCoordinates(cache);
-
-            // Apply TerraCaching
-            if (isTerraCache) {
-                if (terraName != null) {
-                    cache.setName(terraName);
-                }
-                if (terraOwner != null) {
-                    cache.setOwnerDisplayName(terraOwner);
-                }
-                if (terraType != null) {
-                    cache.setType(terraType);
-                }
-                if (terraSize != null) {
-                    cache.setSize(terraSize);
-                }
-                applyLocation(cache, terraCountry, terraState);
-                if (terraDescription != null) {
-                    cache.setDescription(terraDescription);
-                }
-                if (terraHint != null) {
-                    cache.setHint(terraHint);
-                }
-            }
 
             // Apply OpenCaching size (only if not already a known size from elsewhere)
             if (ocSize != null) {

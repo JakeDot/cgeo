@@ -5,7 +5,6 @@ import cgeo.geocaching.activity.TabbedViewPagerActivity;
 import cgeo.geocaching.activity.TabbedViewPagerFragment;
 import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.trackable.TrackableBrand;
-import cgeo.geocaching.connector.trackable.TrackableTrackingCode;
 import cgeo.geocaching.databinding.CachedetailImagegalleryPageBinding;
 import cgeo.geocaching.databinding.TrackableDetailsViewBinding;
 import cgeo.geocaching.location.Units;
@@ -147,7 +146,6 @@ public class TrackableActivity extends TabbedViewPagerActivity {
                 address = Strings.CS.remove(address, ":" + uri.getPort());
             }
             geocode = ConnectorFactory.getTrackableFromURL(address);
-            final TrackableTrackingCode tbTrackingCode = ConnectorFactory.getTrackableTrackingCodeFromURL(address);
 
             final String uriHost = uri.getHost().toLowerCase(Locale.US);
             if (uriHost.endsWith("geocaching.com")) {
@@ -177,14 +175,6 @@ public class TrackableActivity extends TabbedViewPagerActivity {
                     showToast(LocalizationUtils.getString(R.string.err_tb_details_open));
                     finish();
                     return;
-                }
-            } else if (uriHost.endsWith("geokrety.org")) {
-                brand = TrackableBrand.GEOKRETY;
-
-                // If geocode isn't found, try to find by Tracking Code
-                if (geocode == null && !tbTrackingCode.isEmpty()) {
-                    trackingCode = tbTrackingCode.trackingCode;
-                    geocode = tbTrackingCode.trackingCode;
                 }
             }
         }

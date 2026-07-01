@@ -1,9 +1,6 @@
 package cgeo.geocaching.settings;
 
-import cgeo.geocaching.R;
 import cgeo.geocaching.activity.OAuthAuthorizationActivity.OAuthParameters;
-import cgeo.geocaching.connector.su.SuAuthorizationActivity;
-import cgeo.geocaching.connector.su.SuConnector;
 import cgeo.geocaching.utils.LocalizationUtils;
 
 import android.content.Context;
@@ -15,8 +12,7 @@ public class OAuthPreference extends AbstractClickablePreference {
     private static final int NO_KEY = -1;
 
     private enum OAuthActivityMapping {
-        NONE(NO_KEY, null, null, -1, -1),
-        SU(R.string.pref_fakekey_su_authorization, SuAuthorizationActivity.class, SuAuthorizationActivity.SU_OAUTH_PARAMS, SuConnector.getInstance().getTokenPublicPrefKeyId(), SuConnector.getInstance().getTokenPublicPrefKeyId());
+        NONE(NO_KEY, null, null, -1, -1);
 
         public final int prefKeyId;
         public final int publicKeyId;

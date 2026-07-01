@@ -19,12 +19,6 @@ inputs:
   MAPS_API_KEY_MARKET:
     description: Google Maps API key for ???
     required: false
-  SU_CONSUMER_KEY:
-    description: GC.su OKAPI consumer key
-    required: false
-  SU_CONSUMER_SECRET:
-    description: GC.su OKAPI consumer secret
-    required: false
   THUNDERFOREST_API_KEY:
     description: Thunderforest API token
     required: false
@@ -59,7 +53,6 @@ runs:
         cat << EOF > main/cgeo.geocaching_preferences.xml
         <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
         <map>
-            <boolean name="connectorECActive" value="false" />
             <boolean name="googleplayservices" value="false" />
             <boolean name="navigationSygicDriving" value="true" />
             <boolean name="useenglish" value="false" />
@@ -67,7 +60,6 @@ runs:
             <long name="changelog_last_checksum" value="2686462252" />
             <string name="password">${{ inputs.PREF_PASSWORD }}</string>
             <boolean name="skin" value="false" />
-            <string name="ec_icons">1</string>
             <boolean name="twitter" value="false" />
             <string name="memberstatus">Premium</string>
             <string name="username">${{ inputs.PREF_USERNAME }}</string>
@@ -83,7 +75,6 @@ runs:
             <string name="signature"></string>
             <boolean name="choose_list" value="true" />
             <boolean name="lowpowerlocation" value="false" />
-            <boolean name="connectorGeokretyActive" value="false" />
             <boolean name="nativeUa" value="false" />
             <boolean name="navigationMapsDirections" value="true" />
             <boolean name="friendlogswanted" value="true" />
@@ -108,7 +99,6 @@ runs:
             <int name="version" value="20140712" />
             <boolean name="navigationRadar" value="true" />
             <boolean name="navigationPebble" value="true" />
-            <boolean name="geokretycache" value="true" />
             <boolean name="excludemine" value="false" />
             <boolean name="trackautovisit" value="false" />
             <string name="twitter_cache_message">I found [NAME] ([URL]).</string>
@@ -157,10 +147,6 @@ runs:
         # Google Maps
         maps.api.key=${{ inputs.MAPS_API_KEY }}
         maps.api.key.market=${{ inputs.MAPS_API_KEY_MARKET }}
-
-        # Geocaching.su
-        su.consumer.key=${{ inputs.SU_CONSUMER_KEY }}
-        su.consumer.secret=${{ inputs.SU_CONSUMER_SECRET }}
 
         thunderforest.api.key=${{ inputs.THUNDERFOREST_API_KEY }}
 

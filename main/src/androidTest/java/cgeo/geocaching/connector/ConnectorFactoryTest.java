@@ -1,7 +1,6 @@
 package cgeo.geocaching.connector;
 
 import cgeo.geocaching.connector.gc.GCConnector;
-import cgeo.geocaching.connector.oc.OCCZConnector;
 import cgeo.geocaching.connector.unknown.UnknownConnector;
 import cgeo.geocaching.test.mock.GC1ZXX2;
 
@@ -27,11 +26,6 @@ public class ConnectorFactoryTest {
         assertThat(ConnectorFactory.canHandle("GC12345")).isTrue();
         assertThat(ConnectorFactory.canHandle("some string")).isTrue(); // using unknown connector
         assertThat(ConnectorFactory.canHandle("[/start with special char")).isFalse();
-    }
-
-    @Test
-    public void testGeocodeOpenCaching() {
-        assertThat(ConnectorFactory.getConnector("OZ12345")).isInstanceOf(OCCZConnector.class); // opencaching CZ
     }
 
     @Test
@@ -62,7 +56,6 @@ public class ConnectorFactoryTest {
 
     @Test
     public void testTrim() {
-        assertThat(ConnectorFactory.getConnector("   OZ12345   ")).isInstanceOf(OCCZConnector.class); // opencaching CZ
         assertThat(ConnectorFactory.getConnector("   OZ 12345   ")).isInstanceOf(UnknownConnector.class);
     }
 
@@ -75,11 +68,6 @@ public class ConnectorFactoryTest {
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://www.coord.info/GC12ABC")).isEqualTo("GC12ABC");
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://www.geocaching.com/geocache/GC12ABC_die-muhlen-im-schondratal-muhle-munchau")).isEqualTo("GC12ABC");
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://geocaching.com/geocache/GC12ABC_die-muhlen-im-schondratal-muhle-munchau")).isEqualTo("GC12ABC");
-
-        // CZ
-        assertThat(new OCCZConnector().getGeocodeFromUrl("https://www.opencaching.cz/viewcache.php?wp=OZ10F41&log=A#log1186982")).isEqualTo("OZ10F41");
-        assertThat(new OCCZConnector().getGeocodeFromUrl("https://www.opencaching.cz/viewcache.php?cacheid=123456&log=A#log1186982")).isEqualTo("OZ1e240");
-        assertThat(new OCCZConnector().getGeocodeFromUrl("https://www.opencaching.de/viewcache.php?cacheid=123456&log=A#log1186982")).isNull();
 
         // trackable URLs
         assertThat(GCConnector.getInstance().getGeocodeFromUrl("https://coord.info/TB1234")).isNull();
@@ -94,11 +82,6 @@ public class ConnectorFactoryTest {
 
     @Test
     public void testGetTrackableFromURL() throws Exception {
-        ConnectorFactory.updateTBConnectorsList(true); // make sure GK connector is included
-        assertThat(ConnectorFactory.getTrackableFromURL("https://www.geokrety.org/konkret.php?id=30970")).isEqualTo("GK78FA");
-        assertThat(ConnectorFactory.getTrackableFromURL("https://www.geokrety.org/konkret.php?id=30970")).isEqualTo("GK78FA");
-        assertThat(ConnectorFactory.getTrackableFromURL("https://geokrety.org/konkret.php?id=30970")).isEqualTo("GK78FA");
-        assertThat(ConnectorFactory.getTrackableFromURL("https://geokrety.org/konkret.php?id=30970")).isEqualTo("GK78FA");
         assertThat(ConnectorFactory.getTrackableFromURL("https://coord.info/TB1234")).isEqualTo("TB1234");
         assertThat(ConnectorFactory.getTrackableFromURL("https://www.coord.info/TB1234")).isEqualTo("TB1234");
         assertThat(ConnectorFactory.getTrackableFromURL("https://geocaching.com/track/details.aspx?tracker=TB1234")).isEqualTo("TB1234");
@@ -113,21 +96,11 @@ public class ConnectorFactoryTest {
         final Set<String> geocodes = new HashSet<>(18);
         geocodes.add("GC1234");
         geocodes.add("OC1234");
-        geocodes.add("EC1234");
-        geocodes.add("TCABC");
         geocodes.add("WM1234");
-        geocodes.add("GE1234");
-        geocodes.add("GA1234");
-        geocodes.add("TP1234");
 
         geocodes.add("GC5678");
         geocodes.add("OC5678");
-        geocodes.add("EC5678");
-        geocodes.add("TC2JP");
         geocodes.add("WM5678");
-        geocodes.add("GE5678");
-        geocodes.add("GA5678");
-        geocodes.add("TP5678");
 
         geocodes.add("ZZ1");
         return geocodes;

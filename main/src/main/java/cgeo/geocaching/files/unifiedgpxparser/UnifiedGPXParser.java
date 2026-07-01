@@ -40,7 +40,7 @@ import org.xmlpull.v1.XmlPullParserException;
  * <p>
  * Namespace-agnostic on element local names — accepts GPX 1.0, GPX 1.1 and files that
  * omit the namespace declaration. Extension dialects (Groundspeak, GSAK, c:geo,
- * OpenCaching, TerraCaching) are understood and mapped onto the corresponding
+ * OpenCaching) are understood and mapped onto the corresponding
  * {@link Geocache} fields by {@link UnifiedGPXWaypointParser}.
  * <p>
  * The result is a {@link Result} object exposing the four output collections as
@@ -60,8 +60,8 @@ import org.xmlpull.v1.XmlPullParserException;
  * <p>
  * Child waypoints (parking, stage, final, ...) found in the same file are attached to
  * their parent cache after the file has been fully read; child waypoints whose parent
- * is not in the file end up in {@link Result#orphanWaypoints}. Groundspeak and
- * TerraCaching logs are returned via {@link Result#logsByGeocode}.
+ * is not in the file end up in {@link Result#orphanWaypoints}. Groundspeak logs are
+ * returned via {@link Result#logsByGeocode}.
  */
 public final class UnifiedGPXParser {
 

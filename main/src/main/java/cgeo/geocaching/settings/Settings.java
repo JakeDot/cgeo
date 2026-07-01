@@ -739,16 +739,8 @@ public class Settings {
         putBoolean(R.string.pref_connectorGCActive, value);
     }
 
-    public static boolean isECConnectorActive() {
-        return getBoolean(R.string.pref_connectorECActive, false);
-    }
-
     public static boolean isALConnectorActive() {
         return getBoolean(R.string.pref_connectorALActive, true);
-    }
-
-    public static boolean isSUConnectorActive() {
-        return getBoolean(R.string.pref_connectorSUActive, false);
     }
 
     public static boolean isBetterCacherConnectorActive() {
@@ -1003,34 +995,6 @@ public class Settings {
 
     public static boolean isStoreLogImages() {
         return getBoolean(R.string.pref_logimages, false);
-    }
-
-    public static boolean isGeokretyConnectorActive() {
-        return getBoolean(R.string.pref_connectorGeokretyActive, false);
-    }
-
-    public static boolean hasGeokretyAuthorization() {
-        return StringUtils.isNotBlank(getGeokretySecId());
-    }
-
-    public static String getGeokretySecId() {
-        return getString(R.string.pref_fakekey_geokrety_authorization, null);
-    }
-
-    public static void setGeokretySecId(final String secid) {
-        putString(R.string.pref_fakekey_geokrety_authorization, secid);
-    }
-
-    public static String getTokenSecret(final int prefKeyId) {
-        return getString(prefKeyId, StringUtils.EMPTY);
-    }
-
-    public static void setTokenSecret(final int prefKeyId, final String secretToken) {
-        putString(prefKeyId, secretToken);
-    }
-
-    public static boolean isRegisteredForGeokretyLogging() {
-        return getGeokretySecId() != null;
     }
 
     /**
@@ -2002,10 +1966,6 @@ public class Settings {
         return getBoolean(R.string.pref_hideCompletedVariables, false);
     }
 
-    public static String getECIconSet() {
-        return getString(R.string.pref_ec_icons, "1");
-    }
-
     /* Store last checksum of changelog for changelog display */
     public static long getLastChangelogChecksum() {
         return getLong(R.string.pref_changelog_last_checksum, 0);
@@ -2424,9 +2384,7 @@ public class Settings {
     public static HashSet<String> getSensitivePreferenceKeys(final Context context) {
         final HashSet<String> sensitiveKeys = new HashSet<>();
         Collections.addAll(sensitiveKeys,
-                LocalizationUtils.getPlainString(R.string.pref_username), LocalizationUtils.getPlainString(R.string.pref_password),
-                LocalizationUtils.getPlainString(R.string.pref_su_tokensecret), LocalizationUtils.getPlainString(R.string.pref_su_tokenpublic), LocalizationUtils.getPlainString(R.string.pref_temp_su_token_secret), LocalizationUtils.getPlainString(R.string.pref_temp_su_token_public),
-                LocalizationUtils.getPlainString(R.string.pref_fakekey_geokrety_authorization)
+                LocalizationUtils.getPlainString(R.string.pref_username), LocalizationUtils.getPlainString(R.string.pref_password)
         );
         return sensitiveKeys;
     }

@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Geocaching.su -->
-    <string name="su_consumer_key" translatable="false">@su.consumer.key@</string>
-    <string name="su_consumer_secret" translatable="false">@su.consumer.secret@</string>
-
     <!-- Geocaching.com public ALC API -->
     <string name="alc_consumer_key" translatable="false">@alc.consumer.key@</string>
 </resources>

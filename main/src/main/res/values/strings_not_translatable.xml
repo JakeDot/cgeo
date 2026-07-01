@@ -232,14 +232,10 @@
     <!-- websites and product names -->
     <string translatable="false" name="caches_map_locus">Locus</string>
     <string translatable="false" name="settings_title_gc">Geocaching.com</string>
-    <string translatable="false" name="settings_title_ec">Extremcaching.com</string>
     <string translatable="false" name="settings_title_lc">Geocaching.com Adventure Lab</string>
-    <string translatable="false" name="init_su">Geocaching.su</string>
-    <string translatable="false" name="auth_su">geocaching.su</string>
     <string translatable="false" name="init_bettercacher">BetterCacher.org</string>
     <string translatable="false" name="facebook_title">Facebook</string>
     <string translatable="false" name="cache_menu_pebble">Pebble</string>
-    <string translatable="false" name="init_geokrety">GeoKrety.org</string>
     <string translatable="false" name="trackable_geokrety">GeoKrety</string>
 
     <!-- helper app names -->

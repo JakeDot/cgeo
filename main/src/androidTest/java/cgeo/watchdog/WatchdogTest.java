@@ -2,10 +2,8 @@ package cgeo.watchdog;
 
 import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.IConnector;
-import cgeo.geocaching.connector.ec.ECConnector;
 import cgeo.geocaching.connector.gc.GCLogAPITest;
 import cgeo.geocaching.connector.internal.InternalConnector;
-import cgeo.geocaching.connector.oc.OCCZConnector;
 import cgeo.geocaching.connector.trackable.TrackableConnector;
 import cgeo.geocaching.network.Network;
 import cgeo.geocaching.test.NotForIntegrationTests;
@@ -38,18 +36,6 @@ public class WatchdogTest {
     }
 
     private static void checkWebsite(final String connectorName, final String url) {
-
-        // temporarily disable extremcaching.com test
-        // It fails if the SSL certificate of the API has expired, which happens quite regular due to bad maintenance of the site
-        // As it blocks more relevant test results we keep it disabled for the time being
-
-        // temporarily disable geocaching.su test
-        // it keeps failing regularly at the moment, so disable it temporarily to reduce maintenance info emails
-
-        if (connectorName.equalsIgnoreCase("geocaching website extremcaching.com") || (connectorName.equalsIgnoreCase("geocaching website Geocaching.su"))) {
-            return;
-        }
-
         final String page = Network.getResponseData(Network.getRequest(url));
         assertThat(page).overridingErrorMessage("Failed to get response from " + connectorName).isNotEmpty();
     }
@@ -71,7 +57,7 @@ public class WatchdogTest {
     @Test
     public void testGeocachingWebsites() {
         for (final IConnector connector : ConnectorFactory.getConnectors()) {
-            if (!connector.equals(ConnectorFactory.UNKNOWN_CONNECTOR) && !(connector instanceof InternalConnector) && !(connector instanceof ECConnector) && !(connector instanceof OCCZConnector)) {
+            if (!connector.equals(ConnectorFactory.UNKNOWN_CONNECTOR) && !(connector instanceof InternalConnector)) {
                 checkWebsite("geocaching website " + connector.getName(), connector.getTestUrl());
             }
         }

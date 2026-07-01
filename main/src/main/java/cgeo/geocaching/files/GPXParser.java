@@ -6,8 +6,6 @@ import cgeo.geocaching.connector.capability.ILogin;
 import cgeo.geocaching.connector.gc.GCConnector;
 import cgeo.geocaching.connector.gc.GCUtils;
 import cgeo.geocaching.connector.internal.InternalConnector;
-import cgeo.geocaching.connector.tc.TerraCachingLogType;
-import cgeo.geocaching.connector.tc.TerraCachingType;
 import cgeo.geocaching.enumerations.CacheAttribute;
 import cgeo.geocaching.enumerations.CacheSize;
 import cgeo.geocaching.enumerations.CacheType;
@@ -442,7 +440,6 @@ abstract class GPXParser extends FileParser {
 
     private void registerExtensions(@NonNull final Element cacheParent) {
         registerGsakExtensions(cacheParent);
-        registerTerraCachingExtensions(cacheParent);
         registerCgeoExtensions(cacheParent);
         registerOpenCachingExtensions(cacheParent);
         registerGroundspeakExtensions(cacheParent);
@@ -755,93 +752,6 @@ abstract class GPXParser extends FileParser {
 
             gsak.getChild(gsakNamespace, "Child_ByGSAK").setEndTextElementListener(userDefined -> wptUserDefined |= Boolean.parseBoolean(userDefined.trim()));
         }
-    }
-
-    /**
-     * Add listeners for TerraCaching extensions
-     */
-    private void registerTerraCachingExtensions(final Element cacheParent) {
-        final String terraNamespace = "http://www.TerraCaching.com/GPX/1/0";
-        final Element terraCache = cacheParent.getChild(terraNamespace, "terracache");
-
-        terraCache.getChild(terraNamespace, "name").setEndTextElementListener(name -> cache.setName(StringUtils.trim(name)));
-
-        terraCache.getChild(terraNamespace, "owner").setEndTextElementListener(ownerName -> cache.setOwnerDisplayName(validate(ownerName)));
-
-        terraCache.getChild(terraNamespace, "style").setEndTextElementListener(style -> cache.setType(TerraCachingType.getCacheType(style)));
-
-        terraCache.getChild(terraNamespace, "size").setEndTextElementListener(size -> cache.setSize(CacheSize.getById(size)));
-
-        terraCache.getChild(terraNamespace, "country").setEndTextElementListener(country -> {
-            if (StringUtils.isNotBlank(country)) {
-                cache.setLocation(StringUtils.trim(country));
-            }
-        });
-
-        terraCache.getChild(terraNamespace, "state").setEndTextElementListener(state -> {
-            final String trimmedState = state.trim();
-            if (StringUtils.isNotEmpty(trimmedState)) {
-                if (StringUtils.isBlank(cache.getLocation())) {
-                    cache.setLocation(validate(state));
-                } else {
-                    cache.setLocation(trimmedState + ", " + cache.getLocation());
-                }
-            }
-        });
-
-        terraCache.getChild(terraNamespace, "description").setEndTextElementListener(description -> cache.setDescription(trimHtml(description)));
-
-        terraCache.getChild(terraNamespace, "hint").setEndTextElementListener(hint -> cache.setHint(HtmlUtils.extractText(hint)));
-
-        final Element terraLogs = terraCache.getChild(terraNamespace, "logs");
-        final Element terraLog = terraLogs.getChild(terraNamespace, "log");
-
-        terraLog.setStartElementListener(attrs -> {
-            logBuilder = new LogEntry.Builder();
-
-            try {
-                if (attrs.getIndex("id") > -1) {
-                    logBuilder.setId(Integer.parseInt(attrs.getValue("id")));
-                }
-            } catch (final NumberFormatException ignored) {
-                // nothing
-            }
-        });
-
-        terraLog.setEndElementListener(() -> {
-            final LogEntry log = logBuilder.build();
-            if (log.logType != LogType.UNKNOWN) {
-                if (log.logType.isFoundLog() && StringUtils.isNotBlank(log.author)) {
-                    final IConnector connector = ConnectorFactory.getConnector(cache);
-                    if (connector instanceof ILogin && Strings.CS.equals(log.author, ((ILogin) connector).getUserName())) {
-                        cache.setFound(true);
-                        cache.setVisitedDate(log.date);
-                    }
-                }
-                logs.add(log);
-            }
-        });
-
-        // waypoint.cache.logs.log.date
-        terraLog.getChild(terraNamespace, "date").setEndTextElementListener(body -> {
-            try {
-                logBuilder.setDate(parseDate(body).getTime());
-            } catch (final Exception e) {
-                Log.w("Failed to parse log date", e);
-            }
-        });
-
-        // waypoint.cache.logs.log.type
-        terraLog.getChild(terraNamespace, "type").setEndTextElementListener(body -> {
-            final String logType = validate(body);
-            logBuilder.setLogType(TerraCachingLogType.getLogType(logType));
-        });
-
-        // waypoint.cache.logs.log.finder
-        terraLog.getChild(terraNamespace, "user").setEndTextElementListener(finderName -> logBuilder.setAuthor(validate(finderName)));
-
-        // waypoint.cache.logs.log.text
-        terraLog.getChild(terraNamespace, "entry").setEndTextElementListener(entry -> logBuilder.setLog(trimHtml(validate(entry))));
     }
 
     private static String trimHtml(final String html) {

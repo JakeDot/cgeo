@@ -1,6 +1,5 @@
 package cgeo.geocaching.models;
 
-import cgeo.geocaching.connector.ConnectorFactory;
 import cgeo.geocaching.connector.trackable.TrackableBrand;
 import cgeo.geocaching.log.LogEntry;
 import cgeo.geocaching.log.LogType;
@@ -42,16 +41,8 @@ public class TrackableTest  {
     }
 
     @Test
-    public void testGeokretUrl() {
-        ConnectorFactory.updateTBConnectorsList(true); // make sure GK connector is included
-        final Trackable geokret = createTrackable("GK82A2");
-        assertThat(geokret.getUrl()).isEqualTo("https://geokrety.org/konkret.php?id=33442");
-    }
-
-    @Test
     public void testLoggable() {
         assertThat(createTrackable("TB1234").isLoggable()).isTrue();
-        assertThat(createTrackable("GK1234").isLoggable()).isTrue();
     }
 
     @Test

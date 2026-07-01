@@ -20,7 +20,7 @@ public final class Result {
     public final Collection<Geocache> waypoints = new ArrayList<>();
 
     /**
-     * Logs collected from Groundspeak / TerraCaching extensions, keyed by the geocode
+     * Logs collected from Groundspeak extensions, keyed by the geocode
      * of the cache they belong to. Logs are not attached to the {@link Geocache} itself
      * because that's how today's parser hands them to {@code DataStore.saveLogs} at
      * persistence time.
