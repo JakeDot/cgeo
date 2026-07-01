@@ -60,7 +60,7 @@ public class TileProviderFactory {
             if (!hide) {
                 final int id = tileProvider.getNumericalId();
                 final String displayName = tileProvider.getDisplayName(null);
-                parentMenu.add(R.id.menu_group_map_sources_offline, id, i, displayName != null
+                parentMenu.add(R.id.menu_group_map_sources, id, i, displayName != null
                         ? displayName
                         : tileProvider.getTileProviderName()
                 ).setCheckable(true).setChecked(id == currentTileProvider);
@@ -68,8 +68,7 @@ public class TileProviderFactory {
             i++;
         }
         final AbstractTileProvider ctp = Settings.getTileProvider();
-        parentMenu.setGroupCheckable(R.id.menu_group_map_sources_offline, true, true);
-        parentMenu.setGroupCheckable(R.id.menu_group_map_sources_online, true, true);
+        parentMenu.setGroupCheckable(R.id.menu_group_map_sources, true, true);
         parentMenu.findItem(R.id.menu_hillshading).setCheckable(true).setChecked(Settings.getMapShadingShowLayer()).setVisible(MapUtils.hasHillshadingTiles() && ctp.supportsHillshading());
         parentMenu.findItem(R.id.menu_backgroundmap).setCheckable(true).setChecked(Settings.getMapBackgroundMapLayer()).setVisible(ctp.supportsBackgroundMaps());
         parentMenu.findItem(R.id.menu_download_backgroundmap).setVisible(ctp.supportsBackgroundMaps);
