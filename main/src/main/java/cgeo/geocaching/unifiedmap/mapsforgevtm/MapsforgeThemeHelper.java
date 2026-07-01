@@ -7,7 +7,6 @@ import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.ContentStorage;
 import cgeo.geocaching.storage.ContentStorage.FileInformation;
 import cgeo.geocaching.storage.Folder;
-import cgeo.geocaching.storage.LocalStorage;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.extension.OneTimeDialogs;
 import cgeo.geocaching.ui.dialog.Dialogs;
@@ -20,14 +19,11 @@ import cgeo.geocaching.utils.UriUtils;
 
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.Intent;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -54,7 +50,6 @@ import org.oscim.theme.ZipXmlThemeResourceProvider;
 public class MapsforgeThemeHelper implements XmlRenderThemeMenuCallback {
 
     private static final PersistableFolder MAP_THEMES_FOLDER = PersistableFolder.OFFLINE_MAP_THEMES;
-    private static final File MAP_THEMES_INTERNAL_FOLDER = LocalStorage.getMapThemeInternalSyncDir();
 
     private static final String ZIP_THEME_SEPARATOR = ":";
 
@@ -212,52 +207,15 @@ public class MapsforgeThemeHelper implements XmlRenderThemeMenuCallback {
     }
 
     protected void selectMapTheme(final Activity activity, final Map map, final AbstractTileProvider tileProvider) {
-        if (!tileProvider.supportsThemes()) {
-            return;
-        }
-        final String currentThemeId = Settings.getSelectedMapRenderTheme(tileProvider);
-
-        final List<String> names = new ArrayList<>();
-        names.add(LocalizationUtils.getString(R.string.switch_default));
-        int currentItem = 0;
-        int idx = 1;
-        final List<ThemeData> selectableAvThemes = getAvailableThemes();
-        for (final ThemeData theme : selectableAvThemes) {
-            names.add(theme.userDisplayableName);
-            if (Strings.CS.equals(currentThemeId, theme.id)) {
-                currentItem = idx;
-            }
-            idx++;
-        }
-
-        final AlertDialog.Builder builder = Dialogs.newBuilder(activity);
-        builder.setTitle(LocalizationUtils.getString(R.string.map_theme_select));
-        builder.setSingleChoiceItems(names.toArray(new String[0]), currentItem, (dialog, newItem) -> {
-            // Adjust index because of <default> selection
-            setSelectedTheme(newItem > 0 ? selectableAvThemes.get(newItem - 1) : null);
-            reapplyMapTheme(map, tileProvider);
-            dialog.cancel();
-        });
-
-        builder.show();
+        // theme selection UI removed — themes are auto-applied from filesystem
     }
 
     public void selectMapThemeOptions(final Activity activity, final AbstractTileProvider tileProvider) {
-        if (!tileProvider.supportsThemeOptions()) {
-            return;
-        }
-
-        final Intent intent = new Intent(activity, MapsforgeThemeSettings.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        if (themeOptionsAvailable() && themeStyleMenu != null) {
-            intent.putExtra(MapsforgeThemeSettingsFragment.RENDERTHEME_MENU, themeStyleMenu);
-            intent.putExtra(MapsforgeThemeSettingsFragment.SHOW3DOPTION, tileProvider instanceof AbstractMapsforgeVTMOfflineTileProvider);
-        }
-        activity.startActivity(intent);
+        // theme options UI removed
     }
 
     public boolean themeOptionsAvailable() {
-        return StringUtils.isNotBlank(Settings.getSelectedMapRenderTheme(Settings.getTileProvider()));
+        return false;
     }
 
     /**
@@ -332,7 +290,7 @@ public class MapsforgeThemeHelper implements XmlRenderThemeMenuCallback {
      */
     private static void recalculateAvailableThemes() {
         final List<ThemeData> newAvailableThemes = new ArrayList<>();
-        addAvailableThemes(isThemeSynchronizationActive() ? Folder.fromFile(MAP_THEMES_INTERNAL_FOLDER) : MAP_THEMES_FOLDER.getFolder(), newAvailableThemes, "", 0);
+        addAvailableThemes(MAP_THEMES_FOLDER.getFolder(), newAvailableThemes, "", 0);
 
         Collections.sort(newAvailableThemes, (t1, t2) -> TextUtils.COLLATOR.compare(t1.userDisplayableName, t2.userDisplayableName));
 
@@ -399,9 +357,5 @@ public class MapsforgeThemeHelper implements XmlRenderThemeMenuCallback {
 
     private static ContentResolver getContentResolver() {
         return CgeoApplication.getInstance().getContentResolver();
-    }
-
-    public static boolean isThemeSynchronizationActive() {
-        return Settings.getSyncMapRenderThemeFolder();
     }
 }

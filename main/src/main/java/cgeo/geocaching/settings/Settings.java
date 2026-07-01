@@ -1828,21 +1828,24 @@ public class Settings {
     }
 
     /**
-     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeSettingsFragment}!
+     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper} or
+     * {@link cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper}!
      */
     public static void setSelectedMapRenderThemeStyle(final String prefKey, final String style) {
         putStringDirect(prefKey, style);
     }
 
     /**
-     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper}!
+     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper} or
+     * {@link cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper}!
      */
     public static boolean getSyncMapRenderThemeFolder() {
         return getBoolean(R.string.pref_renderthemefolder_synctolocal, false);
     }
 
     /**
-     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeSettingsFragment}!
+     * Shall SOLELY be used by {@link cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper} or
+     * {@link cgeo.geocaching.unifiedmap.mapsforgevtm.MapsforgeThemeHelper}!
      */
     public static String getMapRenderScalePreferenceKey(final String themeStyleId, final RenderThemeScaleType scaleType) {
         return themeStyleId + "-" + scaleType;
