@@ -64,6 +64,29 @@ most unit tests run without them:
 `settings.gradle` includes three Gradle modules: `main` (the app — almost all code lives here),
 `mapswithme-api` and `organicmaps-api` (thin API clients for launching external map apps).
 
+### Compiling without the Android SDK
+
+`./gradlew assembleBasicDebug`/`testBasicDebug`/`checkstyle` require the Android SDK and network
+access to Google's Maven repo (`dl.google.com`). In an environment where either is unavailable,
+those commands cannot run at all — check this first (e.g. `echo $ANDROID_HOME`, try reaching
+`dl.google.com`) before assuming the app is broken.
+
+For that situation, `tools/compile-harness/` is a standalone, Android-free Gradle project (plain
+`java` plugin, Maven Central only) that compiles and unit-tests the one large part of the codebase
+that has (almost) no Android dependency: `cgeo.geocaching.wherigo.openwig` and
+`cgeo.geocaching.wherigo.kahlua` (the Wherigo/OpenWIG Lua engine). It reads the real source files
+in place — no copying — so edits there are validated immediately:
+
+```sh
+gradle -p tools/compile-harness compileJava   # fast compile-only check
+gradle -p tools/compile-harness test          # + run that code's pure-JUnit tests
+```
+
+Use a plain system `gradle`, not the root `./gradlew` (whose wrapper distribution is Android-
+oriented). See `tools/compile-harness/README.md` for how it's wired up and its limits — it is a
+partial, fallback check for when the real quality gates can't run, not a replacement for them.
+When they can run, use them instead.
+
 ## Code style (see `checkstyle.xml` / `.editorconfig` for authoritative rules)
 
 - Java, 4-space indentation, spaces not tabs, files end with a newline.

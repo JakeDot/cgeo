@@ -1,0 +1,52 @@
+// Standalone, Android-SDK-free Gradle build for the parts of c:geo that have no Android
+// dependency (currently the Wherigo/OpenWIG Lua engine). See tools/compile-harness/README.md.
+//
+// This project is intentionally NOT included in the root settings.gradle: it must stay a fully
+// independent build so that running it never triggers configuration of the Android application
+// modules (which require the Android SDK and Google's Maven repository).
+//
+// Run with a plain "gradle" (or the system Gradle install) from this directory - the root
+// project's Gradle wrapper distribution is Android-oriented and not needed here:
+//   gradle -p tools/compile-harness compileJava test
+
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['stubs', '../../main/src/main/java']
+            include 'androidx/annotation/**',
+                    'cgeo/geocaching/wherigo/openwig/**',
+                    'cgeo/geocaching/wherigo/kahlua/**'
+        }
+    }
+    test {
+        java {
+            srcDirs = ['../../main/src/test/java']
+            include 'cgeo/geocaching/wherigo/openwig/**',
+                     'cgeo/geocaching/wherigo/kahlua/**'
+        }
+    }
+}
+
+dependencies {
+    // must track the versions used by the real app in ../../main/build.gradle
+    implementation 'org.apache.commons:commons-collections4:4.5.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+}
+
+test {
+    useJUnit()
+}
