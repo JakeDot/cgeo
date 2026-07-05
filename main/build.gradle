@@ -202,6 +202,10 @@ android {
         basic {
             java.srcDir 'src/nofoss/java' // "basic" shall contain non-foss code
         }
+        // "nojit" is a non-foss flavor too, so it gets the same non-foss-only code as "basic".
+        nojit {
+            java.srcDir 'src/nofoss/java'
+        }
     }
 
     testOptions {
@@ -294,6 +298,26 @@ android {
     // tests rely on JUnit-based classes
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
+
+    // the Wherigo player ships as a separate installable split APK, see wherigo/build.gradle
+    dynamicFeatures = [':wherigo']
+
+    // Optional per-ABI APK splitting for direct-download channels (nightly/GitHub releases,
+    // F-Droid). Play Store already delivers per-device splits automatically via the App Bundle
+    // required for the :wherigo dynamic feature module, so this is off by default and only
+    // affects builds that explicitly opt in - it changes nothing about the existing CI/release
+    // pipeline unless invoked.
+    // Enable with: ./gradlew assembleRelease -PsplitApkByAbi=true
+    if (project.findProperty('splitApkByAbi')?.toString() == 'true') {
+        splits {
+            abi {
+                enable = true
+                reset()
+                include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                universalApk = true // keep producing a universal APK as a fallback
+            }
+        }
+    }
 }
 
 ApplicationAndroidComponentsExtension androidComponentsExt = project.extensions.getByType(ApplicationAndroidComponentsExtension)
@@ -330,6 +354,15 @@ androidComponentsExt.onVariants(androidComponentsExt.selector().withBuildType("d
 }
 androidComponentsExt.onVariants(androidComponentsExt.selector().withBuildType("nightly")) {
     packaging.jniLibs.useLegacyPackaging.set(true)
+}
+
+// org.gradle.workers.max in gradle.properties only throttles Gradle's own Worker API; the Test
+// task forks its own separate JVMs (default maxParallelForks = CPU core count) with no heap cap
+// configured, so running several concurrently on a memory-constrained CI agent can exceed
+// available memory and get SIGKILLed by the OOM killer with no exception/stacktrace at all.
+tasks.withType(Test).configureEach {
+    maxParallelForks = 1
+    maxHeapSize = "1g"
 }
 
 dependencies {
@@ -472,6 +505,12 @@ dependencies {
     configurations.configureEach {
         exclude module: "play-services-measurement"
     }
+
+    // Play Feature Delivery, to install the :wherigo dynamic feature module on demand.
+    // Not available for the "foss" flavor, which deliberately avoids Play Core/Play Services;
+    // that flavor falls back to a no-op stub in src/foss/java, see WherigoModuleInstaller.
+    basicImplementation 'com.google.android.play:feature-delivery:2.1.0'
+    nojitImplementation 'com.google.android.play:feature-delivery:2.1.0'
 
     // Support Library Design
     implementation 'com.google.android.material:material:1.14.0'
@@ -844,7 +883,7 @@ tasks.register('pmd', Pmd) {
     ruleSetFiles = rootProject.files("ruleset.xml")
     source = fileTree('src/main/java')
     include '**/*.java'
-    exclude '**/gen/**','**/brouter/**','**/openwig/**','**/kahlua/**'
+    exclude '**/gen/**','**/brouter/**'
 
     reports {
         xml.required = true
