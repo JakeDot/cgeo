@@ -9,7 +9,7 @@ import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
 import cgeo.geocaching.utils.FileNameCreator;
 import cgeo.geocaching.utils.Log;
-import cgeo.geocaching.wherigo.WherigoActivity;
+import cgeo.geocaching.wherigo.WherigoFileHandler;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -52,8 +52,7 @@ public class HandleLocalFilesActivity extends AbstractActivity {
                 break;
             case WHERIGO:
                 final String guid = copyToWherigoFolder(uri);
-                if (guid != null) {
-                    WherigoActivity.startForGuid(this, guid, null, false);
+                if (guid != null && WherigoFileHandler.handleWherigoFile(this, guid)) {
                     finish();
                     finished = true;
                 }

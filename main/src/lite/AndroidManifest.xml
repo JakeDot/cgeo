@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Manifest overlay for the "lite" flavor.
+  Removes components/meta-data whose backing classes or resources only exist
+  in the "full" flavors (basic/nojit/foss): Google Play Services, Wherigo, and
+  the connectors that are excluded from the lite source set.
+-->
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- no Google Play Services dependency in the "lite" flavor -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            tools:node="remove" />
+
+        <activity android:name=".wherigo.WherigoActivity" tools:node="remove" />
+        <service android:name=".wherigo.WherigoGameService" tools:node="remove" />
+
+        <activity android:name=".connector.oc.OCAuthorizationActivity" tools:node="remove" />
+        <activity android:name=".connector.trackable.GeokretyAuthorizationActivity" tools:node="remove" />
+        <activity android:name=".connector.su.SuAuthorizationActivity" tools:node="remove" />
+    </application>
+</manifest>

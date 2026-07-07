@@ -12,12 +12,9 @@ import cgeo.geocaching.filters.NamedFilter;
 import cgeo.geocaching.list.StoredList;
 import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.settings.Settings;
-import cgeo.geocaching.settings.SettingsActivity;
 import cgeo.geocaching.storage.DataStore;
 import cgeo.geocaching.ui.ViewUtils;
-import cgeo.geocaching.wherigo.WherigoActivity;
-import cgeo.geocaching.wherigo.WherigoUtils;
-import cgeo.geocaching.wherigo.WherigoViewUtils;
+import cgeo.geocaching.wherigo.WherigoUiSupport;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -253,25 +250,7 @@ public class CacheInfoBoxes {
     }
 
     public static void updateWherigoBox(final Geocache cache, final Activity activity, @NonNull final Button wherigoButton, @Nullable final View wherigoView, @Nullable final TextView wherigoText) {
-        final List<String> wherigoGuis = WherigoUtils.getWherigoGuids(cache);
-        final boolean isEnabled = !wherigoGuis.isEmpty();
-
-        ViewUtils.setVisibility(wherigoView, isEnabled ? View.VISIBLE : View.GONE);
-
-        ViewUtils.setVisibility(wherigoText, isEnabled ? View.VISIBLE : View.GONE);
-        ViewUtils.setText(wherigoText, (!isEnabled || Settings.hasGCCredentials()) ? R.string.cache_wherigo_start : R.string.cache_wherigo_credentials);
-
-        ViewUtils.setVisibility(wherigoButton, isEnabled ? View.VISIBLE : View.GONE);
-        if (isEnabled) {
-            wherigoButton.setOnClickListener(v -> {
-                if (Settings.hasGCCredentials()) {
-                    WherigoViewUtils.executeForOneCartridge(activity, wherigoGuis, guid ->
-                            WherigoActivity.startForGuid(activity, guid, cache.getGeocode(), true));
-                } else {
-                    SettingsActivity.openForScreen(R.string.preference_screen_gc, activity);
-                }
-            });
-        }
+        WherigoUiSupport.updateWherigoBox(cache, activity, wherigoButton, wherigoView, wherigoText);
     }
 
     public static void updateChirpWolfBox(final Geocache cache, final Activity activity, @NonNull final Button chirpButton, @Nullable final View chirpView, @Nullable final TextView chirpText) {

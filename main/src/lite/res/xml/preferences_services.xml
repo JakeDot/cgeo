@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:icon="@drawable/settings_cloud"
+    app:title="@string/settings_title_services"
+    app:key="@string/preference_screen_services">
+    <PreferenceCategory
+        android:title="@string/settings_category_geocaching_platform"
+        app:iconSpaceReserved="false" >
+
+        <!-- The "key" values used here are just borrowed to identify the different preferences in PreferencesServicesFragment, their values are unchanged here -->
+
+        <!-- Geocaching.com -->
+        <Preference
+            android:key="@string/pref_fakekey_gc_authorization"
+            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceGeocachingComFragment"
+            app:title="@string/settings_title_gc"
+            app:iconSpaceReserved="false"/>
+
+        <!-- Geocaching.com Adventure Lab -->
+        <Preference
+            android:key="@string/pref_connectorALActive"
+            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceGeocachingComAdventureLabsFragment"
+            app:title="@string/settings_title_lc"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_category_locationcentersearch"
+        app:iconSpaceReserved="false">
+        <cgeo.geocaching.settings.SeekbarPreference
+            android:key="@string/pref_nearbySearchLimit"
+            android:summary="@string/init_nearbysearchlimit_description"
+            android:title="@string/init_nearbysearchlimit_title"
+            app:ui="cgeo.geocaching.ui.ProximityPreferenceUI"
+            android:defaultValue="0"
+            app:min="0"
+            app:max="999"
+            app:minValueDescription="@string/init_settings_description_unlimited"
+            app:highRes="false"
+            app:iconSpaceReserved="false" />
+        <cgeo.geocaching.settings.SeekbarPreference
+            android:key="@string/pref_coordSearchLimit"
+            android:summary="@string/init_coordsearchlimit_description"
+            android:title="@string/init_coordsearchlimit_title"
+            app:ui="cgeo.geocaching.ui.ProximityPreferenceUI"
+            android:defaultValue="0"
+            app:min="0"
+            app:max="999"
+            app:minValueDescription="@string/init_settings_description_unlimited"
+            app:highRes="false"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_category_geocaching_additionals"
+        app:iconSpaceReserved="false" >
+
+        <!-- Send2cgeo -->
+        <Preference
+            android:key="@string/pref_fakekey_sendtocgeo_info"
+            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceSendToCgeoFragment"
+            app:title="@string/init_sendToCgeo"
+            app:iconSpaceReserved="false" />
+
+        <!-- BetterCacher.org -->
+        <Preference
+            android:key="@string/pref_fakekey_bettercacher_settings"
+            app:fragment="cgeo.geocaching.settings.fragments.PreferenceServiceBetterCacherFragment"
+            app:title="@string/init_bettercacher"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
