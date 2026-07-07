@@ -19,19 +19,6 @@ public class TranslateAccessor {
             } catch (final Exception e) {
                 Log.e("TranslateAccessor: Could not initialize Bergamot", e);
             }
-            // Fall back to MLKit if Bergamot failed (e.g. .so not bundled yet)
-            if (instance == null) {
-                try {
-                    final Class<ITranslateAccessor> mlkitClass = (Class<ITranslateAccessor>)
-                            Class.forName("cgeo.geocaching.utils.offlinetranslate.MLKitTranslateAccessor");
-                    if (mlkitClass != null) {
-                        instance = mlkitClass.newInstance();
-                        Log.iForce("TranslateAccessor: MLKit instance created (fallback)");
-                    }
-                } catch (final Exception re) {
-                    Log.iForce("TranslateAccessor: Could not find MLKit");
-                }
-            }
         }
         INSTANCE = instance == null ? new NoopTranslateAccessor() : instance;
     }

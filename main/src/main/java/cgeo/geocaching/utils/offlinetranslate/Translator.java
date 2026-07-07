@@ -33,7 +33,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
  * turning on/off translations)
  * <br>
  * Implementation note: this class should NOT have any dependencies to the used underlying
- * translation framework (eg MLKit)
+ * translation framework (eg Bergamot)
  */
 public class Translator {
 

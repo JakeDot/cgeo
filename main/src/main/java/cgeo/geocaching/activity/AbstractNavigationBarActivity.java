@@ -582,9 +582,6 @@ public abstract class AbstractNavigationBarActivity extends AbstractActionBarAct
             if (InstallWizardActivity.needsNotificationsPermission()) {
                 Dialogs.basicOneTimeMessage(this, OneTimeDialogs.DialogType.NOTIFICATION_PERMISSION, () -> startActivity(new Intent(this, InstallWizardActivity.class)));
             }
-
-            // Cleanup for removed ML Kit offline translation
-            LocalStorage.cleanupMLKitfiles();
         }
     }
 
