@@ -33,7 +33,6 @@ import cgeo.geocaching.enumerations.CacheAttribute;
 import cgeo.geocaching.enumerations.CacheAttributeCategory;
 import cgeo.geocaching.enumerations.CacheType;
 import cgeo.geocaching.enumerations.LoadFlags;
-import cgeo.geocaching.enumerations.LoadFlags.RemoveFlag;
 import cgeo.geocaching.enumerations.LoadFlags.SaveFlag;
 import cgeo.geocaching.enumerations.StatusCode;
 import cgeo.geocaching.enumerations.WaypointType;
@@ -96,6 +95,7 @@ import cgeo.geocaching.utils.CryptUtils;
 import cgeo.geocaching.utils.DisposableHandler;
 import cgeo.geocaching.utils.EmojiUtils;
 import cgeo.geocaching.utils.Formatter;
+import cgeo.geocaching.utils.IgnoreListUtils;
 import cgeo.geocaching.utils.ImageUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
@@ -760,7 +760,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             menu.findItem(R.id.menu_export).setVisible(true);
 
             // submenu advanced
-            menu.findItem(R.id.menu_ignore).setVisible(connector instanceof IIgnoreCapability && ((IIgnoreCapability) connector).canIgnoreCache(cache));
+            menu.findItem(R.id.menu_ignore).setVisible(connector instanceof IIgnoreCapability && ((IIgnoreCapability) connector).canIgnoreCache(cache) && !cache.getLists().contains(StoredList.IGNORE_LIST_ID));
+            menu.findItem(R.id.menu_remove_from_ignorelist).setVisible(connector instanceof IIgnoreCapability && ((IIgnoreCapability) connector).canRemoveFromIgnoreCache(cache) && cache.getLists().contains(StoredList.IGNORE_LIST_ID));
             menu.findItem(R.id.menu_set_cache_icon).setVisible(true);
             menu.findItem(R.id.menu_advanced).setVisible(cache.getCoords() != null);
             menu.findItem(R.id.menu_change_description_style).setVisible(!DescriptionViewCreator.useMarkdown(cache));
@@ -791,6 +792,8 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
             ShareUtils.openUrl(this, "https://project-gc.com/Challenges/" + cache.getGeocode());
         } else if (menuItem == R.id.menu_ignore) {
             ignoreCache();
+        } else if (menuItem == R.id.menu_remove_from_ignorelist) {
+            removeCacheFromIgnorelist();
         } else if (menuItem == R.id.menu_set_coordinates) {
             setCoordinates(this);
         } else if (menuItem == R.id.menu_translate) {
@@ -862,12 +865,18 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
     }
 
     private void ignoreCache() {
-        SimpleDialog.of(this).setTitle(R.string.ignore_confirm_title).setMessage(R.string.ignore_confirm_message).confirm(() -> {
-            AndroidRxUtils.networkScheduler.scheduleDirect(() -> ((IIgnoreCapability) ConnectorFactory.getConnector(cache)).addToIgnorelist(cache));
-            // For consistency, remove also the local cache immediately from memory cache and database
-            if (cache.isOffline()) {
-                dropCache();
-                DataStore.removeCache(cache.getGeocode(), EnumSet.of(RemoveFlag.DB));
+        SimpleDialog.of(this).setTitle(R.string.ignore_confirm_title).setMessage(R.string.ignore_confirm_message).confirm(() ->
+            AndroidRxUtils.networkScheduler.scheduleDirect(() -> {
+                if (IgnoreListUtils.ignoreOnline(cache)) {
+                    runOnUiThread(this::notifyDataSetChanged);
+                }
+            }));
+    }
+
+    private void removeCacheFromIgnorelist() {
+        AndroidRxUtils.networkScheduler.scheduleDirect(() -> {
+            if (IgnoreListUtils.unignoreOnline(cache)) {
+                runOnUiThread(this::notifyDataSetChanged);
             }
         });
     }
