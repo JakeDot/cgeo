@@ -441,8 +441,8 @@ final class ALApi {
                     wpt.setOriginalCoordsEmpty(true);
                 }
 
-                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete
-                if (isAdventureComplete || wptResponse.path("IsComplete").asBoolean(false)) {
+                // Mark waypoint as visited if the Adventure Lab is complete
+                if (isAdventureComplete) {
                     wpt.setVisited(true);
                 }
 
