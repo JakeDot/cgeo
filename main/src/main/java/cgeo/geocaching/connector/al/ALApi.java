@@ -391,8 +391,8 @@ final class ALApi {
             cache.setDisabled(false);
             cache.setHidden(parseDate(response.get("PublishedUtc").asText()));
             cache.setOwnerDisplayName(response.get("OwnerUsername").asText());
-            final boolean isComplete = response.get("IsComplete").asBoolean();
-            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode, isComplete));
+            final boolean isAdventureComplete = response.get("IsComplete").asBoolean();
+            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode, isAdventureComplete));
             final boolean isLinear = response.get("IsLinear").asBoolean();
             if (isLinear) {
                 cache.setAlcMode(1);
@@ -410,7 +410,7 @@ final class ALApi {
     }
 
     @Nullable
-    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode, final boolean isComplete) {
+    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode, final boolean isAdventureComplete) {
         List<Waypoint> result = null;
         final Geopoint pointZero = new Geopoint(0, 0);
         int stageCounter = 0;
@@ -441,8 +441,8 @@ final class ALApi {
                     wpt.setOriginalCoordsEmpty(true);
                 }
 
-                // Mark waypoint as visited if the Adventure Lab is complete
-                if (isComplete) {
+                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete
+                if (isAdventureComplete || wptResponse.path("IsComplete").asBoolean(false)) {
                     wpt.setVisited(true);
                 }
 
