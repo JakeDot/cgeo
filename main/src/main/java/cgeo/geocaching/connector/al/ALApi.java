@@ -170,11 +170,8 @@ final class ALApi {
                 for (final Geocache matchedLabCache : matchedLabCaches) {
                     if (matchedLabCache.getGeocode().equals(geocode)) {
                         gc.setFound(matchedLabCache.isFound());
-                        // If the Adventure Lab is found (complete), mark all waypoints as visited
-                        if (matchedLabCache.isFound() && gc.hasWaypoints()) {
-                            for (final Waypoint waypoint : gc.getWaypoints()) {
-                                waypoint.setVisited(true);
-                            }
+                        if (matchedLabCache.isFound()) {
+                            markWaypointsVisited(gc);
                         }
                     }
                 }
@@ -183,6 +180,15 @@ final class ALApi {
         } catch (final Exception ex) {
             Log.w("APApi: Exception while getting " + geocode, ex);
             return null;
+        }
+    }
+
+    // If the Adventure Lab is found (complete), mark all its waypoints as visited
+    private static void markWaypointsVisited(final Geocache gc) {
+        if (gc.hasWaypoints()) {
+            for (final Waypoint waypoint : gc.getWaypoints()) {
+                waypoint.setVisited(true);
+            }
         }
     }
 
@@ -425,21 +431,7 @@ final class ALApi {
                     note.append("<p><p>").append(wptResponse.get("Question").asText());
                 }
 
-                try {
-                    final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
-                    if (jn instanceof ArrayNode) { // implicitly covers null case as well
-                        final ArrayNode multiChoiceOptions = (ArrayNode) jn;
-                        if (!multiChoiceOptions.isEmpty()) {
-                            note.append("<ul>");
-                            for (final JsonNode mc : multiChoiceOptions) {
-                                note.append("<li>").append(mc.get("Text").asText()).append("</li>");
-                            }
-                            note.append("</ul>");
-                        }
-                    }
-                } catch (Exception ignore) {
-                    // ignore exception
-                }
+                appendMultiChoiceOptions(note, wptResponse);
                 wpt.setNote(note.toString());
 
                 final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
@@ -464,6 +456,24 @@ final class ALApi {
             }
         }
         return result;
+    }
+
+    private static void appendMultiChoiceOptions(final StringBuilder note, final JsonNode wptResponse) {
+        try {
+            final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
+            if (jn instanceof ArrayNode) { // implicitly covers null case as well
+                final ArrayNode multiChoiceOptions = (ArrayNode) jn;
+                if (!multiChoiceOptions.isEmpty()) {
+                    note.append("<ul>");
+                    for (final JsonNode mc : multiChoiceOptions) {
+                        note.append("<li>").append(mc.get("Text").asText()).append("</li>");
+                    }
+                    note.append("</ul>");
+                }
+            }
+        } catch (final Exception ignore) {
+            // ignore exception
+        }
     }
 
     @Nullable
