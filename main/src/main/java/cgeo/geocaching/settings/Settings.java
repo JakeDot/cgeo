@@ -873,6 +873,14 @@ public class Settings {
         return outdatedPhoneModelOrSdk() || getBoolean(R.string.pref_googleplayservices, true);
     }
 
+    public static boolean hasAttemptedDefaultOfflineMapDownload() {
+        return getBoolean(R.string.pref_attemptedDefaultOfflineMapDownload, false);
+    }
+
+    public static void setAttemptedDefaultOfflineMapDownload(final boolean value) {
+        putBoolean(R.string.pref_attemptedDefaultOfflineMapDownload, value);
+    }
+
     public static boolean useLowPowerMode() {
         return getBoolean(R.string.pref_lowpowermode, false);
     }

@@ -385,6 +385,9 @@
     <!-- category geolocation -->
     <string translatable="false" name="pref_googleplayservices">googleplayservices</string>
 
+    <!-- "lite" flavor: whether a first-run default offline map download has already been attempted -->
+    <string translatable="false" name="pref_attemptedDefaultOfflineMapDownload">attemptedDefaultOfflineMapDownload</string>
+
     <!-- category low power mode -->
     <string translatable="false" name="pref_lowpowermode">lowpowerlocation</string>
 
