@@ -49,12 +49,18 @@ public final class DefaultOfflineMapDownloader {
         if (hasExistingOfflineMap()) {
             return;
         }
+        Uri target = null;
         try {
-            final Uri target = ContentStorage.get().create(PersistableFolder.OFFLINE_MAPS, LOCAL_FILENAME);
+            target = ContentStorage.get().create(PersistableFolder.OFFLINE_MAPS, LOCAL_FILENAME);
+            if (target == null) {
+                Log.i("DefaultOfflineMapDownloader: storage error, target URI is null");
+                return;
+            }
             try (InputStream in = Network.getResponseStream(Network.getRequest(REMOTE_URL));
-                 OutputStream out = target == null ? null : ContentStorage.get().openForWrite(target)) {
+                 OutputStream out = ContentStorage.get().openForWrite(target)) {
                 if (in == null || out == null) {
                     Log.i("DefaultOfflineMapDownloader: no connection or storage error, skipping default map download");
+                    ContentStorage.get().delete(target);
                     return;
                 }
                 IOUtils.copy(in, out);
@@ -64,6 +70,9 @@ public final class DefaultOfflineMapDownloader {
             Log.i("DefaultOfflineMapDownloader: default world map downloaded successfully");
         } catch (final Exception e) {
             Log.i("DefaultOfflineMapDownloader: failed to download default world map", e);
+            if (target != null) {
+                ContentStorage.get().delete(target);
+            }
         }
     }
 

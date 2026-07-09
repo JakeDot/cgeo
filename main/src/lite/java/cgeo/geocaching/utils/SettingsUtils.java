@@ -109,14 +109,7 @@ public class SettingsUtils {
                 editor.putInt(key, Integer.parseInt(value));
                 break;
             case TYPE_BOOLEAN:
-                // do not use Boolean.parseBoolean as it silently ignores malformed values
-                if ("true".equalsIgnoreCase(value) || "1".equals(value)) {
-                    editor.putBoolean(key, true);
-                } else if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
-                    editor.putBoolean(key, false);
-                } else {
-                    throw new NumberFormatException();
-                }
+                editor.putBoolean(key, parseStrictBoolean(value));
                 break;
             case TYPE_FLOAT:
                 editor.putFloat(key, Float.parseFloat(value));
@@ -124,6 +117,17 @@ public class SettingsUtils {
             default:
                 throw new XmlPullParserException("unknown type");
         }
+    }
+
+    // do not use Boolean.parseBoolean as it silently ignores malformed values
+    private static boolean parseStrictBoolean(final String value) {
+        if ("true".equalsIgnoreCase(value) || "1".equals(value)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
+            return false;
+        }
+        throw new NumberFormatException();
     }
 
     public static void setPrefClick(final PreferenceFragmentCompat preferenceFragment, @StringRes final int res, final Runnable action) {
@@ -192,8 +196,16 @@ public class SettingsUtils {
         }
 
         final SettingsActivity activity = (SettingsActivity) fragment.getActivity();
-        assert activity != null;
+        if (activity == null) {
+            return;
+        }
 
+        showExtCgeoDirChooserDialog(fragment, activity, usedBytes, extDirs, currentExtDir, directories, freeSpaces, selectedDirIndex);
+    }
+
+    private static void showExtCgeoDirChooserDialog(final PreferenceFragmentCompat fragment, final SettingsActivity activity, final long usedBytes,
+                                                     final List<File> extDirs, final String currentExtDir, final List<CharSequence> directories,
+                                                     final List<Long> freeSpaces, final int selectedDirIndex) {
         final AlertDialog.Builder builder = Dialogs.newBuilder(activity);
         builder.setTitle(LocalizationUtils.getString(R.string.settings_title_data_dir_usage, Formatter.formatBytes(usedBytes)));
         builder.setSingleChoiceItems(new ArrayAdapter<CharSequence>(activity,

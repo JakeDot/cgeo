@@ -41,16 +41,24 @@ public final class WherigoMapSupport {
     }
 
     public static void displayThing(final Activity activity, final Object data) {
-        WherigoViewUtils.displayThing(activity, (EventTable) data, false);
+        if (data instanceof EventTable) {
+            WherigoViewUtils.displayThing(activity, (EventTable) data, false);
+        }
     }
 
     public static int registerVisibilityListener(final Activity activity, final int wherigoContainerViewId) {
-        return WherigoGame.get().addListener(nt -> {
+        final int[] listenerId = new int[1];
+        listenerId[0] = WherigoGame.get().addListener(nt -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                WherigoGame.get().removeListener(listenerId[0]);
+                return;
+            }
             final View view = activity.findViewById(wherigoContainerViewId);
             if (view != null) {
                 view.setVisibility(WherigoGame.get().isPlaying() ? View.VISIBLE : View.GONE);
             }
         });
+        return listenerId[0];
     }
 
     public static void unregisterListener(final int listenerId) {

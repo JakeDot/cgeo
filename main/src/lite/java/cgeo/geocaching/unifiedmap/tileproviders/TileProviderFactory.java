@@ -158,6 +158,9 @@ public class TileProviderFactory {
      */
     public static void addMapViewLanguageMenuItems(final Menu menu) {
         final MenuItem parentMenu = menu.findItem(R.id.menu_select_language);
+        if (parentMenu == null) {
+            return;
+        }
         if (languages != null) {
             final int currentLanguage = Settings.getMapLanguageId();
             final SubMenu subMenu = parentMenu.getSubMenu();

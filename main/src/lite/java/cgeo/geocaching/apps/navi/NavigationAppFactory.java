@@ -169,13 +169,9 @@ public final class NavigationAppFactory {
         final List<NavigationAppsEnum> items = new ArrayList<>();
         final int defaultNavigationTool = Settings.getDefaultNavigationTool();
         for (final NavigationAppsEnum navApp : getActiveNavigationApps()) {
-            if ((showInternalMap || !(navApp.app instanceof InternalMap)) &&
-                    (showDefaultNavigation || defaultNavigationTool != navApp.id)) {
-                if ((cache != null && navApp.app instanceof CacheNavigationApp && navApp.app.isEnabled(cache))
-                    || (waypoint != null && navApp.app instanceof WaypointNavigationApp && ((WaypointNavigationApp) navApp.app).isEnabled(waypoint))
-                    || (destination != null && navApp.app instanceof GeopointNavigationApp)) {
-                    items.add(navApp);
-                }
+            if (isVisibleForFilters(navApp, showInternalMap, showDefaultNavigation, defaultNavigationTool)
+                    && isApplicableForTarget(navApp, cache, waypoint, destination)) {
+                items.add(navApp);
             }
         }
 
@@ -201,6 +197,23 @@ public final class NavigationAppFactory {
             alert.setOnDismissListener(dialog -> ViewUtils.setEnabled(activity.findViewById(menuResToEnableOnDismiss), true));
         }
         alert.show();
+    }
+
+    private static boolean isVisibleForFilters(final NavigationAppsEnum navApp, final boolean showInternalMap, final boolean showDefaultNavigation, final int defaultNavigationTool) {
+        if (!showInternalMap && navApp.app instanceof InternalMap) {
+            return false;
+        }
+        return showDefaultNavigation || defaultNavigationTool != navApp.id;
+    }
+
+    private static boolean isApplicableForTarget(final NavigationAppsEnum navApp, final Geocache cache, final Waypoint waypoint, final Geopoint destination) {
+        if (cache != null && navApp.app instanceof CacheNavigationApp) {
+            return navApp.app.isEnabled(cache);
+        }
+        if (waypoint != null && navApp.app instanceof WaypointNavigationApp) {
+            return ((WaypointNavigationApp) navApp.app).isEnabled(waypoint);
+        }
+        return destination != null && navApp.app instanceof GeopointNavigationApp;
     }
 
     /**
