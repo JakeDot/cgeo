@@ -172,24 +172,30 @@ final class ALApi {
                 return null;
             }
             if (!Settings.isALCfoundStateManual() && gc.getCoords() != null) {
-                final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
-                Log.d("_AL searchByGeocode: found " + matchedLabCaches.size() + " nearby lab cache(s) while looking for " + geocode);
-                for (final Geocache matchedLabCache : matchedLabCaches) {
-                    if (matchedLabCache.getGeocode().equals(geocode)) {
-                        Log.d("_AL searchByGeocode: matched " + geocode + ", found=" + matchedLabCache.isFound());
-                        gc.setFound(matchedLabCache.isFound());
-                        if (matchedLabCache.isFound()) {
-                            markWaypointsVisited(gc);
-                        }
-                        DataStore.saveCache(gc, EnumSet.of(SaveFlag.DB));
-                        break;
-                    }
-                }
+                updateFoundStateFromSearch(gc, geocode);
             }
             return gc;
         } catch (final Exception ex) {
             Log.w("_AL searchByGeocode: exception while getting " + geocode, ex);
             return null;
+        }
+    }
+
+    // Look up the true found state via search() (see comment above) and, if found, mark the
+    // Geocache and its waypoints visited and persist the update
+    private static void updateFoundStateFromSearch(final Geocache gc, final String geocode) throws IOException {
+        final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
+        Log.d("_AL searchByGeocode: found " + matchedLabCaches.size() + " nearby lab cache(s) while looking for " + geocode);
+        for (final Geocache matchedLabCache : matchedLabCaches) {
+            if (matchedLabCache.getGeocode().equals(geocode)) {
+                Log.d("_AL searchByGeocode: matched " + geocode + ", found=" + matchedLabCache.isFound());
+                gc.setFound(matchedLabCache.isFound());
+                if (matchedLabCache.isFound()) {
+                    markWaypointsVisited(gc);
+                }
+                DataStore.saveCache(gc, EnumSet.of(SaveFlag.DB));
+                break;
+            }
         }
     }
 
