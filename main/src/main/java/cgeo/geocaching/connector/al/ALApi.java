@@ -158,17 +158,25 @@ final class ALApi {
     @Nullable
     @WorkerThread
     protected static Geocache searchByGeocode(final String geocode) {
+        Log.d("_AL searchByGeocode: " + geocode);
         if (!Settings.isGCPremiumMember() || CONSUMER_KEY.isEmpty()) {
+            Log.d("_AL searchByGeocode: skipping " + geocode + ", not a premium member or consumer key missing");
             return null;
         }
         final Parameters headers = new Parameters(CONSUMER_HEADER, CONSUMER_KEY);
         try {
             final Response response = apiRequest(geocode.substring(2), null, headers).blockingGet();
             final Geocache gc = importCacheFromJSON(response);
-            if (gc != null && !Settings.isALCfoundStateManual() && gc.getCoords() != null) {
+            if (gc == null) {
+                Log.w("_AL searchByGeocode: importCacheFromJSON returned null for " + geocode);
+                return null;
+            }
+            if (!Settings.isALCfoundStateManual() && gc.getCoords() != null) {
                 final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
+                Log.d("_AL searchByGeocode: found " + matchedLabCaches.size() + " nearby lab cache(s) while looking for " + geocode);
                 for (final Geocache matchedLabCache : matchedLabCaches) {
                     if (matchedLabCache.getGeocode().equals(geocode)) {
+                        Log.d("_AL searchByGeocode: matched " + geocode + ", found=" + matchedLabCache.isFound());
                         gc.setFound(matchedLabCache.isFound());
                         if (matchedLabCache.isFound()) {
                             markWaypointsVisited(gc);
@@ -180,7 +188,7 @@ final class ALApi {
             }
             return gc;
         } catch (final Exception ex) {
-            Log.w("APApi: Exception while getting " + geocode, ex);
+            Log.w("_AL searchByGeocode: exception while getting " + geocode, ex);
             return null;
         }
     }
@@ -188,6 +196,7 @@ final class ALApi {
     // If the Adventure Lab is found (complete), mark all its waypoints as visited
     private static void markWaypointsVisited(final Geocache gc) {
         if (gc.hasWaypoints()) {
+            Log.d("_AL markWaypointsVisited: marking " + gc.getWaypoints().size() + " waypoint(s) of " + gc.getGeocode() + " as visited");
             for (final Waypoint waypoint : gc.getWaypoints()) {
                 waypoint.setVisited(true);
             }
@@ -198,8 +207,10 @@ final class ALApi {
     @WorkerThread
     private static Collection<Geocache> search(final Geopoint center, final int distanceInMeters, final Integer daysSincePublish, final int take) throws IOException {
         if (!Settings.isGCPremiumMember() || CONSUMER_KEY.isEmpty()) {
+            Log.d("_AL search: skipping, not a premium member or consumer key missing");
             return Collections.emptyList();
         }
+        Log.d("_AL search: center=" + center + " radius=" + distanceInMeters + " daysSincePublish=" + daysSincePublish + " take=" + take);
         final Parameters headers = new Parameters(CONSUMER_HEADER, CONSUMER_KEY);
         final ALSearchV4Query query = new ALSearchV4Query();
         query.setOrigin(center.getLatitude(), center.getLongitude(), 0.0);
@@ -209,8 +220,11 @@ final class ALApi {
         query.setCallingUserPublicGuid(GCLogin.getInstance().getPublicGuid());
         try {
             final Response response = apiPostRequest("SearchV4", headers, query, false).blockingGet();
-            return importCachesFromJSON(response);
+            final List<Geocache> caches = importCachesFromJSON(response);
+            Log.d("_AL search: got " + caches.size() + " result(s)");
+            return caches;
         } catch (final Exception ex) {
+            Log.w("_AL search: exception while searching", ex);
             throw new IOException("Problem accessing ALApi", ex);
         }
     }
@@ -225,11 +239,13 @@ final class ALApi {
         // Origin excludes Lab
         final OriginGeocacheFilter of = GeocacheFilter.findInChain(filters, OriginGeocacheFilter.class);
         if (of != null && !of.allowsCachesOf(connector)) {
+            Log.d("_AL searchByFilter: skipping, origin filter excludes this connector");
             return new ArrayList<>();
         }
         // Type excludes Lab
         final TypeGeocacheFilter tf = GeocacheFilter.findInChain(filters, TypeGeocacheFilter.class);
         if (tf != null && tf.isFiltering() && !tf.getRawValues().contains(ADVLAB)) {
+            Log.d("_AL searchByFilter: skipping, type filter excludes Adventure Lab");
             return new ArrayList<>();
         }
 
@@ -256,6 +272,7 @@ final class ALApi {
             daysSincePublish = null;
         }
 
+        Log.d("_AL searchByFilter: searching around " + searchCoords + " radius=" + radius + " daysSincePublish=" + daysSincePublish + " take=" + take);
         return search(searchCoords, radius, daysSincePublish, take);
     }
 
@@ -272,6 +289,7 @@ final class ALApi {
         // retry at most one time
         return response.flatMap((Function<Response, Single<Response>>) response1 -> {
             if (!isRetry && response1.code() == 403) {
+                Log.d("_AL apiRequest: got 403 for " + uri + ", retrying once");
                 return apiRequest(uri, params, headers, true);
             }
             return Single.just(response1);
@@ -286,6 +304,7 @@ final class ALApi {
         // retry at most one time
         return response.flatMap((Function<Response, Single<Response>>) response1 -> {
             if (!isRetry && response1.code() == 403) {
+                Log.d("_AL apiPostRequest: got 403 for " + uri + ", retrying once");
                 return apiPostRequest(uri, headers, jsonObj, true);
             }
             return Single.just(response1);
@@ -359,6 +378,7 @@ final class ALApi {
                 cache.setFound(response.get("IsComplete").asBoolean());
             }
             DataStore.saveCache(cache, EnumSet.of(SaveFlag.CACHE));
+            Log.d("_AL parseCache: parsed " + geocode + ", found=" + cache.isFound());
             return cache;
         } catch (final NullPointerException e) {
             Log.e("_AL ALApi.parseCache", e);
@@ -394,6 +414,7 @@ final class ALApi {
             cache.setHidden(parseDate(response.get("PublishedUtc").asText()));
             cache.setOwnerDisplayName(response.get("OwnerUsername").asText());
             final boolean isAdventureComplete = response.get("IsComplete").asBoolean();
+            Log.d("_AL parseCacheDetail: " + geocode + " isAdventureComplete=" + isAdventureComplete);
             if (!Settings.isALCfoundStateManual()) {
                 cache.setFound(isAdventureComplete);
             }
@@ -407,6 +428,7 @@ final class ALApi {
             Log.d("_AL mode from JSON: IsLinear: " + cache.isLinearAlc());
             cache.setDetailedUpdatedNow();
             DataStore.saveCache(cache, EnumSet.of(SaveFlag.DB));
+            Log.d("_AL parseCacheDetail: parsed " + geocode + " with " + (cache.hasWaypoints() ? cache.getWaypoints().size() : 0) + " waypoint(s)");
             return cache;
         } catch (final NullPointerException e) {
             Log.e("_AL ALApi.parseCache", e);
@@ -446,8 +468,14 @@ final class ALApi {
                     wpt.setOriginalCoordsEmpty(true);
                 }
 
-                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete
+                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete.
+                // TODO(#17107): "IsComplete" per stage is unconfirmed to reflect the actual per-user
+                // completion state (as opposed to e.g. a static default) - the debug log below is
+                // meant to let this be verified against a real, partially-completed Adventure Lab
+                // before this comment and the log line are removed.
                 final boolean isStageComplete = wptResponse.path("IsComplete").asBoolean(false);
+                Log.d("_AL stage completion check: geocode=" + geocode + " stage=" + stageCounter
+                        + " stageIsComplete=" + isStageComplete + " adventureIsComplete=" + isAdventureComplete);
                 if (isAdventureComplete || isStageComplete) {
                     wpt.setVisited(true);
                 }
@@ -458,9 +486,10 @@ final class ALApi {
 
                 result.add(wpt);
             } catch (final NullPointerException e) {
-                Log.e("_AL ALApi.parseWaypoints", e);
+                Log.e("_AL ALApi.parseWaypoints: failed to parse stage " + stageCounter + " of " + geocode, e);
             }
         }
+        Log.d("_AL parseWaypoints: parsed " + (result == null ? 0 : result.size()) + " of " + wptsJson.size() + " stage(s) for " + geocode);
         return result;
     }
 
@@ -477,8 +506,8 @@ final class ALApi {
                     note.append("</ul>");
                 }
             }
-        } catch (final Exception ignore) {
-            // ignore exception
+        } catch (final Exception e) {
+            Log.d("_AL appendMultiChoiceOptions: ignoring malformed " + MULTICHOICEOPTIONS, e);
         }
     }
 
@@ -488,6 +517,7 @@ final class ALApi {
         try {
             return dateFormat.parse(date);
         } catch (final ParseException e) {
+            Log.w("_AL parseDate: failed to parse '" + date + "'", e);
             return new Date(0);
         }
     }
