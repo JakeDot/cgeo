@@ -19,7 +19,6 @@ import cgeo.geocaching.utils.AngleUtils;
 import cgeo.geocaching.utils.GroupedList;
 import cgeo.geocaching.utils.LocalizationUtils;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -394,17 +393,6 @@ public class MapsforgeVtmFragment extends AbstractMapFragment {
 
     // ========================================================================
     // theme & language related methods
-
-    @Override
-    public void selectTheme(final Activity activity) {
-        themeHelper.selectMapTheme(activity, mMap, currentTileProvider);
-    }
-
-    @Override
-    public void selectThemeOptions(final Activity activity) {
-        themeHelper.selectMapThemeOptions(activity, currentTileProvider);
-        doReapplyTheme = true;
-    }
 
     @Override
     public void applyTheme() {

@@ -201,7 +201,15 @@ android {
         // resources specific to flavor "basic".
         basic {
             java.srcDir 'src/nofoss/java' // "basic" shall contain non-foss code
+            java.srcDir 'src/notlight/java' // "basic" shall contain all non-light features
         }
+        nojit {
+            java.srcDir 'src/notlight/java' // "nojit" shall contain all non-light features
+        }
+        foss {
+            java.srcDir 'src/notlight/java' // "foss" shall contain all non-light features
+        }
+        // "light" intentionally does NOT include 'src/notlight/java'
     }
 
     testOptions {
@@ -288,6 +296,11 @@ android {
         foss {
             dimension = "javaCompilerTime"
             buildConfigField "String", "SPECIAL_BUILD", '""'
+        }
+
+        light {
+            dimension = "javaCompilerTime"
+            buildConfigField "String", "SPECIAL_BUILD", '"Light"'
         }
     }
 
@@ -390,8 +403,10 @@ dependencies {
     debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
     implementation "com.squareup.leakcanary:plumber-android:$leakCanaryVersion"
 
-    // Locus Maps integration
-    implementation 'com.github.asamm.locus-api:locus-api-android:0.9.72'
+    // Locus Maps integration — not included in light flavor
+    basicImplementation 'com.github.asamm.locus-api:locus-api-android:0.9.72'
+    nojitImplementation 'com.github.asamm.locus-api:locus-api-android:0.9.72'
+    fossImplementation 'com.github.asamm.locus-api:locus-api-android:0.9.72'
 
     // -- Mapsforge / Mapsforge --
 
@@ -407,11 +422,21 @@ dependencies {
     // String mapsforgeSource = 'com.github.cgeo.mapsforge'
     // String mapsforgeVersion = 'fbc75a4' // fix for #12210
 
-    implementation "$mapsforgeSource:mapsforge-core:$mapsforgeVersion@jar"
-    implementation "$mapsforgeSource:mapsforge-map:$mapsforgeVersion@jar"
-    implementation "$mapsforgeSource:mapsforge-map-android:$mapsforgeVersion@jar"
-    implementation "$mapsforgeSource:mapsforge-map-reader:$mapsforgeVersion@jar"
-    implementation "$mapsforgeSource:mapsforge-themes:$mapsforgeVersion@jar"
+    basicImplementation "$mapsforgeSource:mapsforge-core:$mapsforgeVersion@jar"
+    basicImplementation "$mapsforgeSource:mapsforge-map:$mapsforgeVersion@jar"
+    basicImplementation "$mapsforgeSource:mapsforge-map-android:$mapsforgeVersion@jar"
+    basicImplementation "$mapsforgeSource:mapsforge-map-reader:$mapsforgeVersion@jar"
+    basicImplementation "$mapsforgeSource:mapsforge-themes:$mapsforgeVersion@jar"
+    nojitImplementation "$mapsforgeSource:mapsforge-core:$mapsforgeVersion@jar"
+    nojitImplementation "$mapsforgeSource:mapsforge-map:$mapsforgeVersion@jar"
+    nojitImplementation "$mapsforgeSource:mapsforge-map-android:$mapsforgeVersion@jar"
+    nojitImplementation "$mapsforgeSource:mapsforge-map-reader:$mapsforgeVersion@jar"
+    nojitImplementation "$mapsforgeSource:mapsforge-themes:$mapsforgeVersion@jar"
+    fossImplementation "$mapsforgeSource:mapsforge-core:$mapsforgeVersion@jar"
+    fossImplementation "$mapsforgeSource:mapsforge-map:$mapsforgeVersion@jar"
+    fossImplementation "$mapsforgeSource:mapsforge-map-android:$mapsforgeVersion@jar"
+    fossImplementation "$mapsforgeSource:mapsforge-map-reader:$mapsforgeVersion@jar"
+    fossImplementation "$mapsforgeSource:mapsforge-themes:$mapsforgeVersion@jar"
 
     // -- Mapsforge / VTM --
 
@@ -430,19 +455,41 @@ dependencies {
     //String mapsforgeVTMVersion = 'master-SNAPSHOT'  // the really latest SNAPSHOT of master. Do not use for official builds!
     //String mapsforgeVTMVersion = 'master-20231222.081736-913'
 
-    implementation "$mapsforgeVTMSource:vtm:$mapsforgeVTMVersion"
-    implementation "$mapsforgeVTMSource:vtm-themes:$mapsforgeVTMVersion"
-    implementation "$mapsforgeVTMSource:vtm-jts:$mapsforgeVTMVersion"
-    implementation "$mapsforgeVTMSource:vtm-hillshading:$mapsforgeVTMVersion"
-    implementation "org.locationtech.jts:jts-core:1.20.0"
+    basicImplementation "$mapsforgeVTMSource:vtm:$mapsforgeVTMVersion"
+    basicImplementation "$mapsforgeVTMSource:vtm-themes:$mapsforgeVTMVersion"
+    basicImplementation "$mapsforgeVTMSource:vtm-jts:$mapsforgeVTMVersion"
+    basicImplementation "$mapsforgeVTMSource:vtm-hillshading:$mapsforgeVTMVersion"
+    basicImplementation "org.locationtech.jts:jts-core:1.20.0"
+    nojitImplementation "$mapsforgeVTMSource:vtm:$mapsforgeVTMVersion"
+    nojitImplementation "$mapsforgeVTMSource:vtm-themes:$mapsforgeVTMVersion"
+    nojitImplementation "$mapsforgeVTMSource:vtm-jts:$mapsforgeVTMVersion"
+    nojitImplementation "$mapsforgeVTMSource:vtm-hillshading:$mapsforgeVTMVersion"
+    nojitImplementation "org.locationtech.jts:jts-core:1.20.0"
+    fossImplementation "$mapsforgeVTMSource:vtm:$mapsforgeVTMVersion"
+    fossImplementation "$mapsforgeVTMSource:vtm-themes:$mapsforgeVTMVersion"
+    fossImplementation "$mapsforgeVTMSource:vtm-jts:$mapsforgeVTMVersion"
+    fossImplementation "$mapsforgeVTMSource:vtm-hillshading:$mapsforgeVTMVersion"
+    fossImplementation "org.locationtech.jts:jts-core:1.20.0"
 
-    runtimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-armeabi-v7a"
-    runtimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-arm64-v8a"
-    runtimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86"
-    runtimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86_64"
-    implementation "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion"
+    basicRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-armeabi-v7a"
+    basicRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-arm64-v8a"
+    basicRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86"
+    basicRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86_64"
+    basicImplementation "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion"
+    nojitRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-armeabi-v7a"
+    nojitRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-arm64-v8a"
+    nojitRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86"
+    nojitRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86_64"
+    nojitImplementation "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion"
+    fossRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-armeabi-v7a"
+    fossRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-arm64-v8a"
+    fossRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86"
+    fossRuntimeOnly "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion:natives-x86_64"
+    fossImplementation "$mapsforgeVTMSource:vtm-android:$mapsforgeVTMVersion"
 
-    implementation "$mapsforgeVTMSource:vtm-http:$mapsforgeVTMVersion"
+    basicImplementation "$mapsforgeVTMSource:vtm-http:$mapsforgeVTMVersion"
+    nojitImplementation "$mapsforgeVTMSource:vtm-http:$mapsforgeVTMVersion"
+    fossImplementation "$mapsforgeVTMSource:vtm-http:$mapsforgeVTMVersion"
 
     configurations.configureEach {
         exclude group: 'net.sf.kxml', module: 'kxml2' // duplicate XmlPullParser class
@@ -451,11 +498,7 @@ dependencies {
     // used by mapsforge
     implementation 'com.caverock:androidsvg:1.4'
 
-    // Maps.ME integration
-    implementation project(":mapswithme-api")
-
-    // Organic Maps integration
-    implementation project(":organicmaps-api")
+    // Wherigo engine (kahlua Lua VM + openWIG) — not included in light flavor (engine is in notlight/ source set)
 
     // Metadata Extractor, EXIF location extraction from images
     implementation 'com.drewnoakes:metadata-extractor:2.20.0'
@@ -562,10 +605,12 @@ dependencies {
     // for detailed docs for the base library see https://weeklycoding.com/mpandroidchart/
     implementation 'com.github.AppDevNext.AndroidChart:chartLib:5.2.1'
 
-    // For Wherigos: GIF support
+    // For Wherigos: GIF support — not included in light flavor
     // ani gif support
     // minSdk=17 from version 1.2.16
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.31'
+    basicImplementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.31'
+    nojitImplementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.31'
+    fossImplementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.31'
 
     implementation 'androidx.cardview:cardview:1.0.0'
 
