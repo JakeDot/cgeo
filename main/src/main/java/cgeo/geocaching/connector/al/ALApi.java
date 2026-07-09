@@ -441,8 +441,15 @@ final class ALApi {
                     wpt.setOriginalCoordsEmpty(true);
                 }
 
-                // Mark waypoint as visited if the Adventure Lab is complete
-                if (isAdventureComplete) {
+                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete.
+                // TODO(#17107): "IsComplete" per stage is unconfirmed to reflect the actual per-user
+                // completion state (as opposed to e.g. a static default) - the debug log below is
+                // meant to let this be verified against a real, partially-completed Adventure Lab
+                // before this comment and the log line are removed.
+                final boolean isStageComplete = wptResponse.path("IsComplete").asBoolean(false);
+                Log.d("_AL stage completion check: geocode=" + geocode + " stage=" + stageCounter
+                        + " stageIsComplete=" + isStageComplete + " adventureIsComplete=" + isAdventureComplete);
+                if (isAdventureComplete || isStageComplete) {
                     wpt.setVisited(true);
                 }
 
