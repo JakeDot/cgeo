@@ -165,11 +165,16 @@ final class ALApi {
         try {
             final Response response = apiRequest(geocode.substring(2), null, headers).blockingGet();
             final Geocache gc = importCacheFromJSON(response);
-            if (!Settings.isALCfoundStateManual()) {
+            if (gc != null && !Settings.isALCfoundStateManual() && gc.getCoords() != null) {
                 final Collection<Geocache> matchedLabCaches = search(gc.getCoords(), 1, null, 10);
-                for (Geocache matchedLabCache : matchedLabCaches) {
+                for (final Geocache matchedLabCache : matchedLabCaches) {
                     if (matchedLabCache.getGeocode().equals(geocode)) {
                         gc.setFound(matchedLabCache.isFound());
+                        if (matchedLabCache.isFound()) {
+                            markWaypointsVisited(gc);
+                        }
+                        DataStore.saveCache(gc, EnumSet.of(SaveFlag.DB));
+                        break;
                     }
                 }
             }
@@ -177,6 +182,15 @@ final class ALApi {
         } catch (final Exception ex) {
             Log.w("APApi: Exception while getting " + geocode, ex);
             return null;
+        }
+    }
+
+    // If the Adventure Lab is found (complete), mark all its waypoints as visited
+    private static void markWaypointsVisited(final Geocache gc) {
+        if (gc.hasWaypoints()) {
+            for (final Waypoint waypoint : gc.getWaypoints()) {
+                waypoint.setVisited(true);
+            }
         }
     }
 
@@ -379,7 +393,11 @@ final class ALApi {
             cache.setDisabled(false);
             cache.setHidden(parseDate(response.get("PublishedUtc").asText()));
             cache.setOwnerDisplayName(response.get("OwnerUsername").asText());
-            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode));
+            final boolean isAdventureComplete = response.get("IsComplete").asBoolean();
+            if (!Settings.isALCfoundStateManual()) {
+                cache.setFound(isAdventureComplete);
+            }
+            cache.setWaypoints(parseWaypoints((ArrayNode) response.path("GeocacheSummaries"), geocode, isAdventureComplete));
             final boolean isLinear = response.get("IsLinear").asBoolean();
             if (isLinear) {
                 cache.setAlcMode(1);
@@ -397,7 +415,7 @@ final class ALApi {
     }
 
     @Nullable
-    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode) {
+    private static List<Waypoint> parseWaypoints(final ArrayNode wptsJson, final String geocode, final boolean isAdventureComplete) {
         List<Waypoint> result = null;
         final Geopoint pointZero = new Geopoint(0, 0);
         int stageCounter = 0;
@@ -418,21 +436,7 @@ final class ALApi {
                     note.append("<p><p>").append(wptResponse.get("Question").asText());
                 }
 
-                try {
-                    final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
-                    if (jn instanceof ArrayNode) { // implicitly covers null case as well
-                        final ArrayNode multiChoiceOptions = (ArrayNode) jn;
-                        if (!multiChoiceOptions.isEmpty()) {
-                            note.append("<ul>");
-                            for (final JsonNode mc : multiChoiceOptions) {
-                                note.append("<li>").append(mc.get("Text").asText()).append("</li>");
-                            }
-                            note.append("</ul>");
-                        }
-                    }
-                } catch (Exception ignore) {
-                    // ignore exception
-                }
+                appendMultiChoiceOptions(note, wptResponse);
                 wpt.setNote(note.toString());
 
                 final Geopoint pt = new Geopoint(location.get(LATITUDE).asDouble(), location.get(LONGITUDE).asDouble());
@@ -441,6 +445,13 @@ final class ALApi {
                 } else {
                     wpt.setOriginalCoordsEmpty(true);
                 }
+
+                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete
+                final boolean isStageComplete = wptResponse.path("IsComplete").asBoolean(false);
+                if (isAdventureComplete || isStageComplete) {
+                    wpt.setVisited(true);
+                }
+
                 if (result == null) {
                     result = new ArrayList<>();
                 }
@@ -451,6 +462,24 @@ final class ALApi {
             }
         }
         return result;
+    }
+
+    private static void appendMultiChoiceOptions(final StringBuilder note, final JsonNode wptResponse) {
+        try {
+            final JsonNode jn = wptResponse.path(MULTICHOICEOPTIONS);
+            if (jn instanceof ArrayNode) { // implicitly covers null case as well
+                final ArrayNode multiChoiceOptions = (ArrayNode) jn;
+                if (!multiChoiceOptions.isEmpty()) {
+                    note.append("<ul>");
+                    for (final JsonNode mc : multiChoiceOptions) {
+                        note.append("<li>").append(mc.get("Text").asText()).append("</li>");
+                    }
+                    note.append("</ul>");
+                }
+            }
+        } catch (final Exception ignore) {
+            // ignore exception
+        }
     }
 
     @Nullable
