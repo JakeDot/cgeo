@@ -307,6 +307,7 @@ public class Settings {
         final SharedPreferences prefsV0 = CgeoApplication.getInstance().getSharedPreferences(preferencesNameV0, Context.MODE_PRIVATE);
         if (currentVersion == 0 && prefsV0.getAll().isEmpty()) {
             final Editor e = sharedPrefs.edit();
+            e.putBoolean(getKey(R.string.pref_units_imperial), useImperialUnitsByDefault());
             e.putInt(getKey(R.string.pref_settingsversion), latestPreferencesVersion);
             e.apply();
             return;
@@ -1215,14 +1216,14 @@ public class Settings {
      * live map) and the map of a single cache (which is often zoomed in more deep).
      */
     public static int getMapZoom(final UnifiedMapType.UnifiedMapTypeType mapType) {
-        if (mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetGeocode || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetCoords) {
+        if (mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetGeocode || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetCoords || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_SelectCoords) {
             return getCacheZoom();
         }
         return getMapZoom();
     }
 
     public static void setMapZoom(final UnifiedMapType.UnifiedMapTypeType mapType, final int zoomLevel) {
-        if (mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetGeocode || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetCoords) {
+        if (mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetGeocode || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_TargetCoords || mapType == UnifiedMapType.UnifiedMapTypeType.UMTT_SelectCoords) {
             setCacheZoom(zoomLevel);
         } else {
             setMapZoom(zoomLevel);
@@ -1531,6 +1532,14 @@ public class Settings {
         putBoolean(R.string.pref_brouterAutoTileDownloads, value);
     }
 
+    public static boolean getDownloadAllowMeteredNetwork() {
+        return getBoolean(R.string.pref_downloadAllowMeteredNetwork, false);
+    }
+
+    public static void setDownloadAllowMeteredNetwork(final boolean value) {
+        putBoolean(R.string.pref_downloadAllowMeteredNetwork, value);
+    }
+
     public static boolean brouterAutoTileDownloadsNeedUpdate() {
         return needsIntervalAction(R.string.pref_brouterAutoTileDownloadsLastCheck, getBrouterAutoTileDownloadsInterval() * 24, () -> setBrouterAutoTileDownloadsLastCheck(false));
     }
@@ -1570,7 +1579,7 @@ public class Settings {
         return (System.currentTimeMillis() / 1000) - (delay && (intervalInHours > 72) ? (long) (intervalInHours - 72) * HOURS_TO_SECONDS : 0);
     }
 
-    // checks given timestamp against interval; initializes timestampt, if needed
+    // checks given timestamp against interval; initializes timestamp, if needed
     private static boolean needsIntervalAction(final @StringRes int prefTimestamp, final int intervalInHours, final Runnable initAction) {
         // check disabled?
         if (intervalInHours < 1) {
@@ -2530,6 +2539,14 @@ public class Settings {
         return getBoolean(R.string.pref_dtMarkerOnCacheIcon, false);
     }
 
+    /**
+     * Clears the conditional cache markers SharedPreferences keys (called during DB migration).
+     */
+    public static void clearConditionalCacheMarkersPrefs() {
+        putString(R.string.pref_conditionalCacheMarkers, "[]");
+        putBoolean(R.string.pref_conditionalCacheMarkersEnabled, false);
+    }
+
     public static int getAttributeFilterSources() {
         int setting = getInt(R.string.pref_attributeFilterSources, 0);
         if (setting == 0) {
@@ -2612,12 +2629,6 @@ public class Settings {
 
     public static boolean removeFromRouteOnLog() {
         return getBoolean(R.string.pref_removeFromRouteOnLog, false);
-    }
-
-    public static boolean checkAndSetLegacyFilterConfigMigrated() {
-        final boolean isMigrated = getBoolean(R.string.pref_legacy_filter_config_migrated, false);
-        putBoolean(R.string.pref_legacy_filter_config_migrated, true);
-        return isMigrated;
     }
 
     public static void setLastUsedDate(final Calendar date) {

@@ -28,7 +28,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataStoreTest {
 
@@ -329,6 +329,45 @@ public class DataStoreTest {
             DataStore.removeCache(ARTIFICIAL_GEOCODE, REMOVE_ALL);
         }
     }
+
+    @Test
+    public void testStoreOfflineCacheWithMemoryData() {
+        try {
+            final Geocache cacheInMemory = new Geocache();
+            cacheInMemory.setGeocode(ARTIFICIAL_GEOCODE);
+            cacheInMemory.setCoords(new Geopoint(1, 2));
+            cacheInMemory.setDescription("Cache description in memory");
+            cacheInMemory.setShortDescription("Cache short-description in memory");
+            cacheInMemory.setPersonalNote("Personal note in memory");
+            cacheInMemory.setDetailed(true);
+
+            DataStore.saveCache(cacheInMemory, EnumSet.of(LoadFlags.SaveFlag.CACHE));
+
+            // store cache-data
+            final Geocache cacheNew = new Geocache();
+            cacheNew.setGeocode(ARTIFICIAL_GEOCODE);
+            cacheNew.setDescription("Cache description new");
+            cacheNew.setHint("Cache hint new");
+            //no coord, no personal note, no short description
+
+            DataStore.saveCache(cacheNew, EnumSet.of(LoadFlags.SaveFlag.DB));
+
+            final Geocache cacheDb = DataStore.loadCache(ARTIFICIAL_GEOCODE, LoadFlags.LOAD_CACHE_OR_DB);
+
+            assertThat(cacheDb).isNotNull();
+            assertThat(cacheDb.getGeocode()).isEqualTo(ARTIFICIAL_GEOCODE);
+
+            // all data from new cache except what was preserved from memory
+            assertThat(cacheDb.getCoords()).isEqualTo(new Geopoint(1, 2));
+            assertThat(cacheDb.getDescription()).isEqualTo("Cache description new");
+            assertThat(cacheDb.getShortDescription()).isEqualTo("Cache short-description in memory");
+            assertThat(cacheDb.getPersonalNote()).isEqualTo("Personal note in memory");
+            assertThat(cacheDb.getHint()).isEqualTo("Cache hint new");
+        } finally {
+            DataStore.removeCache(ARTIFICIAL_GEOCODE, REMOVE_ALL);
+        }
+    }
+
 
     @Test
     public void testUpdateOfflineCache() {

@@ -3,6 +3,70 @@ This changelog contains all changes which are not intermediate developing steps.
 
 <!-- --------------------------------------------------------------------------------- --->
 
+## 2026.06.19 Bugfix Release
+
+Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you!
+With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back.
+We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+
+- Fix: Logging caches (website change)
+- Fix: Logging trackables (website change)
+- Fix: Deleting of log images broken (website change)
+- Fix: Cache attributes not detected correctly under certain conditions
+- Change: Unify track and individual route loading buttons
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2026.06.04 Bugfix Release
+
+Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you!
+With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back.
+We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+
+- Fix: Pocket query import broken (website change)
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2026.05.21 Bugfix Release
+
+Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you!
+With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back.
+We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+
+- Fix: Crash when accessing routes
+- Fix: Crash on waypoint page
+- Change: Search for "own caches" starts with fresh filters
+- Fix: Unsaved lab adventure stages losing "visited" info on refresh
+- Fix: Recurring prompt for tile source updates
+- Fix: Random location on mapping a list (Google Maps)
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2026.05.15 Bugfix Release
+
+Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you! With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back. We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+
+- Fix: Wherigo cartridges cannot be downloaded anymore (website change)
+- Fix: Crash in cache infosheet
+
+<!-- --------------------------------------------------------------------------------- --->
+
+## 2026.04.30 Bugfix Release
+
+Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you! With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back. We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+
+- Change: Wherigo files cannot be downloaded currently, display mitigation instructions
+- Fix: Log delete reason does not enforce lengh limit
+- New: Extended logging for crashes in download manager
+- Fix: Waypoint infosheet can become too long, buttons unreachable
+- Fix: Some location info gets truncated
+- Fix: Internal routing no longer working, only straight line shown
+- Fix: Some folder creation issues
+
+Note: If you are using internal routing, you will need to execute the following step once after installing this release: Go to c:geo home screen, open "Manage offline data" - "Update routing data", and let c:geo install the updated files. (Reason: BRouter routing data file structure has changed and all routing data files must comply to the same version.)
+
+<!-- --------------------------------------------------------------------------------- --->
+
 ## 2026.03.16 Bugfix Release
 
 Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you! With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back. We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.

@@ -137,7 +137,7 @@ public class RouteOptimizationHelper {
             return;
         }
 
-        Dialogs.advancedOneTimeMessage(context, OneTimeDialogs.DialogType.ROUTE_OPTIMIZATION, LocalizationUtils.getString(R.string.route_optimization), LocalizationUtils.getString(R.string.route_optimization_info), "", true, null, () -> {
+        Dialogs.advancedOneTimeMessage(context, OneTimeDialogs.DialogType.ROUTE_OPTIMIZATION, LocalizationUtils.getString(R.string.route_optimization), LocalizationUtils.getString(R.string.route_optimization_info), true, () -> {
             final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             final TSPDialog dialog = new TSPDialog(context, executor, updateRoute);
             dialog.show();
@@ -203,6 +203,7 @@ public class RouteOptimizationHelper {
                                 final Geopoint[] track = Routing.getTrackNoCaching(
                                         new Geopoint(initialRoute.get(col).getPoint().getLatitude(), initialRoute.get(col).getPoint().getLongitude()),
                                         new Geopoint(initialRoute.get(j).getPoint().getLatitude(), initialRoute.get(j).getPoint().getLongitude()),
+                                        null,
                                         null);
                                 float distance = 0.0f;
                                 if (track.length > 0) {

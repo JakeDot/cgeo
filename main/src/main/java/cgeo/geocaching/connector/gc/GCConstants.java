@@ -38,7 +38,7 @@ public final class GCConstants {
     static final Pattern PATTERN_SIZE = Pattern.compile("/icons/container/([a-z_]+)\\.");
     static final Pattern PATTERN_LATLON = Pattern.compile("<span id=\"uxLatLon\"[^>]*>(.*?)</span>");
     static final Pattern PATTERN_LATLON_ORIG = Pattern.compile("\\{\"isUserDefined\":true[^}]+?\"oldLatLngDisplay\":\"([^\"]+)\"\\}");
-    static final Pattern PATTERN_LOCATION = Pattern.compile("It&#39;s located in (.*?)\\.");
+    static final Pattern PATTERN_LOCATION = Pattern.compile("<title>.*\\) in (.*?) created by .*</title>");
     // homeLocation: {"Latitude":50.12345,"Longitude":10.98765}
     static final Pattern PATTERN_LOCATION_LOGIN = Pattern.compile("homeLocation:\\s*\\{\\\"Latitude\\\":(-?\\d*\\.\\d*),\\\"Longitude\\\":(-?\\d*\\.\\d*)\\}");
     static final Pattern PATTERN_PERSONALNOTE = Pattern.compile("<div id=\"srOnlyCacheNote\"[^>]*>(.*?)</div>", Pattern.DOTALL);
@@ -193,7 +193,7 @@ public final class GCConstants {
      * Live Map since 14.02.2012
      */
     static final Pattern PATTERN_USERSESSION = Pattern.compile("UserSession\\('([^']+)'");
-    static final Pattern PATTERN_SESSIONTOKEN = Pattern.compile("sessionToken:'([^']+)'");
+    static final Pattern PATTERN_SESSIONTOKEN = Pattern.compile("\"?sessionToken\"?:['\"]([^'\"]+)");
 
     static final String STRING_PREMIUMONLY = "class=\"illustration lock-icon\"";
     static final Pattern PATTERN_PREMIUMONLY_CACHETYPE = Pattern.compile("/app/ui-icons/sprites/cache-types\\.svg#icon-([^\"\\-]+)-?([^\"]+)?");

@@ -872,7 +872,6 @@
     <string name="settings_lc_description">Incluye cachés de Adventure Lab en el mapa.\n\n(Disponible solo para miembros premium \"Geocaching.com\". Requiere un servicio \"Geocaching.com\" activado.)\n\nPara cambiar esta configuración es necesario reiniciar.</string>
     <string name="settings_lc_found_state_title">Estado manual de encontrado</string>
     <string name="settings_lc_found_state_handling">Si está marcado, no se obtendrá automáticamente el estado de encontrado verdadero para los Adventure Lab, en su lugar, proporcionar controles para que el usuario establezca manualmente el estado de encontrado</string>
-    <string name="lc_default_description">Este es un caché Adventure Lab de geocaching.com. Las aventuras sólo se pueden jugar con la aplicación de Adventure Lab de Groundspeake. Pulsa en el icono de Adventure Lab en la página \"Detalles\" para abrir/instalar la aplicación de Adventure Lab para esta aventura desde allí.\nSi no quieres ver cachés de Adventure Lab en el mapa y buscar, puedes desactivar usando el menú \"Configuración\" - Servicios - Geocaching. Laboratorio de Aventuras</string>
     <string name="init_summary_oc_de">Carga cachés de opencaching.de</string>
     <string name="init_oc_de_description">Autorizar que c:geo pueda usar opencaching.de para buscar cachés y acceder a / filtrar tus cachés encontrados.</string>
     <string name="init_summary_oc_pl">Carga cachés de opencaching.pl</string>
@@ -895,7 +894,6 @@
     <string name="init_login_popup_not_authorized">No autorizado</string>
     <string name="init_login_popup_not_logged_in">No has iniciado sesión</string>
     <string name="init_login_manual">Inicio de sesión manual</string>
-    <string name="init_login_manual_description">Por favor espere a que aparezca un sitio web e inicie sesión en su cuenta. Espere hasta que se haya completado el inicio de sesión. Luego haga clic en el botón \'ok\' de abajo.</string>
     <string name="init_login_manual_error_nocookie">No se ha encontrado ningún token de autorización. Por favor inicie sesión o cancele el inicio de sesión manual.</string>
     <string name="init_login_popup_invalid_timestamp">Hora local inválida, ajuste la hora de nuevo</string>
     <string name="init_login_popup_invalid_token">Autorización inválida, volver a autorizar</string>

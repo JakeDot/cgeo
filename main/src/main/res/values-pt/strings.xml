@@ -886,7 +886,6 @@
     <string name="settings_lc_description">Incluir caches Adventure Lab no mapa.\n\n(Disponível apenas para membros premium \"Geocaching.com\". Requer o serviço \"Geocaching.com\" activado.)\n\nA alteração desta definição requer o reinício da aplicação.</string>
     <string name="settings_lc_found_state_title">Estado \"Encontrada\" manual</string>
     <string name="settings_lc_found_state_handling">Se marcado, não obter automaticamente o verdadeiro estado \"encontrado\" para caches Adventure Lab, em vez disso, fornecer controles para o utilizador definir manualmente o estado de \"encontrado\"</string>
-    <string name="lc_default_description">Esta é uma geocache Adventure Lab (do serviço \'geocaching.com\'). As aventuras apenas podem ser jogadas dentro da aplicação Adventure Lab da Groundspeak. Toque no ícone Adventure Lab na página \"Detalhes\" para abrir/instalar a aplicação Adventure Lab para prosseguir com a aventura na mesma.\nSe não deseja ver as geocaches Adventure Lab no mapa e na pesquisa, pode desactiva-las em \"Definições\" - \"Serviços\" - \"Adventure Lab (geocaching.com)\"</string>
     <string name="init_summary_oc_de">Carregar caches a partir de \'opencaching.de\'</string>
     <string name="init_oc_de_description">Autoriza o c:geo em opencaching.de para pesquisar por geocaches e aceder/filtrar às suas geocaches encontradas.</string>
     <string name="init_summary_oc_pl">Carregar caches a partir de \'opencaching.pl\'</string>
@@ -909,7 +908,6 @@
     <string name="init_login_popup_not_authorized">Não autorizado</string>
     <string name="init_login_popup_not_logged_in">Sem sessão iniciada</string>
     <string name="init_login_manual">Início de Sessão Manual</string>
-    <string name="init_login_manual_description">Por favor, aguarde até que uma página web apareça e entre na sua conta. Aguarde até que o início de sessão seja concluído. Em seguida, clique no botão \'ok\' abaixo.</string>
     <string name="init_login_manual_error_nocookie">Não foi encontrado nenhum token de autorização. Por favor, inicie a sessão ou \'cancele\' a manual.</string>
     <string name="init_login_popup_invalid_timestamp">Hora local inválida, altere a hora do aparelho</string>
     <string name="init_login_popup_invalid_token">Autorização inválida, volte a autorizar</string>
@@ -1560,6 +1558,7 @@
     <string name="menu_collapse_log">Encurtar registo</string>
     <string name="cache_log_menu_delete">Eliminar Registo</string>
     <string name="cache_log_menu_popup_title">Registo de %s</string>
+    <string name="cache_log_delete_reason">Motivo (máx. %d caracteres)</string>
     <string name="cache_log_delete_reason_default">O registo foi eliminado, através do c:geo</string>
     <string name="ignore_confirm_title">Tenha Cuidado</string>
     <string name="ignore_confirm_message">Ignorar uma geocache significa que a mesma deixa de constar da informação fornecida a partir de geocaching.com. Só será capaz de ver novamente a geocache deixando de ignora-la no sítio web.</string>

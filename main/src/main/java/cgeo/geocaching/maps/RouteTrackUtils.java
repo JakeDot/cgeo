@@ -1,5 +1,6 @@
 package cgeo.geocaching.maps;
 
+import cgeo.geocaching.CgeoApplication;
 import cgeo.geocaching.R;
 import cgeo.geocaching.activity.ActivityMixin;
 import cgeo.geocaching.export.IndividualRouteExport;
@@ -37,6 +38,7 @@ import cgeo.geocaching.utils.functions.Func0;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
@@ -64,6 +66,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.apache.commons.lang3.StringUtils;
+import org.mapsforge.map.android.hills.DemFolderAndroidContent;
+import org.mapsforge.map.elevation.ElevationAPI;
+import org.mapsforge.map.layer.hills.DemFolder;
 
 public class RouteTrackUtils {
 
@@ -304,9 +309,10 @@ public class RouteTrackUtils {
         }
         final boolean hasIndividualRoute = isRouteNonEmpty(individualRoute);
         dialog.findViewById(R.id.indivroute).setVisibility(hasIndividualRoute ? View.VISIBLE : View.GONE);
-        final View v = dialog.findViewById(R.id.indivroute_load);
-        v.setVisibility(hasIndividualRoute ? View.GONE : View.VISIBLE);
-        v.setOnClickListener(hasIndividualRoute ? null : (view) -> {
+        final View v1 = dialog.findViewById(R.id.indivroute_block);
+        v1.setVisibility(hasIndividualRoute ? View.GONE : View.VISIBLE);
+        final View v2 = dialog.findViewById(R.id.indivroute_load);
+        v2.setOnClickListener(hasIndividualRoute ? null : (view) -> {
             startFileSelectorIndividualRoute();
             this.dialog.dismiss();
         });
@@ -322,7 +328,7 @@ public class RouteTrackUtils {
 
             final CheckBox vAutoTarget = dialog.findViewById(R.id.auto_target);
             vAutoTarget.setChecked(Settings.isAutotargetIndividualRoute());
-            vAutoTarget.setOnClickListener(v1 -> {
+            vAutoTarget.setOnClickListener(v3 -> {
                 setAutotargetIndividualRoute(activity, individualRoute, !Settings.isAutotargetIndividualRoute());
                 updateDialogClearTargets(popup, individualRoute, setTarget, showElevationChart);
             });
@@ -452,4 +458,51 @@ public class RouteTrackUtils {
     public static boolean isNavigationTargetRoute(final IGeoItemSupplier route) {
         return route instanceof NavigationTargetRoute;
     }
+
+    /**
+     * Adds missing elevation data (tracks only)
+     */
+    public static void addMissingElevationData(final Route route) {
+        if (!route.isRouteable()) {
+            final RouteSegment[] segments = route.getSegments();
+            for (RouteSegment segment : segments) {
+                if (null == segment.getElevation() || segment.getElevation().size() != segment.getSize()) {
+                    final ArrayList<Float> newElevation = getElevation(segment.getPoints());
+                    if (newElevation != null && !newElevation.isEmpty()) {
+                        segment.setElevation(newElevation);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieves elevation data for given list of points
+     * <br />
+     * Uses fast elevation data retrieval from Mapsforge's hillshading routines - requires
+     * hillshading data to be downloaded first, but is independent of current map type
+     */
+    @Nullable
+    public static ArrayList<Float> getElevation(@NonNull final ArrayList<Geopoint> points) {
+        if (points.isEmpty()) {
+            return null;
+        }
+
+        final List<double[]> tempIn = new ArrayList<>();
+        for (Geopoint geo : points) {
+            tempIn.add(new double[]{ geo.getLatitude(), geo.getLongitude()});
+        }
+
+        final Context context = CgeoApplication.getInstance();
+        final DemFolder shadingFolder = new DemFolderAndroidContent(PersistableFolder.OFFLINE_MAP_SHADING.getUri(), context, context.getContentResolver());
+        final double[] tempOut = new double[points.size()];
+        new ElevationAPI(shadingFolder).getElevation(tempIn, tempOut);
+
+        final ArrayList<Float> result = new ArrayList<>(tempOut.length);
+        for (double d : tempOut) {
+            result.add((float) d);
+        }
+        return result;
+    }
+
 }

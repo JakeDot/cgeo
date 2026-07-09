@@ -11,6 +11,7 @@ import cgeo.geocaching.downloader.DownloaderUtils;
 import cgeo.geocaching.downloader.HillshadingTileDownloader;
 import cgeo.geocaching.enumerations.LoadFlags;
 import cgeo.geocaching.enumerations.WaypointType;
+import cgeo.geocaching.filters.FilterUtils;
 import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
 import cgeo.geocaching.location.Geopoint;
@@ -39,7 +40,6 @@ import cgeo.geocaching.ui.dialog.SimplePopupMenu;
 import cgeo.geocaching.unifiedmap.UnifiedMapType;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.ClipboardUtils;
-import cgeo.geocaching.utils.FilterUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
 import cgeo.geocaching.utils.MenuUtils;
@@ -124,9 +124,19 @@ public class MapUtils {
         final boolean excludeWpParking = Settings.isExcludeWpParking();
         final boolean excludeWpVisited = Settings.isExcludeWpVisited();
 
+        final Set<String> geocodes = new HashSet<>();
+        for (final Waypoint wp : waypoints) {
+            geocodes.add(wp.getGeocode());
+        }
+        final HashMap<String, Geocache> cacheByGeocode = new HashMap<>();
+        for (final Geocache cache : DataStore.loadCaches(geocodes, LoadFlags.LOAD_CACHE_OR_DB)) {
+            cacheByGeocode.put(cache.getGeocode(), cache);
+        }
+
         final List<Waypoint> removeList = new ArrayList<>();
         for (final Waypoint wp : waypoints) {
-            final Geocache cache = DataStore.loadCache(wp.getGeocode(), LoadFlags.LOAD_CACHE_OR_DB);
+            final Geocache cache = cacheByGeocode.get(wp.getGeocode());
+            wp.setParentGeocache(cache);
             final WaypointType wpt = wp.getWaypointType();
             if (cache == null ||
                     (filter != null && !filter.filter(cache)) ||
@@ -148,7 +158,7 @@ public class MapUtils {
     }
 
     public static void updateFilterBar(final Activity activity, final GeocacheFilterContext filterContext) {
-        FilterUtils.updateFilterBar(activity, getActiveMapFilterName(filterContext), getActiveMapFilterSavedDifferently(filterContext));
+        FilterUtils.updateFilterBar(activity, getActiveMapFilterName(filterContext));
     }
 
     @Nullable
@@ -156,15 +166,6 @@ public class MapUtils {
         final GeocacheFilter filter = filterContext.get();
         if (filter.isFiltering()) {
             return filter.toUserDisplayableString();
-        }
-        return null;
-    }
-
-    @Nullable
-    private static Boolean getActiveMapFilterSavedDifferently(final GeocacheFilterContext filterContext) {
-        final GeocacheFilter filter = filterContext.get();
-        if (filter.isFiltering()) {
-            return filter.isSavedDifferently();
         }
         return null;
     }
@@ -390,6 +391,45 @@ public class MapUtils {
                 .addItemClickListener(R.id.menu_navigate, item -> NavigationAppFactory.showNavigationMenu(activity, null, null, longClickGeopoint, false, true, 0));
     }
 
+
+    /**
+     * show  dialog for confirming selected coordinates from map
+     */
+    public static void showSelectFromMapDialog(final Activity activity, final Geopoint longClickGeopoint) {
+        final AtomicReference<TextView> textview = new AtomicReference<>();
+        final AlertDialog dialog = Dialogs.newBuilder(activity)
+                .setTitle(R.string.selected_position)
+                .setView(R.layout.dialog_selected_position)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok, (d, which) -> {
+                    /* finish activity  */
+                    final Intent result = new Intent();
+                    result.putExtra("coords", GeopointFormatter.reformatForClipboard(textview.get().getText()));
+                    activity.setResult(Activity.RESULT_OK, result);
+                    activity.finish();
+                })
+                .show();
+
+        final TextView tv1 = dialog.findViewById(R.id.tv1);
+        assert tv1 != null;
+        textview.set(tv1);
+        tv1.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.compass_rose_mini, 0, 0, 0);
+        tv1.setCompoundDrawablePadding(ViewUtils.dpToPixel(10));
+        TooltipCompat.setTooltipText(tv1, tv1.getContext().getString(R.string.selected_position));
+        new CoordinatesFormatSwitcher().setView(textview.get()).setCoordinate(longClickGeopoint);
+        final Geopoint currentPosition = LocationDataProvider.getInstance().currentGeo().getCoords();
+        final float distance = longClickGeopoint.distanceTo(currentPosition);
+        TextParam.text(Units.getDistanceFromKilometers(distance)).setImage(ImageParam.id(R.drawable.routing_straight)).setTooltip(R.string.distance).applyTo(dialog.findViewById(R.id.tv2));
+
+        final float elevation = Routing.getElevation(longClickGeopoint);
+        if (!Float.isNaN(elevation)) {
+            TextParam.text(Units.formatElevation(elevation)).setImage(ImageParam.id(R.drawable.elevation)).setTooltip(R.string.elevation_selected).applyTo(dialog.findViewById(R.id.tv4));
+            final float elevationCurrent = Routing.getElevation(currentPosition);
+            if (!Float.isNaN(elevationCurrent)) {
+                TextParam.text(Units.formatElevation(elevation - elevationCurrent)).setImage(ImageParam.id(R.drawable.height)).setTooltip(R.string.elevation_difference).applyTo(dialog.findViewById(R.id.tv3));
+            }
+        }
+    }
     private static void updateRouteTrackButtonVisibility(final Runnable updateRouteTrackButtonVisibility) {
         if (updateRouteTrackButtonVisibility != null) {
             updateRouteTrackButtonVisibility.run();

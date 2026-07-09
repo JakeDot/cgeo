@@ -20,6 +20,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -70,6 +71,11 @@ public abstract class AbstractNavigationBarMapActivity extends AbstractNavigatio
         if  (sheetInfo == null || StringUtils.isBlank(sheetInfo.geocode)) {
             return;
         }
+        // Never start a fragment transaction when activity is gone or its instance state has already been saved,
+        // commit would either be lost or be replayed later in an unsafe state. leading to crash (see #17483 / #17215).
+        if (isFinishing() || isDestroyed() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
         if (sheetInfo.waypointId <= 0) {
             sheetConfigureFragment(CachePopupFragment.newInstance(sheetInfo.geocode), () -> CacheDetailActivity.startActivity(this, sheetInfo.geocode));
         } else {
@@ -84,58 +90,97 @@ public abstract class AbstractNavigationBarMapActivity extends AbstractNavigatio
         final boolean isBottomSheet = behavior instanceof BottomSheetBehavior;
 
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        final SwipeToOpenFragment swipeToOpenFragment = isBottomSheet ? new SwipeToOpenFragment() : null;
-        if (isBottomSheet) {
+        final SwipeToOpenFragment swipeToOpenFragment = isBottomSheet && fragment instanceof CachePopupFragment ? new SwipeToOpenFragment() : null;
+        if (isBottomSheet && swipeToOpenFragment != null) {
             ft.replace(R.id.detailsfragment, swipeToOpenFragment, TAG_SWIPE_FRAGMENT);
             ft.add(R.id.detailsfragment, fragment, TAG_MAPDETAILS_FRAGMENT);
         } else {
             ft.replace(R.id.detailsfragment, fragment, TAG_MAPDETAILS_FRAGMENT);
         }
-        ft.commit();
+        // Execute synchronously so the transaction can never survive as a pending action that gets replayed
+        // during a later onStart() - which crashed in FragmentStateManager.createView (see #17483 / #17215)
+        ft.commitNow();
 
         if (isBottomSheet) { // portrait mode uses BottomSheet
+            // limit content height
+            final DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            final int maxHeight = (int) (displayMetrics.heightPixels * 0.7f);
+            ((BottomSheetBehavior<?>) behavior).setMaxHeight(maxHeight);
+
             final BottomSheetBehavior<FrameLayout> b = BottomSheetBehavior.from(fl);
             b.setHideable(true);
             b.setSkipCollapsed(false);
-            b.setPeekHeight(0); // temporary set to 0 to avoid bumping. Gets updated once view is loaded.
-            b.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-            ft.runOnCommit(() -> {
-                final View view = fragment.requireView();
-                // make bottom sheet fill whole screen
+            // default initialization to avoid bumping & delayed opening (see #17450)
+            // when a sheet is already open (switching to another cache/waypoint), keep it visible and
+            // only swap its content - otherwise hiding & reopening causes a brief intermediate animation
+            final boolean sheetAlreadyVisible = b.getState() != BottomSheetBehavior.STATE_HIDDEN;
+            final boolean[] sheetOpenedAtLeastOnce = { sheetAlreadyVisible };
+            if (!sheetAlreadyVisible) {
+                b.setPeekHeight(0);
+                b.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+
+            // the fragment views exist synchronously after commitNow(), so size & open the sheet directly
+            final View view = fragment.requireView();
+            // make bottom sheet fill whole screen
+            if (swipeToOpenFragment != null) {
                 swipeToOpenFragment.requireView().setMinimumHeight(Resources.getSystem().getDisplayMetrics().heightPixels);
-                // set the height of collapsed state to height of the details fragment
-                synchronized (layoutListeners) {
-                    if (layoutListeners[0] != null) {
-                        view.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListeners[0]);
-                    }
-                    layoutListeners[0] = () -> b.setPeekHeight(view.getHeight());
-                    view.getViewTreeObserver().addOnGlobalLayoutListener(layoutListeners[0]);
+            }
+            // set the height of collapsed state to height of the details fragment
+            synchronized (layoutListeners) {
+                if (layoutListeners[0] != null) {
+                    view.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListeners[0]);
                 }
-            });
-
-            final Activity that = this;
-            final BottomSheetBehavior.BottomSheetCallback callback = new BottomSheetBehavior.BottomSheetCallback() {
-                @Override
-                public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
-                    if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                        sheetRemoveFragment();
+                final int[] lastHeight = { -1 };
+                layoutListeners[0] = () -> {
+                    final int height = Math.min(view.getHeight(), maxHeight);
+                    if (height <= 0) {
+                        return;
                     }
-                    if (newState == BottomSheetBehavior.STATE_EXPANDED && onUpSwipeAction != null) {
-                        onUpSwipeAction.run();
-                        ActivityMixin.overrideTransitionToFade(that);
-                        ActivityMixin.postDelayed(AbstractNavigationBarMapActivity.this::sheetRemoveFragment, 500);
+                    b.setPeekHeight(height); // no-op when unchanged, snaps without animation otherwise
+                    // open only after the height settled (same value on two consecutive layout passes)
+                    if (b.getState() == BottomSheetBehavior.STATE_HIDDEN && height == lastHeight[0]) {
+                        sheetOpenedAtLeastOnce[0] = true;
+                        b.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
+                    lastHeight[0] = height;
+                };
+                view.getViewTreeObserver().addOnGlobalLayoutListener(layoutListeners[0]);
+            }
+            // safety net: make sure the sheet opens even if its height never reports as stable
+            ActivityMixin.postDelayed(() -> {
+                if (!isFinishing() && !isDestroyed() && b.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                    sheetOpenedAtLeastOnce[0] = true;
+                    b.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }
+            }, 300);
 
-                @Override
-                public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {
-                    swipeToOpenFragment.setExpansion(slideOffset, fragment.getView());
-                }
-            };
+            if (swipeToOpenFragment != null) {
+                final Activity that = this;
+                final BottomSheetBehavior.BottomSheetCallback callback = new BottomSheetBehavior.BottomSheetCallback() {
+                    @Override
+                    public void onStateChanged(@NonNull final View bottomSheet, final int newState) {
+                        if (newState == BottomSheetBehavior.STATE_HIDDEN && sheetOpenedAtLeastOnce[0]) {
+                            sheetRemoveFragment();
+                        }
+                        if (newState == BottomSheetBehavior.STATE_EXPANDED && onUpSwipeAction != null) {
+                            onUpSwipeAction.run();
+                            ActivityMixin.overrideTransitionToFade(that);
+                            ActivityMixin.postDelayed(() -> sheetRemoveFragment(), 500);
+                        }
+                    }
 
-            b.addBottomSheetCallback(callback);
-            swipeToOpenFragment.setOnStopCallback(() -> b.removeBottomSheetCallback(callback));
+                    @Override
+                    public void onSlide(@NonNull final View bottomSheet, final float slideOffset) {
+                        swipeToOpenFragment.setExpansion(slideOffset, fragment.getView());
+                    }
+                };
+
+                b.addBottomSheetCallback(callback);
+                swipeToOpenFragment.setOnStopCallback(() -> b.removeBottomSheetCallback(callback));
+            }
         } else { // landscape mode uses SideSheet
             final SideSheetBehavior<FrameLayout> b = SideSheetBehavior.from(fl);
             b.setState(SideSheetBehavior.STATE_EXPANDED);
@@ -209,9 +254,42 @@ public abstract class AbstractNavigationBarMapActivity extends AbstractNavigatio
     // - restore current value
     // - open new sheet (if non-empty)
     public void sheetManageLifecycleOnStart(@Nullable final UnifiedMapViewModel.SheetInfo sheetInfo, @NonNull final Action1<UnifiedMapViewModel.SheetInfo> setSheetInfo) {
-        sheetRemoveFragment();
         setSheetInfo.call(sheetInfo);
         sheetShowDetails(sheetInfo);
+    }
+
+    public void sheetManageLifecycleOnStop(@Nullable final UnifiedMapViewModel viewModel) {
+        if (viewModel == null) {
+            sheetRemoveFragment();
+            return;
+        }
+        final UnifiedMapViewModel.SheetInfo si = viewModel.sheetInfo.getValue();
+        sheetRemoveFragment();
+        viewModel.sheetInfo.setValue(si);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull final Bundle outState) {
+        detachSheetFragments();
+        super.onSaveInstanceState(outState);
+    }
+
+    /**
+     * Removes the infosheet fragments without touching sheetInfo or the container visibility to prevent
+     * crash while framework tries to auto-recreate them in onStart() (see #17483 / #17215)
+     */
+    private void detachSheetFragments() {
+        final FragmentManager fm = getSupportFragmentManager();
+        for (final String tag : new String[]{TAG_MAPDETAILS_FRAGMENT, TAG_SWIPE_FRAGMENT}) {
+            final Fragment f = fm.findFragmentByTag(tag);
+            if (f != null) {
+                try {
+                    fm.beginTransaction().remove(f).commitNowAllowingStateLoss();
+                } catch (final IllegalStateException ignore) {
+                    // ignore fm error on fragment detach
+                }
+            }
+        }
     }
 
     // handling of http429 warning message

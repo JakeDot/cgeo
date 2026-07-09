@@ -9,6 +9,7 @@ import cgeo.geocaching.settings.Settings;
 import static cgeo.geocaching.filters.core.GeocacheFilterContext.FilterType.LIVE;
 import static cgeo.geocaching.filters.core.GeocacheFilterContext.FilterType.OFFLINE;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Parcel;
@@ -25,6 +26,7 @@ public class UnifiedMapType implements Parcelable {
         UMTT_Viewport,          // open map, shows and scales to a given Viewport
         UMTT_TargetGeocode,     // set cache or waypoint as target
         UMTT_TargetCoords,      // set coords as target
+        UMTT_SelectCoords,      // select coordinates from map, starting at given position
         UMTT_List,              // display list contents
         UMTT_SearchResult       // show and scale to searchresult
         // to be extended
@@ -41,6 +43,8 @@ public class UnifiedMapType implements Parcelable {
     public boolean followMyLocation = false;
     public Viewport viewport;
     // reminder: add additional fields to parcelable methods below
+
+    public static final int REQUEST_CODE_GET_COORDS = 10004;
 
     /** default UnifiedMapType is PlainMap with no further data */
     public UnifiedMapType() {
@@ -122,8 +126,20 @@ public class UnifiedMapType implements Parcelable {
 
     /** launch fresh map with current settings */
     public void launchMap(final Context fromActivity) {
+        // dismiss the originating map's cache popup so it isn't restored when the user navigates back
+        if (fromActivity instanceof UnifiedMapActivity) {
+            ((UnifiedMapActivity) fromActivity).sheetRemoveFragment();
+        }
         fromActivity.startActivity(getLaunchMapIntent(fromActivity));
     }
+
+    /** launch fresh map to select coordinates from map */
+    public void launchMapWithSelectCoordinates(final Context fromActivity) {
+        type = UnifiedMapTypeType.UMTT_SelectCoords;
+        final Intent intent = getLaunchMapIntent(fromActivity);
+        ((Activity) fromActivity).startActivityForResult(intent, REQUEST_CODE_GET_COORDS);
+    }
+
 
     public boolean enableLiveMap() {
         return type == UnifiedMapTypeType.UMTT_PlainMap || type == UnifiedMapTypeType.UMTT_TargetCoords;

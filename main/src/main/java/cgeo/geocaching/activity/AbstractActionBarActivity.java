@@ -7,10 +7,12 @@ import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.ui.ViewUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
-import cgeo.geocaching.utils.Log;
 import cgeo.geocaching.utils.MapMarkerUtils;
 import cgeo.geocaching.utils.TextUtils;
 
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,9 +22,11 @@ import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationBarView;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -35,6 +39,7 @@ public class AbstractActionBarActivity extends AbstractActivity {
     private int statusBarHeight = 0;
     private int actionBarHeightWithStatusBar = 0;
     private boolean showSpacer = false;
+    private static int railWidth = 0;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -45,7 +50,6 @@ public class AbstractActionBarActivity extends AbstractActivity {
 
     @Override
     public void setContentView(@LayoutRes final int layoutResID) {
-        Log.e("AbstractActionBarActivity.setContentView: inflating view #" + layoutResID);
         setContentView(LayoutInflater.from(this).inflate(layoutResID, null));
     }
 
@@ -55,11 +59,9 @@ public class AbstractActionBarActivity extends AbstractActivity {
         toolbar = view.findViewById(R.id.appToolbar);
         if (toolbar != null) {
             // use existing toolbar
-            Log.e("AbstractActionBarActivity.setContentView: using given view");
             super.setContentView(view);
         } else {
             // add toolbar above given view
-            Log.e("AbstractActionBarActivity.setContentView: creating new frame view");
             super.setContentView(R.layout.activity_base_with_toolbar);
             final ViewGroup contentContainer = findViewById(R.id.activity_content_wrapper);
             if (contentContainer != null) {
@@ -84,6 +86,41 @@ public class AbstractActionBarActivity extends AbstractActivity {
         if (actionBarView != null) {
             // set action bar background color, otherwise it would be transparent
             actionBarView.setBackgroundColor(getResources().getColor(R.color.colorBackgroundActionBar));
+        }
+    }
+
+    /** Show c:geo logo for this activity (always or in landscape mode only) */
+    protected void setAppIconAsUpIndicator(final boolean inLandscapeOnly) {
+        final ActionBar actionBar = getSupportActionBar();
+        final int orientation = getResources().getConfiguration().orientation;
+        final boolean showUpIndicator = !inLandscapeOnly || orientation == Configuration.ORIENTATION_LANDSCAPE;
+        if (actionBar != null) {
+            if (showUpIndicator) {
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    // adjust home icon padding if navigation rail is shown
+                    final NavigationBarView navigation = findViewById(R.id.activity_navigationBar);
+                    toolbar.setContentInsetsAbsolute(0, toolbar.getContentInsetEnd());
+                    setAppIconAsUpIndicatorHelper(actionBar);
+                    if (railWidth == 0) {
+                        navigation.post(() -> {
+                            railWidth = navigation.getWidth(); // get actual width
+                            setAppIconAsUpIndicatorHelper(actionBar);
+                        });
+                    }
+                } else {
+                    actionBar.setHomeAsUpIndicator(R.drawable.ic_launcher_rounded_noborder);
+                }
+            }
+            actionBar.setHomeActionContentDescription(R.string.about);
+            actionBar.setDisplayHomeAsUpEnabled(showUpIndicator);
+        }
+    }
+
+    private void setAppIconAsUpIndicatorHelper(final ActionBar actionBar) {
+        final Drawable customIcon = ContextCompat.getDrawable(this, R.drawable.ic_launcher_rounded_noborder);
+        if (customIcon != null) {
+            final int sidePadding = railWidth == 0 ? 0 : (railWidth - customIcon.getIntrinsicWidth()) / 2;
+            actionBar.setHomeAsUpIndicator(new InsetDrawable(customIcon, sidePadding, 0, sidePadding, 0));
         }
     }
 

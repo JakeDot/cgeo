@@ -6,6 +6,7 @@ import cgeo.geocaching.connector.IConnector;
 import cgeo.geocaching.connector.capability.ILogin;
 import cgeo.geocaching.connector.gc.GCConnector;
 import cgeo.geocaching.connector.gc.GCLogin;
+import cgeo.geocaching.filters.NamedFilter;
 import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
 import cgeo.geocaching.maps.routing.RoutingMode;
@@ -46,7 +47,6 @@ import androidx.core.util.Pair;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -164,12 +164,13 @@ public final class SystemInformation {
     }
 
     private static void appendMemoryInfo(@NonNull final Context context, @NonNull final StringBuilder body) {
-        body.append("\n- Memory: ");
+        final Integer own = EnvironmentUtils.getOwnMemoryFootprint(context);
+        body.append("\n- Memory: ").append("c:geo:").append(own == null ? "?" : Formatter.formatBytes(1024L * own));
         final ActivityManager.MemoryInfo memoryInfo = EnvironmentUtils.getMemoryInfo(context);
         if (memoryInfo == null) {
             body.append("null");
         } else {
-            body.append(" Available:").append(Formatter.formatBytes(memoryInfo.availMem))
+            body.append(", Available:").append(Formatter.formatBytes(memoryInfo.availMem))
                 .append(", Total:").append(Formatter.formatBytes(memoryInfo.totalMem))
                 .append(", Threshold: ").append(Formatter.formatBytes(memoryInfo.threshold))
                 .append(", low:").append(memoryInfo.lowMemory);
@@ -200,9 +201,9 @@ public final class SystemInformation {
             final GeocacheFilter filter = new GeocacheFilterContext(filterType).get();
             body.append(filter.toUserDisplayableString()).append(" (").append(filter.toConfig()).append(")");
         }
-        final Collection<GeocacheFilter> storedFilters = GeocacheFilter.Storage.getStoredFilters();
-        if (!storedFilters.isEmpty()) {
-            body.append("\n- ").append("Additional stored filters: ").append(storedFilters.size());
+        final int storedFilterCount = NamedFilter.getAll().size();
+        if (storedFilterCount > 0) {
+            body.append("\n- ").append("Named filters: ").append(storedFilterCount);
         }
     }
 

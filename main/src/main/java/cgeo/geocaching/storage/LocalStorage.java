@@ -52,6 +52,7 @@ public final class LocalStorage {
     private static final String TRACKFILE_CACHE_DIR_NAME = "trackfiles";
 
     private static final String WHERIGO_DIRNAME = "wherigo";
+    private static final String BERGAMOT_DIR_NAME = "bergamot";
     private static final long LOW_DISKSPACE_THRESHOLD = 1024 * 1024 * 100; // 100 MB in bytes
 
     //Legacy directory names which should NO LONGER BE OF USE
@@ -205,6 +206,14 @@ public final class LocalStorage {
         final File dir = new File(getGeocacheDataDirectory(geocode == null ? "shared" : geocode), OFFLINE_LOG_IMAGES_DIR_NAME);
         dir.mkdirs();
         return dir;
+    }
+
+    /**
+     * Directory for Bergamot offline translation model files.
+     */
+    @NonNull
+    public static File getBergamotDirectory() {
+        return new File(getInternalCgeoDirectory(), BERGAMOT_DIR_NAME);
     }
 
     @NonNull
@@ -506,6 +515,27 @@ public final class LocalStorage {
             Settings.setLocalStorageVersion(result);
         }
 
+    }
+
+    /**
+     cleans remainders of ML Kit offline translation:
+     /data/data/cgeo.geocaching/no_backup/com.google.mlkit.translate.models/ had subfolders with the actual models
+     /data/data/cgeo.geocaching/no_backup/com.google.mlkit.InstallationId
+     /data/data/cgeo.geocaching/no_backup/com.google.mlkit.RemoteConfig
+     /data/data/cgeo.geocaching/shared_prefs/com.google.mlkit.internal.xml
+     */
+    public static void cleanupMLKitfiles() {
+        final File baseFolder = CgeoApplication.getInstance().getNoBackupFilesDir();
+        if (baseFolder != null) {
+            final File folder = new File(baseFolder, "com.google.mlkit.translate.models");
+            if (folder.exists()) {
+                FileUtils.deleteDirectory(folder);
+                FileUtils.deleteIgnoringFailure(new File(baseFolder, "com.google.mlkit.InstallationId"));
+                FileUtils.deleteIgnoringFailure(new File(baseFolder, "com.google.mlkit.RemoteConfig"));
+                FileUtils.deleteIgnoringFailure(new File(new File(CgeoApplication.getInstance().getDataDir(), "shared_prefs"), "com.google.mlkit.internal.xml"));
+                Log.e("ML Kit cleanup finished");
+            }
+        }
     }
 
 }

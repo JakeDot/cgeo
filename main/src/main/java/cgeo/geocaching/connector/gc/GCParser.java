@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -431,25 +432,29 @@ public final class GCParser {
         // cache attributes
         try {
             final List<String> attributes = new ArrayList<>();
-            final String attributesPre = TextUtils.getMatch(page, GCConstants.PATTERN_ATTRIBUTES, true, null);
-            if (attributesPre != null) {
-                final MatcherWrapper matcherAttributesInside = new MatcherWrapper(GCConstants.PATTERN_ATTRIBUTESINSIDE, attributesPre);
+            final MatcherWrapper attributesList = new MatcherWrapper(GCConstants.PATTERN_ATTRIBUTES, page);
+            while (attributesList.find()) {
+                final String attributesPre = attributesList.group(1);
+                if (attributesPre != null) {
+                    attributes.clear(); // discard user-supplied attributes; last block is "the official one"
+                    final MatcherWrapper matcherAttributesInside = new MatcherWrapper(GCConstants.PATTERN_ATTRIBUTESINSIDE, attributesPre);
 
-                while (matcherAttributesInside.find()) {
-                    if (!matcherAttributesInside.group(2).equalsIgnoreCase("blank")) {
-                        // by default, use the tooltip of the attribute
-                        String attribute = matcherAttributesInside.group(2).toLowerCase(Locale.US);
+                    while (matcherAttributesInside.find()) {
+                        if (!matcherAttributesInside.group(2).equalsIgnoreCase("blank")) {
+                            // by default, use the tooltip of the attribute
+                            String attribute = matcherAttributesInside.group(2).toLowerCase(Locale.US);
 
-                        // if the image name can be recognized, use the image name as attribute
-                        final String imageName = matcherAttributesInside.group(1).trim();
-                        if (StringUtils.isNotEmpty(imageName)) {
-                            final int start = imageName.lastIndexOf('/');
-                            final int end = imageName.lastIndexOf('.');
-                            if (start >= 0 && end >= 0) {
-                                attribute = imageName.substring(start + 1, end).replace('-', '_').toLowerCase(Locale.US);
+                            // if the image name can be recognized, use the image name as attribute
+                            final String imageName = matcherAttributesInside.group(1).trim();
+                            if (StringUtils.isNotEmpty(imageName)) {
+                                final int start = imageName.lastIndexOf('/');
+                                final int end = imageName.lastIndexOf('.');
+                                if (start >= 0 && end >= 0) {
+                                    attribute = imageName.substring(start + 1, end).replace('-', '_').toLowerCase(Locale.US);
+                                }
                             }
+                            attributes.add(attribute);
                         }
-                        attributes.add(attribute);
                     }
                 }
             }
@@ -1555,7 +1560,8 @@ public final class GCParser {
                             .setLogType(LogType.getByType(logType))
                             .setLog(logText)
                             .setFound(entry.path("GeocacheFindCount").asInt())
-                            .setFriend(markAsFriendsLog);
+                            .setFriend(markAsFriendsLog)
+                            .setFavorite(entry.path("FavoritePointUsed").asBoolean());
 
                     final ArrayNode images = (ArrayNode) entry.get("Images");
                     for (final JsonNode image : images) {
@@ -1754,6 +1760,8 @@ public final class GCParser {
         specialLogEntries.addAll(friendLogsBlocked);
         specialLogEntries.addAll(ownLogEntriesBlocked);
         specialLogEntries.addAll(ownerLogsBlocked);
+        final Set<String> seenServiceLogIds = new HashSet<>();
+        specialLogEntries.removeIf(e -> e.serviceLogId != null && !seenServiceLogIds.add(e.serviceLogId));
         if (!specialLogEntries.isEmpty()) {
             setFriendsLogs(specialLogEntries);
             mergeModifiedLogs(logsBlocked, specialLogEntries);
@@ -1855,7 +1863,8 @@ public final class GCParser {
             } else {
                 final int logIndex = mergedLogs.indexOf(modifiedLog);
                 if (logIndex >= 0) {
-                    mergedLogs.set(logIndex, logToMerge);
+                    // manually merge the favorite flag as that's only in the listing logs
+                    mergedLogs.set(logIndex, logToMerge.buildUpon().setFavorite(modifiedLog.favorite).build());
                 }
             }
         }

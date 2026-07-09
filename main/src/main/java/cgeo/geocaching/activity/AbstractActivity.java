@@ -1,15 +1,14 @@
 package cgeo.geocaching.activity;
 
-import cgeo.geocaching.CgeoApplication;
 import cgeo.geocaching.R;
 import cgeo.geocaching.models.CalculatedCoordinate;
 import cgeo.geocaching.models.Geocache;
 import cgeo.geocaching.models.Waypoint;
 import cgeo.geocaching.service.GeocacheChangedBroadcastReceiver;
+import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.ui.TextParam;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
 import cgeo.geocaching.utils.ActionBarUtils;
-import cgeo.geocaching.utils.ApplicationSettings;
 import cgeo.geocaching.utils.EditUtils;
 import cgeo.geocaching.utils.LifecycleAwareBroadcastReceiver;
 import cgeo.geocaching.utils.LocalizationUtils;
@@ -20,7 +19,7 @@ import cgeo.geocaching.utils.html.HtmlUtils;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
 import android.util.Pair;
@@ -44,14 +43,13 @@ import androidx.viewbinding.ViewBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 public abstract class AbstractActivity extends AppCompatActivity implements IAbstractActivity {
 
-    protected CgeoApplication app = null;
-    protected Resources res = null;
     private final CompositeDisposable resumeDisposable = new CompositeDisposable();
 
     private final String logToken = "[" + this.getClass().getName() + "]";
@@ -126,9 +124,20 @@ public abstract class AbstractActivity extends AppCompatActivity implements IAbs
     }
 
     @Override
+    protected void attachBaseContext(final Context newBase) {
+        // Apply user-selected locale to activity context
+        final Locale locale = Settings.getApplicationLocale();
+        final Configuration configuration = new Configuration(newBase.getResources().getConfiguration());
+        configuration.setLocale(locale);
+        final Context localeContext = newBase.createConfigurationContext(configuration);
+        super.attachBaseContext(localeContext);
+    }
+
+    @Override
     public void onCreate(final Bundle savedInstanceState) {
         Log.v(logToken + ".onCreate(Bundle)");
-        ApplicationSettings.setLocale(this);
+
+
         try {
             super.onCreate(savedInstanceState);
         } catch (Exception e) {
@@ -149,9 +158,6 @@ public abstract class AbstractActivity extends AppCompatActivity implements IAbs
             Log.e("Error requesting indeterminate progress", ex);
         }
 
-        // initialize commonly used members
-        res = this.getResources();
-        app = (CgeoApplication) this.getApplication();
         ActivityMixin.onCreate(this, false);
         initEdgeToEdge();
     }
@@ -166,15 +172,10 @@ public abstract class AbstractActivity extends AppCompatActivity implements IAbs
         windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         //apply edge2edge to activity content view
         ViewCompat.setOnApplyWindowInsetsListener(currentWindow.getDecorView(), (v, windowInsets) -> {
-            final View activityContent = v.findViewById(R.id.activity_content);
-            if (activityContent == null) {
-                Log.w("edge2edge: activityContent not found in " + this);
-            } else {
-                //calculate and set the activity_content's insets
-                this.currentWindowInsets = windowInsets.getInsets(DEFAULT_INSETS);
-                //trigger insets recalculation
-                refreshActivityContentInsets();
-            }
+            //calculate and set the activity_content's insets
+            this.currentWindowInsets = windowInsets.getInsets(DEFAULT_INSETS);
+            //trigger insets recalculation
+            refreshActivityContentInsets();
             return windowInsets;
         });
 
@@ -188,16 +189,22 @@ public abstract class AbstractActivity extends AppCompatActivity implements IAbs
             //method was called before insets were set
             return;
         }
-        final View activityContent = getWindow() == null || getWindow().getDecorView() == null ? null :
-            getWindow().getDecorView().findViewById(R.id.activity_content);
-        if (activityContent == null) {
+        final View decorView = getWindow() == null ? null : getWindow().getDecorView();
+        if (decorView == null) {
+            return;
+        }
+        final View activityContent = decorView.findViewById(R.id.activity_content);
+        final View activityWrapper = decorView.findViewById(R.id.activity_content_wrapper);
+        final View root = activityWrapper != null ? activityWrapper : activityContent;
+
+        if (root == null) {
             return;
         }
 
         //let subclasses modify insets according to their needs
         final Insets insets = calculateInsetsForActivityContent(this.currentWindowInsets);
         //apply final insets to activity content
-        activityContent.setPadding(
+        root.setPadding(
                 insets.left < 0 ? this.currentWindowInsets.left : insets.left,
                 insets.top < 0 ? this.currentWindowInsets.top : insets.top,
                 insets.right < 0 ? this.currentWindowInsets.right : insets.right,

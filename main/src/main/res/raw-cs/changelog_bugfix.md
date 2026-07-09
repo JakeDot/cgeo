@@ -1,21 +1,54 @@
 ##
-Time to update! If you are still using Android 7 or older, this might be the last c:geo update for you! With our next feature release of c:geo we will drop support for Android 5-7 to reduce our maintenance load and to be able to update some external components used by c:geo which we are currently still holding back. We will still be supporting Android 8 up to Android 16 then (and newer versions when they will be published), a span of more than eight years of Android history.
+Čas na aktualizaci! Pokud stále používáte Android 7 nebo starší, tato aktualizace c:geo je pro vás možná poslední! S naší další verzí aplikace c:geo ukončíme podporu pro Android 5-7, abychom snížili zátěž spojenou s údržbou a mohli aktualizovat některé externí komponenty používané aplikací c:geo, které v současné době stále udržujeme. Budeme stále podporovat Android 8 až do Android 16 (a novější verze, až budou publikovány), tedy rozpětí více než osmi let historie Androidu.
 
-- Fix: Parsing cache location string fails for certain website languages
-- Fix: Opening trackable from watchlist fails
-- Fix: Keyboard may be blocking list selection
-- Fix: User-defined tileprovider not supporting additional URL parameters
-- Fix: Inventory / Trackables of a cache not loaded anymore
-- Change: Updated internal user-agent to address some download issues
-- Fix: Viewing trackable details removes it from cache inventory
+- Fix: Deleting of log images broken (website change)
+- Change: Unify track and individual route loading buttons
+- Fix: Cache attributes not detected correctly under certain conditions
+- Fix: Logging caches (website change)
+- Fix: Logging trackables (website change)
 
 ##
-- Fix: Offline translation download dialog shown in installations without offline translation support
-- Fix: Coordinate format changing in cache/waypoint info sheet
-- Fix: Log date cut off in list of logs (depending on date format and font size)
-- Fix: Event times not detected in certain conditions
-- Fix: Link in listing not clickable under certain conditions
-- Fix: Logging actions for trackables get mixed up sometimes
+- Fix: Pocket query import broken (website change)
+
+##
+- Oprava: Chyba při přístupu k trasám
+- Oprava: Pád na stránce trasového bodu
+- Změna: Hledání "vlastních kešek" začíná s novými filtry
+- Oprava: Neuložené fáze lab dobrodružství obnovovení stránky ztrácejí informaci o tom, že byly navštíveny
+- Oprava: Opakující se výzva k aktualizaci dlaždic
+- Oprava: Náhodné umístění při mapování seznamu (Google Maps)
+
+##
+- Oprava: Pád aplikace v informačním okně o kešce
+- Oprava: Cartridge Wherigo již nelze stahovat (změna na webu)
+
+##
+ - Změna: Soubory Wherigo nelze v současné době stáhnout, zobrazit pokyny k řešení problému
+ - Oprava: Důvod smazání logu nepřekračuje limit délky
+ - Novinka: Rozšířené protokolování pro pády ve správci stahování
+ - Oprava: Informační list o trasovém bodu může být příliš dlouhý, tlačítka jsou nedostupná
+ - Oprava: Některé informace o poloze jsou zkráceny
+ - Oprava: Interní směrování již nefunguje, pouze zobrazená přímka
+ - Oprava: Některé problémy s vytvořením složky
+
+Poznámka: Pokud používáte interní navigaci, budete po instalaci této verze muset jednou provést následující krok: Přejděte na úvodní obrazovku aplikace c:geo, otevřete položku „Spravovat offline data“ – „Aktualizovat navigační data“ a nechte aplikaci c:geo nainstalovat aktualizované soubory. (Důvod: Struktura souborů s daty pro směrování v BRouteru se změnila a všechny soubory s daty pro směrování musí odpovídat stejné verzi.)
+
+##
+- Oprava: U některých jazyků webových stránek selhává analýza řetězce s umístěním kešky
+- Oprava: Selhání otevření sledovatelné položky ze seznamu sledovatelných položek
+- Řešení: Výběru položky ze seznamu může bránit klávesnice
+- Oprava: Uživatelem definovaný poskytovatel dlaždic nepodporuje další parametry URL
+- Oprava: Inventář / sledovatelné položky keše se již nenačítají
+- Změna: Aktualizován interní user-agent za účelem vyřešení některých problémů se stahováním
+- Oprava: Zobrazení podrobností o sledovatelném předmětu způsobí jeho odstranění z inventáře kešky
+
+##
+- Oprava: Dialogové okno pro stažení offline překladu se zobrazovalo v instalacích bez podpory offline překladů
+- Oprava: Změna formátu souřadnic v informačním listu ke kešce/trasovému bodu
+- Oprava: Zkrácené datum logu v seznamu logů (v závislosti na formátu data a velikosti písma)
+- Oprava: Za určitých podmínek se nezjistily časy událostí
+- Oprava: Odkaz v seznamu není za určitých podmínek funkční
+- Oprava: Akce související se sledovatelnými položkami se někdy zaměňují
 
 ##
 - Změna: Maximální počet sledovatelných GC navštěvujících v rámci jednoho logu kešky, byl snížen na 100 (na žádost geocaching.com, aby se snížilo zatížení jejich serverů způsobené extrémními milovníky trackables)

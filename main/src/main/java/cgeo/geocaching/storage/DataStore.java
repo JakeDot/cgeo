@@ -16,6 +16,7 @@ import cgeo.geocaching.enumerations.LoadFlags.RemoveFlag;
 import cgeo.geocaching.enumerations.LoadFlags.SaveFlag;
 import cgeo.geocaching.enumerations.ProjectionType;
 import cgeo.geocaching.enumerations.WaypointType;
+import cgeo.geocaching.filters.NamedFilter;
 import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.ListIdGeocacheFilter;
 import cgeo.geocaching.list.AbstractList;
@@ -53,11 +54,13 @@ import cgeo.geocaching.utils.CalendarUtils;
 import cgeo.geocaching.utils.CollectionStream;
 import cgeo.geocaching.utils.ContextLogger;
 import cgeo.geocaching.utils.EmojiUtils;
+import cgeo.geocaching.utils.EmojiUtilsLegacyMigration;
 import cgeo.geocaching.utils.EnumValueMapper;
 import cgeo.geocaching.utils.FileNameCreator;
 import cgeo.geocaching.utils.FileUtils;
 import cgeo.geocaching.utils.GeoHeightUtils;
 import cgeo.geocaching.utils.ImageUtils;
+import cgeo.geocaching.utils.JsonUtils;
 import cgeo.geocaching.utils.LifecycleAwareBroadcastReceiver;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
@@ -118,6 +121,9 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleOnSubscribe;
@@ -168,7 +174,8 @@ public class DataStore {
         DBEXTENSION_EMOJILRU(5),
         DBEXTENSION_POCKETQUERY_HISTORY(6),
         DBEXTENSION_TRACKFILES(7),
-        DBEXTENSION_LAST_TRACKABLE_ACTION(8);
+        DBEXTENSION_LAST_TRACKABLE_ACTION(8),
+        DBEXTENSION_EMOJISTRINGLRU(9);
 
         public final int id;
         private static final EnumValueMapper<Integer, DBExtensionType> mapper = new EnumValueMapper<>();
@@ -241,9 +248,10 @@ public class DataStore {
                     "cg_caches.watchlistCount," +  // 42
                     "cg_caches.preventWaypointsFromNote," +  // 43
                     "cg_caches.owner_guid," +  // 44
-                    "cg_caches.emoji," +       // 45
+                    "cg_caches.emojiString," +       // 45
                     "cg_caches.alcMode," +       // 46
-                    "cg_caches.tier"; // 47
+                    "cg_caches.tier," + // 47
+                    "cg_caches.health_score"; // 48
 
     /**
      * The list of fields needed for mapping.
@@ -261,7 +269,7 @@ public class DataStore {
     private static final CacheCache cacheCache = new CacheCache();
     private static volatile SQLiteDatabase database = null;
     private static final ReentrantReadWriteLock databaseLock = new ReentrantReadWriteLock();
-    private static final int dbVersion = 106;
+    private static final int dbVersion = 111;
     public static final int customListIdOffset = 10;
 
     /**
@@ -301,10 +309,15 @@ public class DataStore {
             101, // add service_image_id to saved log images
             102, // add projection attributes to waypoints
             103, // add more projection attributes to waypoints
-            104,  // add geofence radius for lab stages
-            105,  // Migrate UDC geocodes from ZZ1000-based numbers to random ones
-            106  // Update lab caches DT rating to zero from minus one
-    ));
+            104, // add geofence radius for lab stages
+            105, // Migrate UDC geocodes from ZZ1000-based numbers to random ones
+            106, // Update lab caches DT rating to zero from minus one
+            107, // Unify named filters and conditional markers; new cg_filters schema
+            108, // add health_score column to cg_caches
+            109,  // add favorite column to cg_logs
+            110,  // migrate markers/emojis datatype from int to string
+            111  // correct a problem in name filter migration: reference by id instead of name
+            ));
 
     @NonNull private static final String dbTableCaches = "cg_caches";
     @NonNull public static final String dbFieldCaches_type = "type";
@@ -414,16 +427,19 @@ public class DataStore {
             + "watchlistCount INTEGER DEFAULT -1,"
             + "preventWaypointsFromNote INTEGER DEFAULT 0,"
             + "owner_guid TEXT NOT NULL DEFAULT '',"
-            + "emoji INTEGER DEFAULT 0,"
+            + "emoji INTEGER DEFAULT 0,"             // legacy int codepoint, unused from v110 on - superseded by emojiString
+            + "emojiString TEXT,"
             + "alcMode INTEGER DEFAULT 0,"
-            + "tier TEXT"
+            + "tier TEXT,"
+            + "health_score INTEGER"
             + "); ";
     private static final String dbCreateLists = "CREATE TABLE IF NOT EXISTS " + dbTableLists + " ("
             + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
             + "title TEXT NOT NULL, "
             + "updated LONG NOT NULL,"
             + "marker INTEGER NOT NULL,"            // unused from v93 on - TODO should we remove the column?
-            + "emoji INTEGER DEFAULT 0,"
+            + "emoji INTEGER DEFAULT 0,"            // legacy int codepoint, unused from v110 on - superseded by emojiString
+            + "emojiString TEXT,"
             + FIELD_LISTS_PREVENTASKFORDELETION + " INTEGER DEFAULT 0"
             + "); ";
     private static final String dbCreateCachesLists = "CREATE TABLE IF NOT EXISTS " + dbTableCachesLists + " ("
@@ -496,7 +512,8 @@ public class DataStore {
             + dbFieldLogs_log + " TEXT, "
             + "date LONG, "
             + "found INTEGER NOT NULL DEFAULT 0, "
-            + "friend INTEGER "
+            + "friend INTEGER, "
+            + "favorite INTEGER NOT NULL DEFAULT 0 "
             + "); ";
 
     private static final String dbCreateLogCount = "CREATE TABLE IF NOT EXISTS " + dbTableLogCount + " ("
@@ -606,8 +623,9 @@ public class DataStore {
     private static final String dbCreateFilters
             = "CREATE TABLE IF NOT EXISTS " + dbTableFilters + " ("
             + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + "name TEXT NOT NULL UNIQUE, "
-            + "treeconfig TEXT"
+            + "name TEXT, "
+            + "treeconfig TEXT, "
+            + "priority INTEGER NOT NULL DEFAULT 0"
             + "); ";
 
     // reminder to myself: when adding a new CREATE TABLE statement:
@@ -799,8 +817,36 @@ public class DataStore {
 
         public static void removeAll(final SQLiteDatabase db, final DBExtensionType type, final String key) {
             withAccessLock(() -> {
-                checkState(type, key, false);
-                db.delete(dbTableExtension, "_type = ? AND _key LIKE ?", new String[]{String.valueOf(type.id), key});
+                checkState(type, key, true);
+                if (key == null) {
+                    db.delete(dbTableExtension, "_type = ? AND _key IS NULL", new String[]{String.valueOf(type.id)});
+                } else {
+                    db.delete(dbTableExtension, "_type = ? AND _key LIKE ?", new String[]{String.valueOf(type.id), key});
+                }
+            });
+        }
+
+        /**
+         * Atomically replaces all entries for the given key with a single new entry.
+         * Both the removal of existing entries and the insertion of the new entry are
+         * wrapped in a single database transaction, ensuring true atomicity.
+         */
+        protected static DBExtension replaceAll(final DBExtensionType type, final String key, final long long1, final long long2, final long long3, final long long4, final String string1, final String string2, final String string3, final String string4) {
+            return withAccessLock(() -> {
+                if (!init(false)) {
+                    return null;
+                }
+                database.beginTransaction();
+                try {
+                    removeAll(database, type, key);
+                    final DBExtension result = add(database, type, key, long1, long2, long3, long4, string1, string2, string3, string4);
+                    if (result != null) {
+                        database.setTransactionSuccessful();
+                    }
+                    return result;
+                } finally {
+                    database.endTransaction();
+                }
             });
         }
 
@@ -856,31 +902,43 @@ public class DataStore {
 
     public static class DBFilters {
 
-        public static List<GeocacheFilter> getAllStoredFilters() {
-            return withAccessLock(() -> queryToColl(dbTableFilters, new String[]{"name", "treeconfig"},
+        /** Loads all stored NamedFilters ordered by priority ascending (index 0 = highest priority). */
+        public static List<NamedFilter> loadAll() {
+            return withAccessLock(() -> queryToColl(dbTableFilters,
+                    new String[]{"_id", "treeconfig"},
                     null, null, null, null, new ArrayList<>(),
-                    c -> GeocacheFilter.createFromConfig(c.getString(0), c.getString(1))));
+                    c -> {
+                        final String json = c.getString(1);
+                        if (json == null) {
+                            return null;
+                        }
+                        final NamedFilter nf = NamedFilter.createFromConfig(json);
+                        nf.setId(c.getInt(0));
+                        return nf;
+                    }));
         }
 
         /**
-         * Saves using UPSERT on NAME (if filter with same name exists, it deleted before.  otherwise new one is created)
+         * Replaces all rows in cg_filters with the given list.
          */
-        public static int save(final GeocacheFilter filter) {
-            return withAccessLock(() -> {
-                delete(filter.getName());
-                final ContentValues values = new ContentValues();
-                values.put("name", filter.getName());
-                values.put("treeconfig", filter.toConfig());
-                return (int) database.insert(dbTableFilters, null, values);
+        public static void storeAll(final List<NamedFilter> filters) {
+            withAccessLock(() -> {
+                //delete all entries
+                database.delete(dbTableFilters, null, null);
+                //insert all. Some have an id, some may not yet have an id
+                for (NamedFilter nf : filters) {
+                    final ContentValues values = new ContentValues();
+                    if (nf.getId() > 0) {
+                        values.put("_id", nf.getId());
+                    }
+                    values.put("name", nf.getName());
+                    values.put("treeconfig", nf.toConfig());
+                    final int id = (int) database.insert(dbTableFilters, null, values);
+                    nf.setId(id);
+                }
             });
         }
 
-        /**
-         * deletes any entry in DB with same filterName as in supplied filter object, if exists
-         */
-        public static boolean delete(final String filterName) {
-            return withAccessLock(() -> database.delete(dbTableFilters, "name = ?", new String[]{filterName}) > 0);
-        }
     }
 
     private DataStore() {
@@ -1898,6 +1956,119 @@ public class DataStore {
                         }
                     }
 
+                    // Unify named filters and conditional markers: recreate cg_filters with new schema
+                    if (oldVersion < 107) {
+                        try {
+                            // Step 1: rename old table
+                            db.execSQL("ALTER TABLE " + dbTableFilters + " RENAME TO cg_filters_old");
+                            // Step 2: create new table with updated schema
+                            db.execSQL("CREATE TABLE IF NOT EXISTS " + dbTableFilters + " ("
+                                    + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                    + "name TEXT, "
+                                    + "treeconfig TEXT, "
+                                    + "priority INTEGER NOT NULL DEFAULT 0"
+                                    + ")");
+                            // Step 3: migrate existing named filters from the old table
+                            final List<NamedFilter> migratedFilters = new ArrayList<>();
+                            try (android.database.Cursor cursor = db.query("cg_filters_old",
+                                    new String[]{"name", "treeconfig"}, null, null, null, null, "name ASC")) {
+                                int idx = 0;
+                                while (cursor.moveToNext()) {
+                                    final String oldName = cursor.getString(0);
+                                    final String oldConfig = cursor.getString(1);
+                                    final GeocacheFilter gcFilter = GeocacheFilter.createFromConfig(oldConfig);
+                                    migratedFilters.add(new NamedFilter(
+                                        oldName != null ? oldName : "",
+                                        gcFilter,
+                                        EmojiUtils.NO_EMOJI, false, NamedFilter.MarkerPriority.NORMAL).setId(idx + 1));
+                                    idx++;
+                                }
+                            }
+                            // Step 4: migrate ConditionalCacheMarkers from SharedPreferences (read JSON directly)
+                            final String markersJson = cgeo.geocaching.settings.Settings.getString(
+                                    cgeo.geocaching.R.string.pref_conditionalCacheMarkers, "[]");
+                            final JsonNode markersRoot = JsonUtils.stringToNode(markersJson);
+                            final int numMigratedFilters = migratedFilters.size();
+                            if (markersRoot != null && markersRoot.isArray()) {
+                                int j = 0;
+                                for (final JsonNode child : markersRoot) {
+                                    final String markerId = EmojiUtilsLegacyMigration.legacyIntToEmojiString(
+                                            JsonUtils.getInt(child, "markerId", EmojiUtilsLegacyMigration.NO_EMOJI_LEGACY));
+                                    final com.fasterxml.jackson.databind.JsonNode filterNode = child.get("filter");
+                                    cgeo.geocaching.filters.core.GeocacheFilter markerGf = null;
+                                    if (filterNode != null) {
+                                        try {
+                                            markerGf = GeocacheFilter.createFromConfig(JsonUtils.nodeToString(filterNode));
+                                        } catch (final Exception ex) {
+                                            // ignore parse errors, use null filter
+                                        }
+                                    }
+                                    migratedFilters.add(new NamedFilter(
+                                            "Marker Filter " + (j + 1),
+                                            markerGf,
+                                            markerId,
+                                            true, NamedFilter.MarkerPriority.NORMAL)
+                                            .setId(numMigratedFilters + j + 1));
+                                    j++;
+                                }
+                            }
+                            // Step 5: write migrated filters into new table
+                            for (int i = 0; i < migratedFilters.size(); i++) {
+                                final NamedFilter nf = migratedFilters.get(i);
+                                final ContentValues cv = new ContentValues();
+                                cv.put("_id", nf.getId());
+                                cv.put("name", nf.getName()); //for legacy
+                                cv.put("treeconfig", nf.toConfig());
+                                db.insert(dbTableFilters, null, cv);
+                            }
+                            // Step 6: drop old table and clear SharedPreferences marker keys
+                            db.execSQL("DROP TABLE IF EXISTS cg_filters_old");
+                            cgeo.geocaching.settings.Settings.clearConditionalCacheMarkersPrefs();
+                        } catch (final SQLException e) {
+                            onUpgradeError(e, 107);
+                        }
+                    }
+
+                    // Add health_score column
+                    if (oldVersion < 108) {
+                        try {
+                            createColumnIfNotExists(db, dbTableCaches, "health_score INTEGER");
+                        } catch (final SQLException e) {
+                            onUpgradeError(e, 108);
+                        }
+                    }
+                    // add favorite flag to cg_logs
+                    if (oldVersion < 109) {
+                        try {
+                            createColumnIfNotExists(db, dbTableLogs, "favorite INTEGER NOT NULL DEFAULT 0");
+                        } catch (final SQLException e) {
+                            onUpgradeError(e, 109);
+                        }
+                    }
+
+                    // migrate assigned emoji from int codepoint ("emoji" column) to String representation ("emojiString" column)
+                    if (oldVersion < 110) {
+                        try {
+                            createColumnIfNotExists(db, dbTableCaches, "emojiString TEXT");
+                            createColumnIfNotExists(db, dbTableLists, "emojiString TEXT");
+                            migrateEmojiIntToString(db, dbTableCaches, "geocode");
+                            migrateEmojiIntToString(db, dbTableLists, "_id");
+                            migrateFilterMarkerIntToString(db);
+                            migrateEmojiLruIntToString(db);
+                        } catch (final SQLException e) {
+                            onUpgradeError(e, 110);
+                        }
+                    }
+
+                    //fix migration problem for named filters created with version 107
+                    if (oldVersion < 111) {
+                        try {
+                            migrateNamedFilterNameToId(db);
+                        } catch (final SQLException e) {
+                            onUpgradeError(e, 111);
+                        }
+                    }
+
                 }
 
                 //at the very end of onUpgrade: rewrite downgradeable versions in database
@@ -1915,9 +2086,124 @@ public class DataStore {
             Log.iForce("[DB] Upgrade database from ver. " + oldVersion + " to ver. " + newVersion + ": completed");
         }
 
-        private void onUpgradeError(final SQLException e, final int version) throws SQLException {
+        private void onUpgradeError(final Exception e, final int version) throws SQLException {
             Log.e("Failed to upgrade to version " + version, e);
-            throw e;
+            throw e instanceof SQLException ? (SQLException) e : new SQLException("Upgrade to version " + version + " failed", e);
+        }
+
+        /** converts the legacy int "emoji" codepoint column into the new String "emojiString" column */
+        private void migrateEmojiIntToString(final SQLiteDatabase db, final String table, final String idColumn) {
+            try (Cursor c = db.query(table, new String[]{idColumn, "emoji"}, "emoji <> 0", null, null, null, null)) {
+                while (c.moveToNext()) {
+                    final String emojiString = EmojiUtilsLegacyMigration.legacyIntToEmojiString(c.getInt(1));
+                    final ContentValues cv = new ContentValues();
+                    if (emojiString == null) {
+                        cv.putNull("emojiString");
+                    } else {
+                        cv.put("emojiString", emojiString);
+                    }
+                    db.update(table, cv, idColumn + " = ?", new String[]{c.getString(0)});
+                }
+            }
+        }
+
+        /** converts the legacy int "markerId" codepoint stored in the cg_filters treeconfig JSON into its String representation */
+        private void migrateFilterMarkerIntToString(final SQLiteDatabase db) {
+            try (Cursor c = db.query(dbTableFilters, new String[]{"_id", "treeconfig"}, null, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    final String json = c.getString(1);
+                    if (json == null) {
+                        continue;
+                    }
+                    final JsonNode node = JsonUtils.stringToNode(json);
+                    if (!(node instanceof ObjectNode)) {
+                        continue;
+                    }
+                    final JsonNode markerNode = node.get("markerId");
+                    if (markerNode == null || !markerNode.isNumber()) {
+                        continue; // already migrated to String (or no marker stored)
+                    }
+                    JsonUtils.setText((ObjectNode) node, "markerId", EmojiUtilsLegacyMigration.legacyIntToEmojiString(markerNode.asInt()));
+                    final ContentValues cv = new ContentValues();
+                    cv.put("treeconfig", JsonUtils.nodeToString(node));
+                    db.update(dbTableFilters, cv, "_id = ?", new String[]{c.getString(0)});
+                }
+            }
+        }
+
+        /** EmojiLRU: converts the legacy int "emoji" codepoint column into the new String  */
+        private void migrateEmojiLruIntToString(final SQLiteDatabase db) {
+            try (Cursor c = db.query(dbTableExtension, new String[]{"_id", "_key"}, "_type = " + DBExtensionType.DBEXTENSION_EMOJILRU.id, null, null, null, null)) {
+                while (c.moveToNext()) {
+                    final String emojiString = EmojiUtilsLegacyMigration.legacyIntToEmojiString(c.getInt(1));
+                    final ContentValues cv = new ContentValues();
+                    if (emojiString == null) {
+                        cv.putNull("_key");
+                    } else {
+                        cv.put("_key", emojiString);
+                    }
+                    db.update(dbTableExtension, cv, "_id" + " = ?", new String[]{c.getString(0)});
+                }
+            }
+        }
+
+        private void migrateNamedFilterNameToId(final SQLiteDatabase db) {
+            //find all existing filters name and id
+            final Map<String, Integer> nameToId = new HashMap<>();
+            try (Cursor c1 = db.query(dbTableFilters, new String[]{"_id", "name"}, null, null, null, null, null)) {
+                while (c1.moveToNext()) {
+                    if (!c1.isNull(0) && !c1.isNull(1)) {
+                        nameToId.put(c1.getString(1), c1.getInt(0));
+                    }
+                }
+
+                //for each filter replace named_filter references to "name" with "id"
+                try (Cursor c = db.query(dbTableFilters, new String[]{"_id", "treeconfig"}, null, null, null, null, null)) {
+                    while (c.moveToNext()) {
+                        if (c.isNull(0) || c.isNull(1)) {
+                            continue;
+                        }
+                        final String treeconfig = c.getString(1);
+                        final int id = c.getInt(0);
+                        final JsonNode tcNode = JsonUtils.stringToNode(treeconfig);
+                        final String filterText = JsonUtils.getText(tcNode, "filter", null);
+                        if (filterText == null) {
+                            return;
+                        }
+                        final JsonNode node = JsonUtils.stringToNode(filterText);
+                        JsonUtils.forEach(node, n -> {
+                            // Check if the current node matches your criteria
+                            if (!n.isObject() || !n.has("type") || !"named_filter".equals(n.get("type").asText())) {
+                                return true;
+                            }
+                            final JsonNode configNode = n.get("config");
+                            if (configNode == null || !configNode.isObject()) {
+                                return false;
+                            }
+                            final ObjectNode configObj = (ObjectNode) configNode;
+                            final String name = configObj.has("name") ? configObj.get("name").asText() : null;
+                            final Integer filterId = nameToId.get(name);
+                            if (name == null || filterId == null) {
+                                return false;
+                            }
+                            // Check if the array "ids" is present
+                            if (configObj.has("ids") && configObj.get("ids").isArray()) {
+                                final ArrayNode idsArray = (ArrayNode) configObj.get("ids");
+                                idsArray.add(filterId);
+                            } else {
+                                final ArrayNode newIdsArray = JsonUtils.createArrayNode();
+                                newIdsArray.add(filterId);
+                                configObj.set("ids", newIdsArray);
+                            }
+                            return false;
+                        });
+                        final ContentValues cv = new ContentValues();
+                        ((ObjectNode) tcNode).set("filter", node);
+                        cv.put("treeconfig", JsonUtils.nodeToString(tcNode));
+                        db.update(dbTableFilters, cv, "_id = ?", new String[]{String.valueOf(id)});
+                    }
+                }
+            }
         }
 
         @Override
@@ -2337,6 +2623,12 @@ public class DataStore {
                     boolean dbUpdateRequired = !isOffline || (cacheCache.getCacheFromCache(geocode) != null);
                     if (isOffline) {
                         dbUpdateRequired |= !cache.gatherMissingFrom(existingCache);
+                    } else if (existingCache != null && existingCache.isDetailed()) {
+                        // For non-offline caches (not saved to any list), still merge user-modified
+                        // data from the existing version: visited waypoints, personal note,
+                        // user-modified coordinates, etc. The return value is irrelevant here
+                        // since dbUpdateRequired is already true for non-offline caches.
+                        cache.gatherMissingFrom(existingCache);
                     }
                     // parse the note AFTER merging the local information in
                     dbUpdateRequired |= cache.addCacheArtefactsFromNotes();
@@ -2354,6 +2646,7 @@ public class DataStore {
                 }
 
                 for (final Geocache geocache : toBeStored) {
+                    geocache.updateHealthScore();
                     storeIntoDatabase(geocache);
                 }
 
@@ -2457,9 +2750,10 @@ public class DataStore {
             values.put("watchlistCount", cache.getWatchlistCount());
             values.put("preventWaypointsFromNote", cache.isPreventWaypointsFromNote() ? 1 : 0);
             values.put("owner_guid", cache.getOwnerGuid());
-            values.put("emoji", cache.getAssignedEmoji());
+            values.put("emojiString", cache.getAssignedEmoji());
             values.put("alcMode", cache.getAlcMode());
             values.put("tier", cache.getTier() == null ? null : cache.getTier().getRaw());
+            values.put("health_score", cache.getHealthScore());
 
             init();
 
@@ -2819,6 +3113,7 @@ public class DataStore {
                 insertLog.bindLong(8, log.date);
                 insertLog.bindLong(9, log.found);
                 insertLog.bindLong(10, log.friend ? 1 : 0);
+                insertLog.bindLong(11, log.favorite ? 1 : 0);
                 final long logId = insertLog.executeInsert();
                 if (log.hasLogImages()) {
                     final SQLiteStatement insertImage = PreparedStatement.INSERT_LOG_IMAGE.getStatement();
@@ -2938,7 +3233,17 @@ public class DataStore {
     public static List<String> getListHierarchy() {
         return withAccessLock(() -> {
             final Cursor c = database.rawQuery("SELECT DISTINCT RTRIM(title, REPLACE(title, ':', '')) FROM " + dbTableLists + " ORDER BY title COLLATE NOCASE ASC", new String[]{});
-            return cursorToColl(c, new ArrayList<>(), GET_STRING_0);
+            final Set<String> result = new HashSet<>();
+            while (c.moveToNext()) {
+                final String temp = c.getString(0).trim().replaceAll(":+$", "").trim();
+                if (!temp.isEmpty()) {
+                    result.add(temp);
+                }
+            }
+            c.close();
+            final ArrayList<String> result2 = new ArrayList<>(result);
+            Collections.sort(result2);
+            return result2;
         });
     }
 
@@ -3140,13 +3445,6 @@ public class DataStore {
                         cache.setAttributes(loadAttributes(cache.getGeocode()));
                     }
 
-                    if (loadFlags.contains(LoadFlag.WAYPOINTS)) {
-                        final List<Waypoint> waypoints = loadWaypoints(cache.getGeocode());
-                        if (CollectionUtils.isNotEmpty(waypoints)) {
-                            cache.setWaypoints(waypoints);
-                        }
-                    }
-
                     if (loadFlags.contains(LoadFlag.SPOILERS)) {
                         final List<Image> spoilers = loadSpoilers(cache.getGeocode());
                         cache.setSpoilers(spoilers);
@@ -3186,6 +3484,17 @@ public class DataStore {
                     cacheCache.putCacheInCache(cache);
 
                     caches.add(cache);
+                }
+
+                // waypoints are loaded in a single batch query (instead of one query per cache) and assigned here
+                if (loadFlags.contains(LoadFlag.WAYPOINTS)) {
+                    final Map<String, List<Waypoint>> waypointsByGeocode = loadWaypointsByGeocodes(geocodes);
+                    for (final Geocache geocache : caches) {
+                        final List<Waypoint> waypoints = waypointsByGeocode.get(geocache.getGeocode());
+                        if (CollectionUtils.isNotEmpty(waypoints)) {
+                            geocache.setWaypoints(waypoints);
+                        }
+                    }
                 }
 
                 final Map<String, Set<Integer>> cacheLists = loadLists(geocodes);
@@ -3275,9 +3584,10 @@ public class DataStore {
         cache.setWatchlistCount(cursor.getInt(42));
         cache.setPreventWaypointsFromNote(cursor.getInt(43) > 0);
         cache.setOwnerGuid(cursor.getString(44));
-        cache.setAssignedEmoji(cursor.getInt(45));
+        cache.setAssignedEmoji(cursor.getString(45));
         cache.setAlcMode(cursor.getInt(46));
         cache.setTier(Tier.getByName(cursor.getString(47)));
+        cache.setHealthScore(cursor.isNull(48) ? null : cursor.getInt(48));
 
         return cache;
     }
@@ -3407,6 +3717,32 @@ public class DataStore {
                 null,
                 new LinkedList<>(),
                 DataStore::createWaypointFromDatabaseContent));
+    }
+
+    /**
+     * Loads the waypoints for many caches in a single query, grouped by geocode. Avoids
+     * the per-cache query when loading a batch of caches with {@link LoadFlag#WAYPOINTS}.
+     */
+    @NonNull
+    private static Map<String, List<Waypoint>> loadWaypointsByGeocodes(final Set<String> geocodes) {
+        if (CollectionUtils.isEmpty(geocodes)) {
+            return Collections.emptyMap();
+        }
+        return withAccessLock(() -> {
+            final List<Waypoint> allWaypoints = queryToColl(dbTableWaypoints,
+                    WAYPOINT_COLUMNS,
+                    whereGeocodeIn(geocodes).toString(),
+                    null,
+                    "_id",
+                    null,
+                    new LinkedList<>(),
+                    DataStore::createWaypointFromDatabaseContent);
+            final Map<String, List<Waypoint>> result = new HashMap<>();
+            for (final Waypoint waypoint : allWaypoints) {
+                result.computeIfAbsent(waypoint.getGeocode(), k -> new ArrayList<>()).add(waypoint);
+            }
+            return result;
+        });
     }
 
     @NonNull
@@ -3755,6 +4091,53 @@ public class DataStore {
         return loadLogs(geocode, null, null);
     }
 
+    /**
+     * Loads minimal log data (type + date) needed for health score calculation.
+     * Returns at most 20 logs ordered newest-first. Much lighter than {@link #loadLogs(String)}.
+     */
+    @NonNull
+    public static List<LogEntry> loadLogsForHealthScore(final String geocode) {
+        return withAccessLock(() -> {
+            final List<LogEntry> logs = new ArrayList<>();
+            if (StringUtils.isBlank(geocode)) {
+                return logs;
+            }
+            init();
+
+            try (Cursor cursor = database.rawQuery(
+                "SELECT type, date FROM " + dbTableLogs + " WHERE geocode = ? ORDER BY " + getGeocacheLogOrderByClause() + " LIMIT 20",
+                    new String[]{geocode})) {
+                while (cursor.moveToNext()) {
+                    logs.add(new LogEntry.Builder()
+                        .setLogType(LogType.getById(cursor.getInt(0)))
+                        .setDate(cursor.getLong(1))
+                        .build());
+                }
+            }
+            return Collections.unmodifiableList(logs);
+        });
+    }
+
+    private static String getGeocacheLogOrderByClause() {
+        final long offsetMillis = TimeZone.getDefault().getOffset(System.currentTimeMillis());
+        return "Date((date+" + offsetMillis + ")/1000, 'unixepoch') DESC";
+    }
+
+    /**
+     * Saves the health score for a single cache to the database (lightweight single-column update).
+     */
+    public static void saveHealthScore(final String geocode, @Nullable final Integer healthScore) {
+        withAccessLock(() -> {
+            if (StringUtils.isBlank(geocode)) {
+                return;
+            }
+            init();
+            final ContentValues values = new ContentValues();
+            values.put("health_score", healthScore);
+            database.update(dbTableCaches, values, "geocode = ?", new String[]{geocode});
+        });
+    }
+
     @NonNull
     public static List<LogEntry> loadLogsOfAuthor(final String geocode, final @Nullable String authorName, final @Nullable Boolean whereFriend) {
         return loadLogs(geocode, authorName, whereFriend);
@@ -3784,11 +4167,10 @@ public class DataStore {
                     whereFriendSql += whereFriend ? "1" : "0";
                 }
 
-                final long offsetMillis = TimeZone.getDefault().getOffset(System.currentTimeMillis());
-                final String dateOrderSql = " ORDER BY Date((date+" + offsetMillis + ")/1000, 'unixepoch') DESC, service_log_id DESC, cg_logs._id ASC";
+                final String dateOrderSql = " ORDER BY " + getGeocacheLogOrderByClause() + ", service_log_id DESC, cg_logs._id ASC";
                 final Cursor cursor = database.rawQuery(
-                        //                     0           1               2     3       4            5    6     7      8                                       9                10      11     12   13           14
-                        "SELECT cg_logs._id AS cg_logs_id, service_log_id, type, author, author_guid, log, date, found, friend, " + dbTableLogImages + "._id as cg_logImages_id, log_id, title, url, description, service_image_id"
+                        //                     0           1               2     3       4            5    6     7      8       9                                                  10               11      12     13   14           15
+                        "SELECT cg_logs._id AS cg_logs_id, service_log_id, type, author, author_guid, log, date, found, friend, favorite, " + dbTableLogImages + "._id as cg_logImages_id, log_id, title, url, description, service_image_id"
                                 + " FROM " + dbTableLogs + " LEFT OUTER JOIN " + dbTableLogImages
                                 + " ON ( cg_logs._id = log_id ) WHERE geocode = ?  " + " AND author LIKE ? " + whereFriendSql + dateOrderSql, new String[]{geocode, StringUtils.isEmpty(authorName) ? "%" : authorName});
 
@@ -3810,13 +4192,14 @@ public class DataStore {
                                 .setLog(cursor.getString(5))
                                 .setDate(cursor.getLong(6))
                                 .setFound(cursor.getInt(7))
-                                .setFriend(cursor.getInt(8) == 1);
-                        if (!cursor.isNull(9)) {
-                            log.addLogImage(new Image.Builder().setUrl(cursor.getString(12)).setTitle(cursor.getString(11)).setDescription(cursor.getString(13)).setServiceImageId(cursor.getString(14)).build());
+                                .setFriend(cursor.getInt(8) == 1)
+                                .setFavorite(cursor.getInt(9) == 1);
+                        if (!cursor.isNull(10)) {
+                            log.addLogImage(new Image.Builder().setUrl(cursor.getString(13)).setTitle(cursor.getString(12)).setDescription(cursor.getString(14)).setServiceImageId(cursor.getString(15)).build());
                         }
                     } else {
                         // We cannot get several lines for the same log entry if it does not contain an image.
-                        log.addLogImage(new Image.Builder().setUrl(cursor.getString(12)).setTitle(cursor.getString(11)).setDescription(cursor.getString(13)).setServiceImageId(cursor.getString(14)).build());
+                        log.addLogImage(new Image.Builder().setUrl(cursor.getString(13)).setTitle(cursor.getString(12)).setDescription(cursor.getString(14)).setServiceImageId(cursor.getString(15)).build());
                     }
                 }
                 if (log != null) {
@@ -4546,14 +4929,13 @@ public class DataStore {
                 return Collections.emptyList();
             }
 
-            final Resources res = CgeoApplication.getInstance().getResources();
             final List<StoredList> lists = new ArrayList<>();
             if (listId == null) {
-                lists.add(new StoredList(StoredList.STANDARD_LIST_ID, LocalizationUtils.getString(R.string.list_inbox), EmojiUtils.NO_EMOJI, false, (int) PreparedStatement.COUNT_CACHES_ON_STANDARD_LIST.simpleQueryForLong()));
+                lists.add(new StoredList(StoredList.STANDARD_LIST_ID, LocalizationUtils.getString(R.string.list_inbox), null, false, (int) PreparedStatement.COUNT_CACHES_ON_STANDARD_LIST.simpleQueryForLong()));
             }
 
             try {
-                final String query = "SELECT l._id AS _id, l.title AS title, l.emoji AS emoji," +
+                final String query = "SELECT l._id AS _id, l.title AS title, l.emojiString AS emojiString," +
                         " l." + FIELD_LISTS_PREVENTASKFORDELETION + " AS " + FIELD_LISTS_PREVENTASKFORDELETION + "," +
                         " COUNT(c.geocode) AS count" +
                         " FROM " + dbTableLists + " l LEFT OUTER JOIN " + dbTableCachesLists + " c" +
@@ -4574,12 +4956,12 @@ public class DataStore {
     private static List<StoredList> getListsFromCursor(final Cursor cursor) {
         final int indexId = cursor.getColumnIndex("_id");
         final int indexTitle = cursor.getColumnIndex("title");
-        final int indexEmoji = cursor.getColumnIndex("emoji");
+        final int indexEmojiString = cursor.getColumnIndex("emojiString");
         final int indexCount = cursor.getColumnIndex("count");
         final int indexPreventAskForDeletion = cursor.getColumnIndex(FIELD_LISTS_PREVENTASKFORDELETION);
         return cursorToColl(cursor, new ArrayList<>(), cursor1 -> {
             final int count = indexCount != -1 ? cursor1.getInt(indexCount) : 0;
-            return new StoredList(cursor1.getInt(indexId) + customListIdOffset, cursor1.getString(indexTitle), cursor1.getInt(indexEmoji), indexPreventAskForDeletion >= 0 && cursor1.getInt(indexPreventAskForDeletion) != 0, count);
+            return new StoredList(cursor1.getInt(indexId) + customListIdOffset, cursor1.getString(indexTitle), cursor1.getString(indexEmojiString), indexPreventAskForDeletion >= 0 && cursor1.getInt(indexPreventAskForDeletion) != 0, count);
         });
     }
 
@@ -4597,11 +4979,11 @@ public class DataStore {
 
             final Resources res = CgeoApplication.getInstance().getResources();
             if (id == PseudoList.ALL_LIST.id) {
-                return new StoredList(PseudoList.ALL_LIST.id, LocalizationUtils.getString(R.string.list_all_lists), EmojiUtils.NO_EMOJI, true, getAllCachesCount());
+                return new StoredList(PseudoList.ALL_LIST.id, LocalizationUtils.getString(R.string.list_all_lists), null, true, getAllCachesCount());
             }
 
             // fall back to standard list in case of invalid list id
-            return new StoredList(StoredList.STANDARD_LIST_ID, LocalizationUtils.getString(R.string.list_inbox), EmojiUtils.NO_EMOJI, false, (int) PreparedStatement.COUNT_CACHES_ON_STANDARD_LIST.simpleQueryForLong());
+            return new StoredList(StoredList.STANDARD_LIST_ID, LocalizationUtils.getString(R.string.list_inbox), null, false, (int) PreparedStatement.COUNT_CACHES_ON_STANDARD_LIST.simpleQueryForLong());
         });
     }
 
@@ -4640,7 +5022,7 @@ public class DataStore {
                 values.put("updated", System.currentTimeMillis());
                 values.put("marker", 0); // ToDo - delete column?
                 values.put(FIELD_LISTS_PREVENTASKFORDELETION, 0);
-                values.put("emoji", 0);
+                values.putNull("emojiString");
 
                 id = (int) database.insert(dbTableLists, null, values);
                 database.setTransactionSuccessful();
@@ -4726,10 +5108,10 @@ public class DataStore {
 
     /**
      * @param listId   List to change
-     * @param useEmoji Id of new emoji
+     * @param useEmoji new emoji (or null/empty for none)
      * @return Number of lists changed
      */
-    public static int setListEmoji(final int listId, final int useEmoji) {
+    public static int setListEmoji(final int listId, @Nullable final String useEmoji) {
         if (listId == StoredList.STANDARD_LIST_ID) {
             return 0;
         }
@@ -4742,7 +5124,7 @@ public class DataStore {
             int count = 0;
             try {
                 final ContentValues values = new ContentValues();
-                values.put("emoji", useEmoji);
+                values.put("emojiString", useEmoji);
                 values.put("updated", System.currentTimeMillis());
 
                 count = database.update(dbTableLists, values, "_id = " + (listId - customListIdOffset), null);
@@ -4953,7 +5335,7 @@ public class DataStore {
         });
     }
 
-    public static void setCacheIcons(final Collection<Geocache> caches, final int newCacheIcon) {
+    public static void setCacheIcons(final Collection<Geocache> caches, @Nullable final String newCacheIcon) {
         if (caches.isEmpty()) {
             return;
         }
@@ -4964,7 +5346,7 @@ public class DataStore {
             database.beginTransaction();
             try {
                 for (final Geocache cache : caches) {
-                    add.bindLong(1, newCacheIcon);
+                    bindStringOrNull(add, 1, newCacheIcon);
                     add.bindString(2, cache.getGeocode());
                     add.execute();
 
@@ -4979,9 +5361,9 @@ public class DataStore {
 
     /**
      * Sets individual cache icons given by HashMap<Geocode, newCacheIcon>.
-     * Missing entries are reset to default value (0).
+     * Missing entries are reset to default value (none).
      */
-    public static void setCacheIcons(final Collection<Geocache> caches, final HashMap<String, Integer> undo) {
+    public static void setCacheIcons(final Collection<Geocache> caches, final HashMap<String, String> undo) {
         if (caches.isEmpty()) {
             return;
         }
@@ -4993,18 +5375,26 @@ public class DataStore {
             try {
                 for (final Geocache cache : caches) {
                     final String geocode = cache.getGeocode();
-                    final Integer newCacheIcon = undo.get(geocode);
-                    add.bindLong(1, newCacheIcon == null ? 0 : newCacheIcon);
+                    final String newCacheIcon = undo.get(geocode);
+                    bindStringOrNull(add, 1, newCacheIcon);
                     add.bindString(2, geocode);
                     add.execute();
 
-                    cache.setAssignedEmoji(newCacheIcon == null ? 0 : newCacheIcon);
+                    cache.setAssignedEmoji(newCacheIcon);
                 }
                 database.setTransactionSuccessful();
             } finally {
                 database.endTransaction();
             }
         });
+    }
+
+    private static void bindStringOrNull(final SQLiteStatement statement, final int index, @Nullable final String value) {
+        if (value == null) {
+            statement.bindNull(index);
+        } else {
+            statement.bindString(index, value);
+        }
     }
 
     private static @NonNull
@@ -5057,6 +5447,7 @@ public class DataStore {
     @NonNull
     public static Geocache loadCacheTexts(final String geocode) {
         final Geocache partial = new Geocache();
+        partial.setGeocode(geocode);
 
         // in case of database issues, we still need to return a result to avoid endless loops
         partial.setDescription(StringUtils.EMPTY);
@@ -5100,7 +5491,7 @@ public class DataStore {
     /**
      * checks if this is a newly created database
      */
-    public static boolean isNewlyCreatedDatebase() {
+    public static boolean isNewlyCreatedDatabase() {
         return newlyCreatedDatabase;
     }
 
@@ -5170,7 +5561,7 @@ public class DataStore {
         OFFLINE_LOG_ID_OF_GEOCODE("SELECT _id FROM " + dbTableLogsOffline + " WHERE geocode = ?"),
         COUNT_CACHES_ON_STANDARD_LIST("SELECT COUNT(geocode) FROM " + dbTableCachesLists + " WHERE list_id = " + StoredList.STANDARD_LIST_ID),
         COUNT_ALL_CACHES("SELECT COUNT(DISTINCT(geocode)) FROM " + dbTableCachesLists + " WHERE list_id >= " + StoredList.STANDARD_LIST_ID),
-        INSERT_LOG("INSERT INTO " + dbTableLogs + " (geocode, updated, service_log_id, type, author, author_guid, log, date, found, friend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"),
+        INSERT_LOG("INSERT INTO " + dbTableLogs + " (geocode, updated, service_log_id, type, author, author_guid, log, date, found, friend, favorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"),
         CLEAN_LOG("DELETE FROM " + dbTableLogs + " WHERE geocode = ? AND date >= ? AND date <= ? AND type = ? AND author = ?"),
         INSERT_ATTRIBUTE("INSERT INTO " + dbTableAttributes + " (geocode, updated, attribute) VALUES (?, ?, ?)"),
         INSERT_CATEGORY("INSERT INTO " + dbTableCategories + " (geocode, category) VALUES (?, ?)"),
@@ -5191,7 +5582,7 @@ public class DataStore {
         SEQUENCE_UPDATE("UPDATE " + dbTableSequences + " SET seq = ? WHERE name = ?"),
         SEQUENCE_INSERT("INSERT INTO " + dbTableSequences + " (name, seq) VALUES (?, ?)"),
         GET_ALL_STORED_LOCATIONS("SELECT DISTINCT c.location FROM " + dbTableCaches + " c WHERE c.location IS NOT NULL"),
-        SET_CACHE_ICON("UPDATE " + dbTableCaches + " SET emoji = ? WHERE geocode = ?");
+        SET_CACHE_ICON("UPDATE " + dbTableCaches + " SET emojiString = ? WHERE geocode = ?");
 
         private static final List<PreparedStatement> statements = new ArrayList<>();
 

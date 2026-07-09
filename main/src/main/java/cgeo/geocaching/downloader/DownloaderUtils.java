@@ -12,6 +12,7 @@ import cgeo.geocaching.network.Parameters;
 import cgeo.geocaching.permission.PermissionContext;
 import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.storage.ContentStorage;
+import cgeo.geocaching.storage.DataStore;
 import cgeo.geocaching.storage.PersistableFolder;
 import cgeo.geocaching.storage.extension.PendingDownload;
 import cgeo.geocaching.ui.ImageParam;
@@ -20,6 +21,7 @@ import cgeo.geocaching.ui.TextParam;
 import cgeo.geocaching.ui.ViewUtils;
 import cgeo.geocaching.ui.dialog.Dialogs;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
+import cgeo.geocaching.unifiedmap.UnifiedMapActivity;
 import cgeo.geocaching.unifiedmap.tileproviders.TileProviderFactory;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.AsyncTaskWithProgressText;
@@ -27,9 +29,12 @@ import cgeo.geocaching.utils.CalendarUtils;
 import cgeo.geocaching.utils.FileUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
+import cgeo.geocaching.utils.MenuUtils;
 import cgeo.geocaching.utils.TextUtils;
 import cgeo.geocaching.utils.functions.Action1;
 import cgeo.geocaching.utils.offlinetranslate.TranslationModelManager;
+import cgeo.geocaching.utils.offlinetranslate.TranslatorUtils;
+import static cgeo.geocaching.models.Download.DownloadType.DOWNLOADTYPE_BROUTER_LOOKUPS;
 import static cgeo.geocaching.models.Download.DownloadType.DOWNLOADTYPE_BROUTER_TILES;
 import static cgeo.geocaching.models.Download.DownloadType.DOWNLOADTYPE_HILLSHADING_TILES;
 import static cgeo.geocaching.models.Download.DownloadType.DOWNLOADTYPE_LANGUAGE_MODEL;
@@ -40,12 +45,15 @@ import static cgeo.geocaching.models.Download.DownloadType.DOWNLOAD_TYPE_ALL_THE
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -66,11 +74,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-
 
 public class DownloaderUtils {
 
@@ -85,22 +93,42 @@ public class DownloaderUtils {
     public static boolean onOptionsItemSelected(final Activity activity, final int id) {
         if (id == R.id.menu_download_offlinemap) {
             activity.startActivity(new Intent(activity, DownloadSelectorActivity.class));
-            return true;
         } else if (id == R.id.menu_download_backgroundmap) {
             final Intent intent = new Intent(activity, DownloadSelectorActivity.class);
             intent.putExtra(DownloadSelectorActivity.INTENT_FIXED_DOWNLOADTYPE, Download.DownloadType.DOWNLOADTYPE_MAP_OPENANDROMAPS_BACKGROUNDS.id);
             activity.startActivity(intent);
-            return true;
+        } else if (id == R.id.menu_update_routingdata) {
+            checkForUpdatesAndDownloadAll(activity, Download.DownloadType.DOWNLOADTYPE_BROUTER_TILES, R.string.updates_check, DownloaderUtils::returnFromTileUpdateCheck);
+            checkForUpdatesAndDownloadAll(activity, Download.DownloadType.DOWNLOADTYPE_BROUTER_LOOKUPS, R.string.updates_check, updateCheckAllowed -> { });
+        } else if (id == R.id.menu_update_mapdata) {
+            checkForUpdatesAndDownloadAll(activity, Download.DownloadType.DOWNLOADTYPE_ALL_MAPRELATED, R.string.updates_check, DownloaderUtils::returnFromMapUpdateCheck);
+        } else if (id == R.id.menu_download_language) {
+            TranslatorUtils.downloadLanguageModels(activity);
         } else if (id == R.id.menu_delete_offline_data) {
             deleteOfflineData(activity);
-            return true;
+        } else if (id == R.id.menu_delete_orphaned_data) {
+            deleteOrphanedData(activity);
+        } else {
+            return false;
         }
-        return false;
+        return true;
+    }
+
+    /** injects offline data submenu at given position and enables/disables certain menu items depending on whether we are in map or not */
+    public static void addManageOfflineDataMenu(@NonNull final Activity activity, @NonNull final MenuItem subMenuAnchor) {
+        final Menu subMenu = subMenuAnchor.getSubMenu();
+        assert subMenu != null;
+        activity.getMenuInflater().inflate(R.menu.manage_offline_data, subMenu);
+        final boolean inMap = (activity instanceof UnifiedMapActivity);
+        MenuUtils.setVisible(subMenu.findItem(R.id.menu_download_language), !inMap);
+        MenuUtils.setVisible(subMenu.findItem(R.id.menu_check_routingdata), inMap);
+        MenuUtils.setVisible(subMenu.findItem(R.id.menu_check_hillshadingdata), inMap);
     }
 
     public static void checkForRoutingTileUpdates(final MainActivity activity) {
         if (Settings.useInternalRouting() && !PersistableFolder.ROUTING_TILES.isLegacy() && Settings.brouterAutoTileDownloadsNeedUpdate()) {
             DownloaderUtils.checkForUpdatesAndDownloadAll(activity, R.id.tilesupdate, DOWNLOADTYPE_BROUTER_TILES, R.string.updates_check, R.string.tileupdate_info, DownloaderUtils::returnFromTileUpdateCheck);
+            DownloaderUtils.checkForUpdatesAndDownloadAll(activity, R.id.tilesupdate, DOWNLOADTYPE_BROUTER_LOOKUPS, R.string.updates_check, R.string. tileupdate_info, DownloaderUtils::returnFromTileUpdateCheck);
         }
     }
 
@@ -116,6 +144,19 @@ public class DownloaderUtils {
 
     public static void returnFromMapUpdateCheck(final boolean updateCheckAllowed) {
         Settings.setMapAutoDownloadsLastCheck(!updateCheckAllowed);
+    }
+
+    public static void deleteOrphanedData(final Activity activity) {
+        final ProgressDialog waitDialog = new ProgressDialog(activity);
+        waitDialog.setTitle(LocalizationUtils.getString(R.string.init_maintenance_start));
+        waitDialog.setMessage(LocalizationUtils.getString(R.string.init_maintenance_ongoing));
+        waitDialog.setCancelable(false);
+        waitDialog.show();
+
+        AndroidRxUtils.andThenOnUi(Schedulers.io(), DataStore::removeObsoleteGeocacheDataDirectories, () -> {
+            ViewUtils.showShortToast(activity, R.string.init_maintenance_finished);
+            waitDialog.dismiss();
+        });
     }
 
     private static String getFilenameFromUri(final Uri uri) {
@@ -134,13 +175,15 @@ public class DownloaderUtils {
         builder.setView(binding.getRoot());
         binding.downloadInfo1.setText(LocalizationUtils.getString(R.string.download_confirmation, StringUtils.isNotBlank(additionalInfo) ? additionalInfo + "\n\n" : "", filename, "\n\n" + LocalizationUtils.getString(R.string.download_warning) + (StringUtils.isNotBlank(sizeInfo) ? "\n\n" + sizeInfo : "")));
         binding.downloadInfo2.setVisibility(View.GONE);
+        binding.allowMeteredNetwork.setChecked(Settings.getDownloadAllowMeteredNetwork());
 
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     final boolean allowMeteredNetwork = binding.allowMeteredNetwork.isChecked();
+                    Settings.setDownloadAllowMeteredNetwork(allowMeteredNetwork);
                     final DownloadManager downloadManager = (DownloadManager) activity.getSystemService(DOWNLOAD_SERVICE);
                     if (null != downloadManager) {
-                        final long id = addDownload(activity, downloadManager, type, uri, filename, allowMeteredNetwork);
+                        final long id = addDownload(activity, downloadManager, type, uri, filename, allowMeteredNetwork, System.currentTimeMillis());
                         if (id != -1) {
                             if (downloadStartedCallback != null) {
                                 downloadStartedCallback.accept(id);
@@ -151,7 +194,7 @@ public class DownloaderUtils {
                             if (downloader != null) {
                                 final DownloadDescriptor extraFile = downloader.getExtrafile(activity, uri);
                                 if (extraFile != null) {
-                                    addDownload(activity, downloadManager, extraFile.type, extraFile.uri, extraFile.filename, allowMeteredNetwork);
+                                    addDownload(activity, downloadManager, extraFile.type, extraFile.uri, extraFile.filename, allowMeteredNetwork, System.currentTimeMillis());
                                 }
                             }
                             ActivityMixin.showShortToast(activity, R.string.download_started);
@@ -184,6 +227,7 @@ public class DownloaderUtils {
         builder.setView(binding.getRoot());
         binding.downloadInfo1.setText(confirmation);
         binding.downloadInfo2.setText(R.string.download_warning);
+        binding.allowMeteredNetwork.setChecked(Settings.getDownloadAllowMeteredNetwork());
 
         for (Download download : downloads) {
             final CheckBox cb = new CheckBox(new ContextThemeWrapper(activity, R.style.checkbox_full));
@@ -203,6 +247,7 @@ public class DownloaderUtils {
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     final boolean allowMeteredNetwork = binding.allowMeteredNetwork.isChecked();
+                    Settings.setDownloadAllowMeteredNetwork(allowMeteredNetwork);
 
                     final DownloadManager downloadManager = (DownloadManager) activity.getSystemService(DOWNLOAD_SERVICE);
                     if (null != downloadManager) {
@@ -210,15 +255,7 @@ public class DownloaderUtils {
                         for (Download download : downloads) {
                             if (download.customMarker) {
                                 numFiles++;
-                                final DownloadManager.Request request = new DownloadManager.Request(download.getUri())
-                                        .setTitle(download.getName())
-                                        .setDescription(LocalizationUtils.getString(R.string.downloadmap_filename, download.getName()))
-                                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, download.getName())
-                                        .setAllowedOverMetered(allowMeteredNetwork)
-                                        .setAllowedOverRoaming(allowMeteredNetwork);
-                                Log.i("Download enqueued: " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + download.getName());
-                                AndroidRxUtils.networkScheduler.scheduleDirect(() -> PendingDownload.add(downloadManager.enqueue(request), download.getName(), download.getUri().toString(), download.getDateInfo(), download.getType().id));
+                                addDownload(activity, downloadManager, download.getType().id, download.getUri(), download.getName(), allowMeteredNetwork, download.getDateInfo());
                             }
                         }
                         ActivityMixin.showShortToast(activity, numFiles > 0 ? R.string.download_started : R.string.no_files_selected);
@@ -240,23 +277,30 @@ public class DownloaderUtils {
                 .show();
     }
 
-    private static long addDownload(final Activity activity, final DownloadManager downloadManager, final int type, final Uri uri, final String filename, final boolean allowMeteredNetwork) {
+    private static long addDownload(final Activity activity, final DownloadManager downloadManager, final int type, final Uri uri, final String filename, final boolean allowMeteredNetwork, final long timestamp) {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && !PermissionContext.LEGACY_WRITE_EXTERNAL_STORAGE.hasAllPermissions()) {
             // those versions still need WRITE_EXTERNAL_STORAGE permission to enqueue a download
             SimpleDialog.ofContext(activity).setTitle(TextParam.id(R.string.permission_missing)).setMessage(TextParam.id(R.string.storage_permission_needed)).show();
             return -1;
         }
-        final DownloadManager.Request request = new DownloadManager.Request(uri)
-                .setTitle(filename)
-                .setDescription(LocalizationUtils.getString(R.string.downloadmap_filename, filename))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
-                .setAllowedOverMetered(allowMeteredNetwork)
-                .setAllowedOverRoaming(allowMeteredNetwork);
-        Log.i("Download enqueued: " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);
-        final long id = downloadManager.enqueue(request);
-        PendingDownload.add(id, filename, uri.toString(), System.currentTimeMillis(), type);
-        return id;
+        try {
+            Log.i("Enqueuing download: '" + filename + "' from '" + uri + "' to '" + Environment.DIRECTORY_DOWNLOADS + "/" + filename + "'");
+            final DownloadManager.Request request = new DownloadManager.Request(uri)
+                    .setTitle(filename)
+                    .setDescription(LocalizationUtils.getString(R.string.downloadmap_filename, filename))
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
+                    .setAllowedOverMetered(allowMeteredNetwork)
+                    .setAllowedOverRoaming(allowMeteredNetwork);
+            final long id = downloadManager.enqueue(request);
+            AndroidRxUtils.networkScheduler.scheduleDirect(() -> PendingDownload.add(id, filename, uri.toString(), timestamp, type));
+            Log.i("Download #" + id + " enqueued successfully ('" + uri + "')");
+            return id;
+        } catch (SecurityException | IllegalStateException e) {
+            Log.e("Error adding download of '" + filename + "' from '" + uri + "' to '" + Environment.DIRECTORY_DOWNLOADS + "/" + filename + "':\n" + e.getClass() + ", " + e.getMessage());
+            ActivityMixin.showToast(activity, R.string.download_enqueing_error);
+        }
+        return -1;
     }
 
     public static class DownloadDescriptor {
@@ -294,12 +338,14 @@ public class DownloaderUtils {
      * if yes: ask user to download them all
      * if yes: trigger download(s)
      */
-    public static void checkForUpdatesAndDownloadAll(final MainActivity activity, final int layout, final Download.DownloadType type, @StringRes final int title, @StringRes final int info, final Action1<Boolean> callback) {
+    public static void checkForUpdatesAndDownloadAll(final MainActivity activity, final int layout, final Download.DownloadType type, @StringRes final int title, @StringRes final int info, @Nullable final Action1<Boolean> callback) {
         activity.displayActionItem(layout, info, true, (actionRequested) -> {
             if (actionRequested) {
                 new CheckForDownloadsTask(activity, title, type).execute();
             }
-            callback.call(actionRequested);
+            if (callback != null) {
+                callback.call(actionRequested);
+            }
         });
     }
 
@@ -446,7 +492,8 @@ public class DownloaderUtils {
                 .setDisplayMapper((item, itemGroup) -> TextParam.text(item.right), (item, itemGroup) -> String.valueOf(item.left), null)
                 .activateGrouping(item -> LocalizationUtils.getString(Download.DownloadType.getFromId(item.left).getTypeNameResId()))
                 .setGroupDisplayMapper(gi -> TextParam.text("**" + gi.getGroup() + "** *(" + gi.getContainedItemCount() + ")*").setMarkdown(true))
-                .setGroupDisplayIconMapper(gi -> ImageParam.id(gi.getItems().isEmpty() ? 0 : Download.DownloadType.getFromId(gi.getItems().get(0).left).getIconResId()));
+                .setGroupDisplayIconMapper(gi -> ImageParam.id(gi.getItems().isEmpty() ? 0 : Download.DownloadType.getFromId(gi.getItems().get(0).left).getIconResId()))
+                .setCollapseMode(SimpleItemListModel.GroupCollapseMode.FORCED_COLLAPSED);
 
         SimpleDialog.of(activity).setTitle(TextParam.id(R.string.delete_items))
                 .setPositiveButton(TextParam.id(R.string.delete))
@@ -620,4 +667,5 @@ public class DownloaderUtils {
 
         SimpleDialog.of(activity).setTitle(R.string.debug_current_downloads).setMessage(TextParam.text(sb.toString()).setMarkdown(true)).show();
     }
+
 }

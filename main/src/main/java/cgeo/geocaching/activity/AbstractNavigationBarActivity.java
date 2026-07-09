@@ -241,7 +241,6 @@ public abstract class AbstractNavigationBarActivity extends AbstractActionBarAct
     @Override
     protected Insets calculateInsetsForActivityContent(@NonNull final Insets def) {
         final Insets insets = super.calculateInsetsForActivityContent(def);
-        Log.e("insets.top=" + insets.top + ", left=" + insets.left + ", right=" + insets.right + ", bottom=" + insets.bottom + ", ab=" + getResources().getDimension(R.dimen.actionbar_height));
         if (hideNavigationBar || getSelectedBottomItemId() == MENU_HIDE_NAVIGATIONBAR) {
             //-> navbar is NOT shown, we have to handle all insets (including bottom)
             return insets;
@@ -584,11 +583,13 @@ public abstract class AbstractNavigationBarActivity extends AbstractActionBarAct
                 Dialogs.basicOneTimeMessage(this, OneTimeDialogs.DialogType.NOTIFICATION_PERMISSION, () -> startActivity(new Intent(this, InstallWizardActivity.class)));
             }
 
+            // Cleanup for removed ML Kit offline translation
+            LocalStorage.cleanupMLKitfiles();
         }
     }
 
     private void checkRestore() {
-        if (DataStore.isNewlyCreatedDatebase() && !restoreMessageShown && BackupUtils.hasBackup(BackupUtils.newestBackupFolder(false))) {
+        if (DataStore.isNewlyCreatedDatabase() && !restoreMessageShown && BackupUtils.hasBackup(BackupUtils.newestBackupFolder(false))) {
             restoreMessageShown = true;
             Dialogs.newBuilder(this)
                     .setTitle(LocalizationUtils.getString(R.string.init_backup_restore))

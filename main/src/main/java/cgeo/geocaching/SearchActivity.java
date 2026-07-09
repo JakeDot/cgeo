@@ -13,7 +13,10 @@ import cgeo.geocaching.connector.internal.InternalConnector;
 import cgeo.geocaching.connector.trackable.TrackableBrand;
 import cgeo.geocaching.connector.trackable.TrackableTrackingCode;
 import cgeo.geocaching.databinding.SearchActivityBinding;
+import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
+import cgeo.geocaching.filters.core.GeocacheFilterType;
+import cgeo.geocaching.filters.core.StatusGeocacheFilter;
 import cgeo.geocaching.filters.gui.GeocacheFilterActivity;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.search.GeocacheAutoCompleteAdapter;
@@ -160,6 +163,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        setAppIconAsUpIndicator(true);
         if (null != searchView) {
             if (searchPerformed) {
                 // search triggered from search field -> return to main screen
@@ -176,6 +180,15 @@ public class SearchActivity extends AbstractNavigationBarActivity {
             }
         }
         searchPerformed = false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
+        if (item.getItemId() != android.R.id.home) {
+            return super.onOptionsItemSelected(item);
+        }
+        startActivity(new Intent(this, AboutActivity.class));
+        return true;
     }
 
     @Override
@@ -479,7 +492,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         addSearchCardWithField(R.string.search_tb, R.drawable.trackable_all, null, this::findTrackableFn, DataStore::getSuggestionsTrackableCode, () -> Settings.getHistoryList(R.string.pref_search_history_trackable), value -> Settings.removeFromHistoryList(R.string.pref_search_history_trackable, value), new InputFilter.AllCaps());
 
         addSearchCard(R.string.search_own_caches, R.drawable.ic_menu_owned)
-                .addOnClickListener(() -> findByOwnerFn(Settings.getUserName()));
+                .addOnClickListener(this::findOwnFn);
 
         addSearchCard(R.string.caches_history, R.drawable.ic_menu_recent_history)
                 .addOnClickListener(() -> startActivity(CacheListActivity.getHistoryIntent(this)));
@@ -547,6 +560,15 @@ public class SearchActivity extends AbstractNavigationBarActivity {
         ActivityMixin.overrideTransitionToFade(this);
     }
 
+    private void findOwnFn() {
+        final StatusGeocacheFilter statusFilter = GeocacheFilterType.STATUS.create();
+        statusFilter.setStatusOwned(true);
+        final GeocacheFilterContext filterContext = new GeocacheFilterContext(GeocacheFilterContext.FilterType.TRANSIENT);
+        filterContext.set(GeocacheFilter.create(false, false, statusFilter));
+        CacheListActivity.startActivityFilter(this, filterContext);
+        ActivityMixin.overrideTransitionToFade(this);
+    }
+
     private void findByFinderFn(final String usernameText) {
         if (StringUtils.isBlank(usernameText)) {
             SimpleDialog.of(this).setTitle(R.string.warn_search_help_title).setMessage(R.string.warn_search_help_user).show();
@@ -590,7 +612,7 @@ public class SearchActivity extends AbstractNavigationBarActivity {
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, @Nullable final Intent data) {
         if (requestCode == GeocacheFilterActivity.REQUEST_SELECT_FILTER && resultCode == Activity.RESULT_OK) {
-            CacheListActivity.startActivityFilter(this);
+            CacheListActivity.startActivityFilter(this, null);
             ActivityMixin.overrideTransitionToFade(this);
         } else {
             super.onActivityResult(requestCode, resultCode, data);

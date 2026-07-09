@@ -10,6 +10,8 @@ import androidx.annotation.StringRes;
 
 public abstract class PseudoList extends AbstractList {
     private static final int ALL_LIST_ID = 2;
+
+    public final @DrawableRes int drawableId;
     /**
      * list entry to show all caches
      */
@@ -46,17 +48,22 @@ public abstract class PseudoList extends AbstractList {
      * private constructor to have all instances as constants in the class
      */
     private PseudoList(final int id, @StringRes final int titleResourceId, @DrawableRes final int iconResId) {
-        super(id, LocalizationUtils.getString(titleResourceId), iconResId);
+        super(id, "", titleResourceId);
+        this.drawableId = iconResId;
     }
 
     @Override
     public String getTitleAndCount() {
-        return "<" + title + ">";
+        return "<" + getTitle() + ">";
     }
 
     @Override
     @NonNull
     public String getTitle() {
+        // Dynamically retrieve the localized string to support language changes
+        if (titleResourceId != 0) {
+            return LocalizationUtils.getString(titleResourceId);
+        }
         return title;
     }
 

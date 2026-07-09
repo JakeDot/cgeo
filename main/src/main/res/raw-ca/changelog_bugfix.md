@@ -1,6 +1,39 @@
 ##
 Hora d'actualitzar! Si encara feu servir Android 7 o una versió anterior, aquesta podria ser la darrera actualització de c:geo! Amb la propera versió de c:geo, deixarem de tenir compatibilitat amb Android 5-7 per reduir la càrrega de manteniment i poder actualitzar alguns components externs que utilitza c:geo i que actualment encara estem retenint. Continuarem donant suport a Android 8 fins a Android 16 aleshores (i a les versions més noves quan es publiquin), un període de més de vuit anys d'història d'Android.
 
+- Correcció: L'eliminació d'imatges de registre està trencada (canvi de lloc web)
+- Canvi: Unifica els botons de càrrega de pistes i rutes individuals
+- Correcció: Els atributs del catxé no es detecten correctament en determinades condicions
+- Fix: Logging caches (website change)
+- Fix: Logging trackables (website change)
+
+##
+- Correcció: La importació de consultes de Pocket no funciona correctament (canvi de lloc web)
+
+##
+- Correcció: Error en accedir a rutes
+- Correcció: Error a la pàgina de punts de referència
+- Canvi: La cerca de "catxés pròpis" comença amb filtres nous
+- Correcció: Les etapes de lab aventure no desades perdien la informació de "visitada" en actualitzar-les
+- Correcció: Sol·licitud recurrent per a actualitzacions de la font de les tessel·les
+- Correcció: Ubicació aleatòria en un mapa d'una llista (Google Maps)
+
+##
+- Correcció: Error a la fitxa informativa del catxé
+- Correcció: Ja no es poden descarregar els cartutxos Wherigo (canvi de lloc web)
+
+##
+ - Canvi: Actualment no es poden descarregar els fitxers de Wherigo, mostreu les instruccions de mitigació
+ - Correcció: El motiu de l'eliminació del registre no aplica el límit de longitud
+ - Nou: Registre ampliat per a errors al gestor de descàrregues
+ - Correcció: El full d'informació dels punts de referència pot arribar a ser massa llarg i els botons són inaccessibles
+ - Correcció: Alguna informació d'ubicació es trunca
+ - Correcció: L'encaminament intern ja no funciona, només es mostra la línia recta
+ - Correcció: Alguns problemes de creació de carpetes
+
+Nota: Si feu servir l'encaminament intern, haureu d'executar el pas següent un cop instal·lat aquesta versió: Aneu a la pantalla d'inici de c:geo, obriu "Gestiona dades fora de línia" - "Actualitza dades d'encaminament" i deixeu que c:geo instal·li els fitxers actualitzats. (Motiu: L'estructura del fitxer de dades d'encaminament de BRouter ha canviat i tots els fitxers de dades d'encaminament han de complir la mateixa versió.)
+
+##
 - Correcció: L'anàlisi de la cadena d'ubicació del catxé falla per a determinats idiomes de llocs web
 - Correcció: Error en obrir un element rastrejable des de la llista de seguiment
 - Correcció: El teclat pot estar bloquejant la selecció de la llista
