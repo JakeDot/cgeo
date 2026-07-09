@@ -474,17 +474,7 @@ final class ALApi {
                     wpt.setOriginalCoordsEmpty(true);
                 }
 
-                // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete.
-                // TODO(#17107): "IsComplete" per stage is unconfirmed to reflect the actual per-user
-                // completion state (as opposed to e.g. a static default) - the debug log below is
-                // meant to let this be verified against a real, partially-completed Adventure Lab
-                // before this comment and the log line are removed.
-                final boolean isStageComplete = wptResponse.path("IsComplete").asBoolean(false);
-                Log.d("_AL stage completion check: geocode=" + geocode + " stage=" + stageCounter
-                        + " stageIsComplete=" + isStageComplete + " adventureIsComplete=" + isAdventureComplete);
-                if (isAdventureComplete || isStageComplete) {
-                    wpt.setVisited(true);
-                }
+                markVisitedIfComplete(wpt, wptResponse, isAdventureComplete, geocode, stageCounter);
 
                 if (result == null) {
                     result = new ArrayList<>();
@@ -497,6 +487,20 @@ final class ALApi {
         }
         Log.d("_AL parseWaypoints: parsed " + (result == null ? 0 : result.size()) + " of " + wptsJson.size() + " stage(s) for " + geocode);
         return result;
+    }
+
+    // Mark waypoint as visited if the whole Adventure Lab or this individual stage is complete.
+    // TODO(#17107): "IsComplete" per stage is unconfirmed to reflect the actual per-user
+    // completion state (as opposed to e.g. a static default) - the debug log below is
+    // meant to let this be verified against a real, partially-completed Adventure Lab
+    // before this comment and the log line are removed.
+    private static void markVisitedIfComplete(final Waypoint wpt, final JsonNode wptResponse, final boolean isAdventureComplete, final String geocode, final int stageCounter) {
+        final boolean isStageComplete = wptResponse.path("IsComplete").asBoolean(false);
+        Log.d("_AL stage completion check: geocode=" + geocode + " stage=" + stageCounter
+                + " stageIsComplete=" + isStageComplete + " adventureIsComplete=" + isAdventureComplete);
+        if (isAdventureComplete || isStageComplete) {
+            wpt.setVisited(true);
+        }
     }
 
     private static void appendMultiChoiceOptions(final StringBuilder note, final JsonNode wptResponse) {
