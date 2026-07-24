@@ -101,14 +101,8 @@ public final class NavigationAppFactory {
          * Google Navigation in transit mode
          */
         GOOGLE_NAVIGATION_TRANSIT(new GoogleNavigationTransitApp(), 14, R.string.pref_navigation_menu_google_transit),
-        /**
-         * Google Maps Directions
-         */
-        GOOGLE_MAPS_DIRECTIONS(new GoogleMapsDirectionApp(), 13, R.string.pref_navigation_menu_google_maps_directions),
 
         PEBBLE(new PebbleApp(), 17, R.string.pref_navigation_menu_pebble),
-        MAPSWITHME(new MapsMeApp(), 22, R.string.pref_navigation_menu_mapswithme),
-        ORGANICMAP(new OrganicMapsApp(), 29, R.string.pref_navigation_menu_organicmaps),
         CRUISER(new CruiserNavigationApp(), 28, R.string.pref_navigation_menu_cruiser);
 
         NavigationAppsEnum(final App app, final int id, final int preferenceKey) {
@@ -175,13 +169,9 @@ public final class NavigationAppFactory {
         final List<NavigationAppsEnum> items = new ArrayList<>();
         final int defaultNavigationTool = Settings.getDefaultNavigationTool();
         for (final NavigationAppsEnum navApp : getActiveNavigationApps()) {
-            if ((showInternalMap || !(navApp.app instanceof InternalMap)) &&
-                    (showDefaultNavigation || defaultNavigationTool != navApp.id)) {
-                if ((cache != null && navApp.app instanceof CacheNavigationApp && navApp.app.isEnabled(cache))
-                    || (waypoint != null && navApp.app instanceof WaypointNavigationApp && ((WaypointNavigationApp) navApp.app).isEnabled(waypoint))
-                    || (destination != null && navApp.app instanceof GeopointNavigationApp)) {
-                    items.add(navApp);
-                }
+            if (isVisibleForFilters(navApp, showInternalMap, showDefaultNavigation, defaultNavigationTool)
+                    && isApplicableForTarget(navApp, cache, waypoint, destination)) {
+                items.add(navApp);
             }
         }
 
@@ -207,6 +197,23 @@ public final class NavigationAppFactory {
             alert.setOnDismissListener(dialog -> ViewUtils.setEnabled(activity.findViewById(menuResToEnableOnDismiss), true));
         }
         alert.show();
+    }
+
+    private static boolean isVisibleForFilters(final NavigationAppsEnum navApp, final boolean showInternalMap, final boolean showDefaultNavigation, final int defaultNavigationTool) {
+        if (!showInternalMap && navApp.app instanceof InternalMap) {
+            return false;
+        }
+        return showDefaultNavigation || defaultNavigationTool != navApp.id;
+    }
+
+    private static boolean isApplicableForTarget(final NavigationAppsEnum navApp, final Geocache cache, final Waypoint waypoint, final Geopoint destination) {
+        if (cache != null && navApp.app instanceof CacheNavigationApp) {
+            return navApp.app.isEnabled(cache);
+        }
+        if (waypoint != null && navApp.app instanceof WaypointNavigationApp) {
+            return ((WaypointNavigationApp) navApp.app).isEnabled(waypoint);
+        }
+        return destination != null && navApp.app instanceof GeopointNavigationApp;
     }
 
     /**

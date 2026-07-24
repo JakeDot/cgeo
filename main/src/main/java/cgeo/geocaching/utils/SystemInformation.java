@@ -11,7 +11,7 @@ import cgeo.geocaching.filters.core.GeocacheFilter;
 import cgeo.geocaching.filters.core.GeocacheFilterContext;
 import cgeo.geocaching.maps.routing.RoutingMode;
 import cgeo.geocaching.permission.PermissionContext;
-import cgeo.geocaching.playservices.GooglePlayServices;
+import cgeo.geocaching.playservices.PlayServicesSystemInfo;
 import cgeo.geocaching.sensors.LocationDataProvider;
 import cgeo.geocaching.sensors.MagnetometerAndAccelerometerProvider;
 import cgeo.geocaching.sensors.OrientationProvider;
@@ -26,9 +26,7 @@ import cgeo.geocaching.storage.PersistableUri;
 import cgeo.geocaching.unifiedmap.mapsforge.MapsforgeThemeHelper;
 import cgeo.geocaching.unifiedmap.tileproviders.AbstractTileProvider;
 import cgeo.geocaching.utils.html.HtmlUtils;
-import cgeo.geocaching.wherigo.WherigoGame;
-import cgeo.geocaching.wherigo.WherigoSavegameInfo;
-import cgeo.geocaching.wherigo.WherigoThingType;
+import cgeo.geocaching.wherigo.WherigoSystemInfo;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -46,11 +44,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.util.Pair;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import com.google.android.gms.common.GoogleApiAvailability;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -84,7 +80,7 @@ public final class SystemInformation {
                 .append("\n- Android build: ").append(Build.DISPLAY);
         appendScreenResolution(context, body);
         body.append("\n- Sailfish OS detected: ").append(EnvironmentUtils.isSailfishOs());
-        appendGooglePlayServicesVersion(context, body);
+        PlayServicesSystemInfo.append(context, body);
         appendMemoryInfo(context, body);
         body.append("\n")
                 .append("\nSensor and location:")
@@ -140,7 +136,7 @@ public final class SystemInformation {
 
         appendPermissions(context, body);
 
-        appendWherigo(body);
+        WherigoSystemInfo.append(body);
 
         body.append("\n")
                 .append("\nPaths")
@@ -329,37 +325,6 @@ public final class SystemInformation {
         for (PermissionContext pc : PermissionContext.values()) {
             for (String permission : pc.getPermissions()) {
                 appendPermission(context, body, permission);
-            }
-        }
-    }
-
-    private static void appendWherigo(final StringBuilder body) {
-        final WherigoGame game = WherigoGame.get();
-        final ContentStorage.FileInformation  cartridgeFileInfo = game.getCartridgeInfo() == null ? null : game.getCartridgeInfo().getFileInfo();
-        final CharSequence loadFileInfo = TextUtils.join(WherigoSavegameInfo.getAllSaveFiles(cartridgeFileInfo), WherigoSavegameInfo::toShortString, ", ");
-        final CharSequence visibleThingsCounts = TextUtils.join(Arrays.asList(WherigoThingType.values()), tt -> tt.name() + ":" + tt.getThingsForUserDisplay().size(), ", ");
-        body.append("\n")
-            .append("\nWherigo")
-            .append("\n-------")
-            .append("\n- playing:").append(game.isPlaying()).append(", debug:").append(game.isDebugMode()).append(", debugFC:").append(game.isDebugModeForCartridge())
-            .append("\n- Name: ").append(game.getCartridgeName()).append(" (").append(game.getCGuid()).append(")")
-            .append("\n- Cache context: ").append(game.getContextGeocacheName())
-            .append("\n- Last Error: ").append(game.getLastError())
-            .append("\n- Last Played: ").append(game.getLastPlayedCGuid()).append(" / ").append(game.getLastSetContextGeocode())
-            .append("\n- Visible things: ").append(visibleThingsCounts)
-            .append("\n- Cartridge File: ").append(cartridgeFileInfo)
-            .append("\n- Load Slots: ").append(loadFileInfo);
-    }
-
-    private static void appendGooglePlayServicesVersion(final Context context, final StringBuilder body) {
-        final boolean googlePlayServicesAvailable = GooglePlayServices.isAvailable();
-        body.append("\n- Google Play services: ").append(googlePlayServicesAvailable ? (Settings.useGooglePlayServices() ? "enabled" : "disabled") : "unavailable");
-        if (googlePlayServicesAvailable) {
-            body.append(" - ");
-            try {
-                body.append(StringUtils.defaultIfBlank(context.getPackageManager().getPackageInfo(GoogleApiAvailability.GOOGLE_PLAY_SERVICES_PACKAGE, 0).versionName, "unknown version"));
-            } catch (final PackageManager.NameNotFoundException e) {
-                body.append("unretrievable version (").append(e.getMessage()).append(')');
             }
         }
     }

@@ -51,7 +51,7 @@ import cgeo.geocaching.utils.ShareUtils;
 import cgeo.geocaching.utils.TextUtils;
 import cgeo.geocaching.utils.functions.Action1;
 import cgeo.geocaching.utils.offlinetranslate.TranslateAccessor;
-import cgeo.geocaching.wherigo.WherigoActivity;
+import cgeo.geocaching.wherigo.WherigoIntents;
 import static cgeo.geocaching.Intents.EXTRA_MESSAGE_CENTER_COUNTER;
 
 import android.annotation.SuppressLint;
@@ -585,7 +585,10 @@ public class MainActivity extends AbstractNavigationBarActivity {
         } else if (id == R.id.menu_helpers) {
             startActivity(new Intent(this, UsefulAppsActivity.class));
         } else if (id == R.id.menu_wherigo) {
-            startActivity(new Intent(this, WherigoActivity.class));
+            final Intent wherigoIntent = WherigoIntents.createPlayerIntent(this);
+            if (wherigoIntent != null) {
+                startActivity(wherigoIntent);
+            }
         } else if (id == R.id.menu_wizard) {
             final Intent wizard = new Intent(this, InstallWizardActivity.class);
             wizard.putExtra(InstallWizardActivity.BUNDLE_MODE, InstallWizardActivity.needsFolderMigration() ? InstallWizardActivity.WizardMode.WIZARDMODE_MIGRATION.id : InstallWizardActivity.WizardMode.WIZARDMODE_RETURNING.id);

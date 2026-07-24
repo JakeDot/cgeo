@@ -7,37 +7,7 @@
         android:icon="@drawable/ic_action_layers"
         android:showAsAction="always"
         android:title="@string/map_view_map"
-        app:showAsAction="always">
-        <!-- only used for legacy map, overwritten by map_mapview for Unified map -->
-        <menu>
-            <group
-                android:id="@+id/menu_group_map_sources_online"
-                android:checkableBehavior="single" >
-            </group>
-            <group
-                android:id="@+id/menu_group_map_sources_offline"
-                android:checkableBehavior="single" >
-            </group>
-            <group android:id="@+id/menu_group_offlinemaps">
-                <item
-                    android:orderInCategory="90"
-                    android:id="@+id/menu_hillshading"
-                    android:title="@string/settings_hillshading_enable"
-                    android:icon="@drawable/ic_menu_hills"
-                    android:checkable="true"
-                    android:visible="false"/>
-                <item
-                    android:orderInCategory="91"
-                    android:id="@+id/menu_manage_offline_data"
-                    android:icon="@drawable/wherigo_download"
-                    android:title="@string/menu_manage_offline_data"
-                    android:visible="false">
-                    <menu>
-                    </menu>
-                </item>
-            </group>
-        </menu>
-    </item>
+        app:showAsAction="always"/>
     <item
         android:id="@+id/menu_filter"
         android:icon="@drawable/ic_menu_filter"

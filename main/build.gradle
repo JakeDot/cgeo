@@ -201,6 +201,43 @@ android {
         // resources specific to flavor "basic".
         basic {
             java.srcDir 'src/nofoss/java' // "basic" shall contain non-foss code
+            java.srcDir 'src/full/java' // "basic" is a full-featured flavor
+            res.srcDir 'src/full/res'
+        }
+        // "nojit" and "foss" are full-featured flavors just like "basic"
+        nojit {
+            java.srcDir 'src/full/java'
+            res.srcDir 'src/full/res'
+        }
+        foss {
+            java.srcDir 'src/full/java'
+            res.srcDir 'src/full/res'
+        }
+        // unit / instrumentation tests for classes that only exist in the "full" flavors
+        testBasic {
+            java.srcDir 'src/testFull/java'
+        }
+        testNojit {
+            java.srcDir 'src/testFull/java'
+        }
+        testFoss {
+            java.srcDir 'src/testFull/java'
+        }
+        androidTestBasic {
+            java.srcDir 'src/androidTestFull/java'
+        }
+        androidTestNojit {
+            java.srcDir 'src/androidTestFull/java'
+        }
+        androidTestFoss {
+            java.srcDir 'src/androidTestFull/java'
+        }
+        // resources specific to flavor "lite": a cut-down, Geocaching.com-focused build with
+        // only a single offline map engine and none of the "full" flavors' extra connectors,
+        // map engines, Play Services or third-party navigation-app integrations.
+        lite {
+            java.srcDir 'src/lite/java'
+            manifest.srcFile 'src/lite/AndroidManifest.xml'
         }
     }
 
@@ -286,6 +323,15 @@ android {
         }
 
         foss {
+            dimension = "javaCompilerTime"
+            buildConfigField "String", "SPECIAL_BUILD", '""'
+        }
+
+        // "lite" is a cut-down flavor based on "foss": no Google Play Services / Google Maps,
+        // no third-party navigation-app integrations, a single offline map engine (VTM), and
+        // only the Geocaching.com-family connectors (GC, Adventure Lab, Waymarking, the
+        // internal/user-defined connector and its Travel Bug trackable support).
+        lite {
             dimension = "javaCompilerTime"
             buildConfigField "String", "SPECIAL_BUILD", '""'
         }
@@ -451,11 +497,15 @@ dependencies {
     // used by mapsforge
     implementation 'com.caverock:androidsvg:1.4'
 
-    // Maps.ME integration
-    implementation project(":mapswithme-api")
+    // Maps.ME integration (not available in the "lite" flavor)
+    basicImplementation project(":mapswithme-api")
+    nojitImplementation project(":mapswithme-api")
+    fossImplementation project(":mapswithme-api")
 
-    // Organic Maps integration
-    implementation project(":organicmaps-api")
+    // Organic Maps integration (not available in the "lite" flavor)
+    basicImplementation project(":organicmaps-api")
+    nojitImplementation project(":organicmaps-api")
+    fossImplementation project(":organicmaps-api")
 
     // Metadata Extractor, EXIF location extraction from images
     implementation 'com.drewnoakes:metadata-extractor:2.20.0'
@@ -465,9 +515,13 @@ dependencies {
     // For local unit tests
     testImplementation "com.squareup.okhttp3:mockwebserver3:$okhttpVersion"
 
-    // Play Services
-    implementation 'com.google.android.gms:play-services-location:21.4.0'
-    implementation 'com.google.android.gms:play-services-maps:20.0.0'
+    // Play Services (not available in the "lite" flavor)
+    basicImplementation 'com.google.android.gms:play-services-location:21.4.0'
+    nojitImplementation 'com.google.android.gms:play-services-location:21.4.0'
+    fossImplementation 'com.google.android.gms:play-services-location:21.4.0'
+    basicImplementation 'com.google.android.gms:play-services-maps:20.0.0'
+    nojitImplementation 'com.google.android.gms:play-services-maps:20.0.0'
+    fossImplementation 'com.google.android.gms:play-services-maps:20.0.0'
     // somehow there is a transitive play service dependency which we don't want
     configurations.configureEach {
         exclude module: "play-services-measurement"

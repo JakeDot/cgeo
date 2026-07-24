@@ -6,7 +6,7 @@ import cgeo.geocaching.activity.INavigationSource;
 import cgeo.geocaching.activity.Progress;
 import cgeo.geocaching.activity.TabbedViewPagerActivity;
 import cgeo.geocaching.activity.TabbedViewPagerFragment;
-import cgeo.geocaching.apps.cachelist.MapsMeCacheListApp;
+import cgeo.geocaching.apps.cachelist.MapsMeIntentHelper;
 import cgeo.geocaching.apps.navi.NavigationAppFactory;
 import cgeo.geocaching.calendar.CalendarAdder;
 import cgeo.geocaching.command.AbstractCommand;
@@ -115,7 +115,7 @@ import cgeo.geocaching.utils.html.HtmlStyle;
 import cgeo.geocaching.utils.html.HtmlUtils;
 import cgeo.geocaching.utils.html.UnknownTagsHandler;
 import cgeo.geocaching.utils.offlinetranslate.ITranslatorImpl;
-import cgeo.geocaching.wherigo.WherigoViewUtils;
+import cgeo.geocaching.wherigo.WherigoUiSupport;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -283,7 +283,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
 
         // When clicking a cache in MapsWithMe, we get back a PendingIntent
         if (StringUtils.isEmpty(geocode)) {
-            geocode = MapsMeCacheListApp.getCacheFromMapsWithMe(this, getIntent());
+            geocode = MapsMeIntentHelper.getCacheFromMapsWithMe(this, getIntent());
         }
 
         if (geocode == null && uri != null) {
@@ -2156,7 +2156,7 @@ public class CacheDetailActivity extends TabbedViewPagerActivity
 
                 if (StringUtils.isNotBlank(description)) {
                     handleImageClick(activity, cache, description);
-                    WherigoViewUtils.htmlReplaceWherigoClickAction(activity, cache.getGeocode(), description);
+                    WherigoUiSupport.htmlReplaceWherigoClickAction(activity, cache.getGeocode(), description);
                     //display various fixes
                     HtmlUtils.fixRelativeLinks(description, ConnectorFactory.getConnector(cache).getHostUrl() + "/");
                     fixOldGeocheckerLink(activity, cache, description);

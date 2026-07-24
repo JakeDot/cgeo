@@ -15,7 +15,7 @@ import cgeo.geocaching.connector.capability.WatchListCapability;
 import cgeo.geocaching.connector.gc.GCConnector;
 import cgeo.geocaching.connector.gc.GCUtils;
 import cgeo.geocaching.connector.internal.InternalConnector;
-import cgeo.geocaching.connector.su.SuConnector;
+import cgeo.geocaching.connector.su.SuCacheIdHelper;
 import cgeo.geocaching.connector.trackable.TrackableBrand;
 import cgeo.geocaching.enumerations.CacheSize;
 import cgeo.geocaching.enumerations.CacheType;
@@ -908,8 +908,9 @@ public class Geocache implements INamedGeoCoordinate {
             if (getConnector() instanceof GCConnector) {
                 return String.valueOf(GCUtils.gcLikeCodeToGcLikeId(geocode));
             }
-            if (getConnector() instanceof SuConnector) {
-                return SuConnector.geocodeToId(geocode);
+            final String suCacheId = SuCacheIdHelper.getCacheId(getConnector(), geocode);
+            if (suCacheId != null) {
+                return suCacheId;
             }
         }
 
