@@ -36,6 +36,11 @@ public class ToastNotification {
     }
 
     public void show() {
+        if (!Settings.useToastReplacementNotification()) {
+            ViewUtils.runOnUiThread(false, () -> Toast.makeText(context, text, duration).show());
+            return;
+        }
+
         final NotificationCompat.Builder builder = Notifications.newBuilder(context, NotificationChannels.TOAST_REPLACEMENT_NOTIFICATION)
                 .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
@@ -44,7 +49,8 @@ public class ToastNotification {
                 .setAutoCancel(true)
                 .setTimeoutAfter(duration == LENGTH_SHORT ? DURATION_SHORT_MILLIS : DURATION_LONG_MILLIS);
         try {
-            Notifications.getNotificationManager(context).notify(Settings.getUniqueNotificationId(), builder.build());
+            final int toastReplacementNotificationId = 130;
+            Notifications.getNotificationManager(context).notify(toastReplacementNotificationId, builder.build());
         } catch (SecurityException se) {
             Log.w("Could not show silent notification, falling back to system toast", se);
             ViewUtils.runOnUiThread(false, () -> Toast.makeText(context, text, duration).show());
