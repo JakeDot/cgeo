@@ -2817,6 +2817,8 @@
     <string name="notification_channel_cache_download_description">result notifications for caches background downloads</string>
     <string name="notification_channel_log_name">log posting</string>
     <string name="notification_channel_log_description">progress and error notifications for posting cache logs</string>
+    <string name="notification_channel_toast_replacement_name">status messages</string>
+    <string name="notification_channel_toast_replacement_description">temporary status messages shown silently</string>
     <string name="notification_download_receiver_title">Importing download</string>
 
     <!-- individual routes -->
