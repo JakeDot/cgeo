@@ -586,7 +586,7 @@ public class ViewUtils {
         runOnUiThread(false, () -> {
             final Context toastContext = wrap(context == null || (context instanceof Activity && ((Activity) context).isFinishing()) ?
                     CgeoApplication.getInstance() : context);
-            final int toastDuration = shortToast ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG;
+            final int toastDuration = shortToast ? ToastNotification.LENGTH_SHORT : ToastNotification.LENGTH_LONG;
             final CharSequence toastText = text == null ? "---" : text.getText(toastContext);
 
             Log.iForce("[" + (context == null ? "APP" : context.getClass().getName()) + "].showToast(" + toastText + "){" + (shortToast ? "SHORT" : "LONG") + "}");
