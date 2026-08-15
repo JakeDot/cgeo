@@ -1354,6 +1354,8 @@
     <string name="init_debug_title">Debug information</string>
     <string name="init_debug_note">c:geo can generate a lot of debugging information. Activating this setting will affect the stability of c:geo and is only recommended if you are asked to send a log to the developers. Please keep debug logging disabled during normal usage of c:geo!</string>
     <string name="init_debug">Activate debug log</string>
+    <string name="init_toast_replacement_notification">Show status messages as silent notifications</string>
+    <string name="init_toast_replacement_notification_note">If disabled, c:geo uses classic Android toasts for temporary status messages.</string>
     <string name="init_dbonsdcard_title">Database location</string>
     <string name="init_dbonsdcard_note">You may store the database of c:geo either system internally or into a folder on your user storage. We recommend to only activate this option if you need regular manual access to your database file.</string>
     <string name="init_dbonsdcard">On user storage</string>

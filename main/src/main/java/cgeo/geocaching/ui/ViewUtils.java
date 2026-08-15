@@ -7,6 +7,7 @@ import cgeo.geocaching.databinding.CheckboxItemBinding;
 import cgeo.geocaching.databinding.DialogEdittextBinding;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.location.GeopointFormatter;
+import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.ui.dialog.Dialogs;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
 import cgeo.geocaching.ui.notifications.ToastNotification;
@@ -57,6 +58,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import static android.view.MenuItem.SHOW_AS_ACTION_ALWAYS;
 
 import androidx.annotation.AttrRes;
@@ -591,8 +593,12 @@ public class ViewUtils {
 
             Log.iForce("[" + (context == null ? "APP" : context.getClass().getName()) + "].showToast(" + toastText + "){" + (shortToast ? "SHORT" : "LONG") + "}");
             try {
-                final ToastNotification toast = ToastNotification.makeText(toastContext, toastText, toastDuration);
-                toast.show();
+                if (Settings.useToastReplacementNotification()) {
+                    final ToastNotification toast = ToastNotification.makeText(toastContext, toastText, toastDuration);
+                    toast.show();
+                } else {
+                    Toast.makeText(toastContext, toastText, toastDuration).show();
+                }
             } catch (RuntimeException re) {
                 //this can happen e.g. in Unit tests when thread has no called Looper.prepare()
                 Log.w("Could not show toast '" + toastText + "' to user", re);
