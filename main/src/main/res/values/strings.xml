@@ -1929,6 +1929,7 @@
     <string name="html_style_default">Default</string>
     <string name="html_style_default_no_contrast_fix">Default w/o contrast fix</string>
     <string name="html_style_monochrome">Monochrome</string>
+    <string name="html_style_webview">WebView</string>
     <string name="html_style_source_formatted">HTML Source Formatted</string>
     <string name="html_style_source">HTML Source</string>
 
@@ -1938,6 +1939,7 @@
     <string name="cc_hint_seconds">seconds</string>
     <string name="cc_hint_fraction">fraction</string>
     <string name="hash_symbol">#</string>
+    <string name="averaging_my_coordinates">Averaging my coordinates…</string>
 
     <!-- gpx -->
     <string name="gpx_import_loading_caches_with_filename">Loading caches from %1$s</string>
@@ -3179,6 +3181,8 @@
     <string name="delete">Delete</string>
     <string name="play">Play</string>
     <string name="copy" tools:ignore="PrivateResource">Copy</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
 
     <!-- Multi-Selections -->
     <string name="multiselect_selectall">Select All</string>
