@@ -1,4 +1,5 @@
 ### Map
+-
 - 
 
 ### Cache details
@@ -6,6 +7,7 @@
 - Fix: Stacked progress dialogs when deleting multiple logs
 
 ### Wherigo player
+-
 - 
 
 ### General
