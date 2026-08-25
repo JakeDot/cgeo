@@ -7,8 +7,10 @@ import cgeo.geocaching.databinding.CheckboxItemBinding;
 import cgeo.geocaching.databinding.DialogEdittextBinding;
 import cgeo.geocaching.location.Geopoint;
 import cgeo.geocaching.location.GeopointFormatter;
+import cgeo.geocaching.settings.Settings;
 import cgeo.geocaching.ui.dialog.Dialogs;
 import cgeo.geocaching.ui.dialog.SimpleDialog;
+import cgeo.geocaching.ui.notifications.ToastNotification;
 import cgeo.geocaching.utils.AndroidRxUtils;
 import cgeo.geocaching.utils.LocalizationUtils;
 import cgeo.geocaching.utils.Log;
@@ -26,7 +28,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -587,16 +588,17 @@ public class ViewUtils {
         runOnUiThread(false, () -> {
             final Context toastContext = wrap(context == null || (context instanceof Activity && ((Activity) context).isFinishing()) ?
                     CgeoApplication.getInstance() : context);
-            final int toastDuration = shortToast ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG;
+            final int toastDuration = shortToast ? ToastNotification.LENGTH_SHORT : ToastNotification.LENGTH_LONG;
             final CharSequence toastText = text == null ? "---" : text.getText(toastContext);
 
             Log.iForce("[" + (context == null ? "APP" : context.getClass().getName()) + "].showToast(" + toastText + "){" + (shortToast ? "SHORT" : "LONG") + "}");
             try {
-                final Toast toast = Toast.makeText(toastContext, toastText, toastDuration);
-                if (Build.VERSION.SDK_INT < 30) {
-                    toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 100);
+                if (Settings.useToastReplacementNotification()) {
+                    final ToastNotification toast = ToastNotification.makeText(toastContext, toastText, toastDuration);
+                    toast.show();
+                } else {
+                    Toast.makeText(toastContext, toastText, toastDuration).show();
                 }
-                toast.show();
             } catch (RuntimeException re) {
                 //this can happen e.g. in Unit tests when thread has no called Looper.prepare()
                 Log.w("Could not show toast '" + toastText + "' to user", re);

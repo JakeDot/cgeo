@@ -68,6 +68,12 @@
             android:key="@string/pref_debug"
             android:title="@string/init_debug"
             app:iconSpaceReserved="false" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_toast_replacement_notification"
+            android:summary="@string/init_toast_replacement_notification_note"
+            android:title="@string/init_toast_replacement_notification"
+            app:iconSpaceReserved="false" />
         <Preference
             android:key="@string/pref_fakekey_generate_logcat"
             android:layout="@layout/preference_button"

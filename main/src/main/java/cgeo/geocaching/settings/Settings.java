@@ -2629,6 +2629,10 @@ public class Settings {
         return getBoolean(R.string.pref_extended_settings_enabled, false);
     }
 
+    public static boolean useToastReplacementNotification() {
+        return getBoolean(R.string.pref_toast_replacement_notification, true);
+    }
+
     public static boolean removeFromRouteOnLog() {
         return getBoolean(R.string.pref_removeFromRouteOnLog, false);
     }

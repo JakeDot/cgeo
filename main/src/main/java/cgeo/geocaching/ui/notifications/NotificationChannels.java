@@ -16,7 +16,8 @@ public enum NotificationChannels {
     DOWNLOADER_RESULT_NOTIFICATION(R.string.notification_channel_downloader_name, R.string.notification_channel_downloader_description, NotificationManagerCompat.IMPORTANCE_HIGH),
     CACHES_DOWNLOADED_NOTIFICATION(R.string.notification_channel_cache_download_name, R.string.notification_channel_cache_download_description, NotificationManagerCompat.IMPORTANCE_DEFAULT),
     WHERIGO_NOTIFICATION(R.string.wherigo, R.string.notification_channel_cache_download_description, NotificationManagerCompat.IMPORTANCE_DEFAULT),
-    LOG_RESULT_NOTIFICATION(R.string.notification_channel_log_name, R.string.notification_channel_log_description, NotificationManagerCompat.IMPORTANCE_DEFAULT);
+    LOG_RESULT_NOTIFICATION(R.string.notification_channel_log_name, R.string.notification_channel_log_description, NotificationManagerCompat.IMPORTANCE_DEFAULT),
+    TOAST_REPLACEMENT_NOTIFICATION(R.string.notification_channel_toast_replacement_name, R.string.notification_channel_toast_replacement_description, NotificationManagerCompat.IMPORTANCE_LOW);
 
     public final int channelDisplayableTitle;
     public final int channelDisplayableDescription;
@@ -38,6 +39,11 @@ public enum NotificationChannels {
                     channel.channelImportance
             );
             notificationChannel.setDescription(LocalizationUtils.getString(channel.channelDisplayableDescription));
+            if (channel == TOAST_REPLACEMENT_NOTIFICATION) {
+                notificationChannel.setSound(null, null);
+                notificationChannel.enableVibration(false);
+                notificationChannel.setShowBadge(false);
+            }
             manager.createNotificationChannel(notificationChannel);
         }
     }
