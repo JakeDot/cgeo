@@ -47,13 +47,16 @@ jobs:
 
   check-secrets:
     if: >
-      github.event_name != 'pull_request_target' ||
+      github.repository == 'cgeo/cgeo' &&
       (
-        github.event.pull_request.head.repo.full_name != github.repository &&
+        github.event_name != 'pull_request_target' ||
         (
-          github.event.action == 'opened' || github.event.action == 'reopened' ||
-          (github.event.action == 'labeled' && github.event.label.name == 'ok-to-test') ||
-          (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'ok-to-test'))
+          github.event.pull_request.head.repo.full_name != github.repository &&
+          (
+            github.event.action == 'opened' || github.event.action == 'reopened' ||
+            (github.event.action == 'labeled' && github.event.label.name == 'ok-to-test') ||
+            (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'ok-to-test'))
+          )
         )
       )
     runs-on: ubuntu-latest
