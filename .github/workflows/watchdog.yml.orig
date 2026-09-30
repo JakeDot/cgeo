@@ -26,7 +26,8 @@ jobs:
       - name: Check secrets
         run: |
           if [ -z "${{ secrets.KEY_STORE }}" ]; then
-            echo "::warning::No secret defined or no access to secrets"
+            echo "::error::No secret defined or no access to secrets"
+            exit 1
           fi
           echo "::notice::Secrets seems available"
 
